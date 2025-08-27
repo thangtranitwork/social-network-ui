@@ -1,0 +1,122 @@
+{
+  "components": {
+    "chatBox": {
+      "loading": "Đang tải tin nhắn...",
+      "noMessages": "Chưa có tin nhắn nào",
+      "sendError": "Lỗi gửi tin nhắn",
+      "fileTooLarge": "File quá lớn! Vui lòng chọn file nhỏ hơn 10MB",
+      "fileSentSuccess": "Gửi file thành công!",
+      "fileError": "Lỗi gửi file",
+      "messageDeleted": "Tin nhắn đã xóa",
+      "deleteError": "Lỗi xóa tin nhắn",
+      "editSuccess": "Chỉnh sửa tin nhắn thành công!",
+      "editError": "Lỗi chỉnh sửa tin nhắn"
+    },
+    "chatItem": {
+      "noMessages": "Chưa có tin nhắn nào",
+      "attachmentLabel": "[File đính kèm]",
+      "deletedMessage": "Tin nhắn đã xóa",
+      "youPrefix": "Bạn: "
+    },
+    "chatList": {
+      "messages": "Tin nhắn",
+      "searchPlaceholder": "Tìm kiếm cuộc trò chuyện...",
+      "noConversations": "Chưa có cuộc trò chuyện nào",
+      "loadError": "Không thể tải cuộc trò chuyện. Vui lòng thử lại.",
+      "noMatches": "Không tìm thấy kết quả",
+      "searching": "Đang tìm kiếm...",
+      "chatsCount": "{{count}} cuộc trò chuyện",
+      "moreChats": "+{{count}} cuộc trò chuyện khác",
+      "collapseLabel": "Thu gọn danh sách chat"
+    },
+    "newPostModal": {
+      "title": "Bài đăng mới",
+      "uploadPrompt": "Chọn ảnh hoặc video, hoặc kéo thả vào đây",
+      "privacy": "Quyền riêng tư",
+      "caption": "Chú thích",
+      "captionPlaceholder": "Viết gì đó...",
+      "posting": "Đang đăng...",
+      "post": "Đăng",
+      "postSuccess": "Tạo bài đăng thành công",
+      "postError": "Có lỗi xảy ra, vui lòng thử lại",
+      "connectionError": "Lỗi kết nối hoặc máy chủ.",
+      "privacyOptions": {
+        "public": "🌍 Công khai",
+        "friends": "👥 Bạn bè",
+        "private": "🔒 Chỉ mình tôi"
+      }
+    },
+    "chatHeader": {
+      "online": "Trực tuyến",
+      "offline": "Ngoại tuyến",
+      "typing": "Đang gõ...",
+      "lastSeen": "Lần cuối truy cập"
+    },
+    "chatInput": {
+      "placeholder": "Nhập tin nhắn...",
+      "editingPlaceholder": "Chỉnh sửa tin nhắn...",
+      "send": "Gửi",
+      "save": "Lưu",
+      "cancel": "Hủy",
+      "selectFile": "Chọn file",
+      "uploading": "Đang tải lên..."
+    },
+    "messageItem": {
+      "edit": "Chỉnh sửa",
+      "delete": "Xóa",
+      "reply": "Trả lời",
+      "edited": "Đã chỉnh sửa",
+      "deleted": "Tin nhắn này đã bị xóa"
+    },
+    "postModal": {
+      "likes": "{{count}} lượt thích",
+      "comments": "Bình luận",
+      "loadingComments": "Đang tải bình luận...",
+      "noComments": "Chưa có bình luận nào",
+      "commentPlaceholder": "Viết bình luận...",
+      "replyPlaceholder": "Trả lời {{name}}...",
+      "addPhoto": "+ Ảnh",
+      "addFile": "+ File",
+      "send": "Gửi",
+      "reply": "Trả lời",
+      "cancel": "Hủy",
+      "sending": "Đang gửi...",
+      "replying": "Đang trả lời...",
+      "commentSendError": "Lỗi gửi bình luận",
+      "commentLikeError": "Lỗi thích bình luận",
+      "replySuccess": "Trả lời bình luận thành công",
+      "replyError": "Lỗi trả lời bình luận",
+      "mediaAlt": "Media bài đăng {{index}}"
+    }
+  },
+  "common": {
+    "loading": "Đang tải...",
+    "error": "Lỗi",
+    "success": "Thành công",
+    "cancel": "Hủy",
+    "save": "Lưu",
+    "delete": "Xóa",
+    "edit": "Chỉnh sửa",
+    "back": "Quay lại",
+    "close": "Đóng",
+    "retry": "Thử lại"
+  },
+  "time": {
+    "now": "bây giờ",
+    "justNow": "vừa xong",
+    "minutesAgo": "{{count}} phút trước",
+    "hoursAgo": "{{count}} giờ trước", 
+    "daysAgo": "{{count}} ngày trước",
+    "weeksAgo": "{{count}} tuần trước",
+    "monthsAgo": "{{count}} tháng trước",
+    "yearsAgo": "{{count}} năm trước"
+  },
+  "file": {
+    "maxSizeError": "Kích thước file vượt quá giới hạn",
+    "uploadError": "Tải lên thất bại",
+    "uploadSuccess": "Tải lên thành công",
+    "unsupportedFormat": "Định dạng file không được hỗ trợ",
+    "selectFile": "Chọn một file",
+    "dropFile": "Thả file vào đây"
+  }
+}

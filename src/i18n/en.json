@@ -1,0 +1,122 @@
+{
+  "components": {
+    "chatBox": {
+      "loading": "Loading messages...",
+      "noMessages": "No messages yet",
+      "sendError": "Error sending message",
+      "fileTooLarge": "File too large! Please select a file smaller than 10MB",
+      "fileSentSuccess": "File sent successfully!",
+      "fileError": "Error sending file",
+      "messageDeleted": "Message deleted",
+      "deleteError": "Error deleting message",
+      "editSuccess": "Message edited successfully!",
+      "editError": "Error editing message"
+    },
+    "chatItem": {
+      "noMessages": "No messages yet",
+      "attachmentLabel": "[Attachment]",
+      "deletedMessage": "Message deleted",
+      "youPrefix": "You: "
+    },
+    "chatList": {
+      "messages": "Messages",
+      "searchPlaceholder": "Search conversations...",
+      "noConversations": "No conversations yet",
+      "loadError": "Failed to load chats. Please try again.",
+      "noMatches": "No matches found",
+      "searching": "Searching...",
+      "chatsCount": "{count} chats",
+      "moreChats": "+{count} more",
+      "collapseLabel": "Collapse chat list"
+    },
+    "newPostModal": {
+      "title": "New post",
+      "uploadPrompt": "Select images or videos, or drag and drop here",
+      "privacy": "Privacy",
+      "caption": "Caption",
+      "captionPlaceholder": "Write something...",
+      "posting": "Posting...",
+      "post": "Post",
+      "postSuccess": "Post created successfully",
+      "postError": "An error occurred, please try again",
+      "connectionError": "Connection or server error.",
+      "privacyOptions": {
+        "public": "🌍 Public",
+        "friends": "👥 Friends",
+        "private": "🔒 Only me"
+      }
+    },
+    "chatHeader": {
+      "online": "Online",
+      "offline": "Offline",
+      "typing": "Typing...",
+      "lastSeen": "Last seen"
+    },
+    "chatInput": {
+      "placeholder": "Type a message...",
+      "editingPlaceholder": "Edit message...",
+      "send": "Send",
+      "save": "Save",
+      "cancel": "Cancel",
+      "selectFile": "Select file",
+      "uploading": "Uploading..."
+    },
+    "messageItem": {
+      "edit": "Edit",
+      "delete": "Delete",
+      "reply": "Reply",
+      "edited": "Edited",
+      "deleted": "This message has been deleted"
+    },
+    "postModal": {
+      "likes": "{count} likes",
+      "comments": "Comments",
+      "loadingComments": "Loading comments...",
+      "noComments": "No comments yet",
+      "commentPlaceholder": "Write a comment...",
+      "replyPlaceholder": "Reply to {name}...",
+      "addPhoto": "+ Photo",
+      "addFile": "+ File",
+      "send": "Send",
+      "reply": "Reply",
+      "cancel": "Cancel",
+      "sending": "Sending...",
+      "replying": "Replying...",
+      "commentSendError": "Error sending comment",
+      "commentLikeError": "Error liking comment",
+      "replySuccess": "Comment replied successfully",
+      "replyError": "Error replying to comment",
+      "mediaAlt": "Post media {index}"
+    }
+  },
+  "common": {
+    "loading": "Loading...",
+    "error": "Error",
+    "success": "Success",
+    "cancel": "Cancel",
+    "save": "Save",
+    "delete": "Delete",
+    "edit": "Edit",
+    "back": "Back",
+    "close": "Close",
+    "retry": "Retry"
+  },
+  "time": {
+    "now": "now",
+    "justNow": "just now",
+    "minutesAgo": "{count} minutes ago",
+    "hoursAgo": "{count} hours ago",
+    "daysAgo": "{count} days ago",
+    "weeksAgo": "{count} weeks ago",
+    "monthsAgo": "{count} months ago",
+    "yearsAgo": "{count} years ago"
+  },
+  "file": {
+    "maxSizeError": "File size exceeds limit",
+    "uploadError": "Upload failed",
+    "uploadSuccess": "Upload successful",
+    "unsupportedFormat": "Unsupported file format",
+    "selectFile": "Select a file",
+    "dropFile": "Drop file here"
+  }
+}
