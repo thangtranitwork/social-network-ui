@@ -1,11 +1,11 @@
 "use client";
 
+import dayjs from "dayjs";
+import "dayjs/locale/vi";
+import relativeTime from "dayjs/plugin/relativeTime";
 import { memo } from "react";
 import Avatar from "../ui-components/Avatar";
 import Badge from "../ui-components/Badge";
-import dayjs from "dayjs";
-import relativeTime from "dayjs/plugin/relativeTime";
-import "dayjs/locale/vi";
 
 dayjs.extend(relativeTime);
 dayjs.locale("vi");
@@ -16,9 +16,9 @@ function ChatItem({ chat, onClick, selected }) {
   const isOnline = target?.isOnline || false;
   const isUnread = notReadMessageCount > 0;
   const displayName =
-      `${target?.givenName || ""} ${target?.familyName || ""}`.trim() ||
-      target?.username ||
-      "Unknown User";
+    `${target?.givenName || ""} ${target?.familyName || ""}`.trim() ||
+    target?.username ||
+    "Unknown User";
 
   let content = "Chưa có tin nhắn nào";
   let sentTime = "";
@@ -56,6 +56,8 @@ function ChatItem({ chat, onClick, selected }) {
         content = "Tin nhắn đã bị thu hồi";
       } else if (attachment) {
         content = "[Tệp đính kèm]";
+      } else if (type === "GIF") {
+        content = "[GIF đính kèm]";
       } else {
         content = msgContent?.slice(0, 60) || "Tin nhắn đã bị xoá";
       }
@@ -68,9 +70,8 @@ function ChatItem({ chat, onClick, selected }) {
   return (
     <div
       onClick={onClick}
-      className={`flex items-center gap-3 p-3 rounded-xl cursor-pointer transition hover:bg-accent ${
-        selected ? "bg-accent" : ""
-      }`}
+      className={`flex items-center gap-3 p-3 rounded-xl cursor-pointer transition hover:bg-accent ${selected ? "bg-accent" : ""
+        }`}
       data-chat-id={chatId}
     >
       {/* Avatar */}
@@ -83,9 +84,8 @@ function ChatItem({ chat, onClick, selected }) {
 
         <div className="absolute bottom-0 right-0">
           <div
-            className={`w-3.5 h-3.5 rounded-full border-2 border-background ${
-              isOnline ? "bg-green-500" : "bg-gray-400"
-            }`}
+            className={`w-3.5 h-3.5 rounded-full border-2 border-background ${isOnline ? "bg-green-500" : "bg-gray-400"
+              }`}
           >
             {isOnline && (
               <div className="absolute inset-0 w-3.5 h-3.5 bg-green-500 rounded-full animate-pulse opacity-75" />
@@ -102,9 +102,8 @@ function ChatItem({ chat, onClick, selected }) {
           </p>
           {sentTime && (
             <span
-              className={`text-xs text-muted-foreground shrink-0 ${
-                isUnread ? "font-bold" : ""
-              }`}
+              className={`text-xs text-muted-foreground shrink-0 ${isUnread ? "font-bold" : ""
+                }`}
             >
               {sentTime}
             </span>
@@ -113,9 +112,8 @@ function ChatItem({ chat, onClick, selected }) {
 
         <div className="flex justify-between items-center">
           <p
-            className={`text-sm text-muted-foreground truncate ${
-              isUnread ? "font-bold" : ""
-            }`}
+            className={`text-sm text-muted-foreground truncate ${isUnread ? "font-bold" : ""
+              }`}
           >
             {content}
           </p>

@@ -1,7 +1,7 @@
 "use client"
 
-import { useRef, useEffect } from "react"
-import useTypingNotification from "@/hooks/useTypingNotification";
+import { useEffect, useRef } from "react";
+import GifPicker from "./GifPicker";
 
 export default function ChatInput({
   input,
@@ -14,6 +14,7 @@ export default function ChatInput({
   loading = false,
   onSend,
   onSendFile,
+  onSendGif,
   onSaveEdit,
   onCancelEdit,
   onCancelFile,
@@ -33,12 +34,12 @@ export default function ChatInput({
   }, [editingMessage, disabled])
 
   useEffect(() => {
-  console.log("✅ useEffect chạy, textareaRef:", textareaRef.current, "disabled:", disabled);
-  if (textareaRef.current && !disabled) {
-    textareaRef.current.focus();
-    console.log("✅ textarea.focus() đã gọi");
-  }
-}, [editingMessage, disabled]);
+    console.log("✅ useEffect chạy, textareaRef:", textareaRef.current, "disabled:", disabled);
+    if (textareaRef.current && !disabled) {
+      textareaRef.current.focus();
+      console.log("✅ textarea.focus() đã gọi");
+    }
+  }, [editingMessage, disabled]);
 
   const handleSendClick = () => {
     if (disabled || loading) return
@@ -76,7 +77,7 @@ export default function ChatInput({
   // ✅ Handle textarea blur với proper logging
   const handleTextareaBlur = (e) => {
     // console.log("📝 ChatInput: Textarea blurred - calling typing blur handler")
-    
+
     // Gọi typing notification blur handler từ useTypingNotification
     if (onBlur) {
       try {
@@ -94,7 +95,7 @@ export default function ChatInput({
   const handleInputChange = (e) => {
     const value = e.target.value
     setInput(value)
-    
+
     // TODO: Có thể thêm logic gửi typing status qua socket
     // console.log("📝 User is typing:", value.length > 0)
   }
@@ -102,11 +103,11 @@ export default function ChatInput({
   // Check if we can send - either has text content or has file
   const canSend = () => {
     if (disabled || loading) return false
-    
+
     if (editingMessage) {
       return input.trim().length > 0
     }
-    
+
     // Can send if has file OR has text content (but not necessarily both)
     return selectedFile || input.trim().length > 0
   }
@@ -127,11 +128,10 @@ export default function ChatInput({
       <button
         onClick={handleSendClick}
         disabled={!canSend()}
-        className={`flex items-center justify-center w-8 h-8 rounded-full transition-colors ${
-          !canSend()
-            ? "bg-gray-300 text-gray-500 cursor-not-allowed"
-            : "bg-blue-500 hover:bg-blue-600 text-white"
-        }`}
+        className={`flex items-center justify-center w-8 h-8 rounded-full transition-colors ${!canSend()
+          ? "bg-gray-300 text-gray-500 cursor-not-allowed"
+          : "bg-blue-500 hover:bg-blue-600 text-white"
+          }`}
       >
         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
@@ -185,11 +185,10 @@ export default function ChatInput({
         <button
           onClick={handleFileClick}
           disabled={disabled || loading}
-          className={`flex items-center justify-center w-8 h-8 rounded-full transition-colors ${
-            disabled || loading
-              ? "text-gray-400 cursor-not-allowed"
-              : "text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-gray-700 dark:hover:text-gray-300"
-          }`}
+          className={`flex items-center justify-center w-8 h-8 rounded-full transition-colors ${disabled || loading
+            ? "text-gray-400 cursor-not-allowed"
+            : "text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-gray-700 dark:hover:text-gray-300"
+            }`}
           title="Đính kèm file"
         >
           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -201,21 +200,29 @@ export default function ChatInput({
             />
           </svg>
         </button>
+        <div disabled={disabled || loading}
+          className={`flex items-center justify-center w-8 h-8 rounded-full transition-colors ${disabled || loading
+            ? "text-gray-400 cursor-not-allowed"
+            : "text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-gray-700 dark:hover:text-gray-300"
+            }`}
+          title="Gửi GIF">
+          <GifPicker onSend={onSendGif} />
+
+        </div>
 
         {/* Input field */}
         <div className="flex-1 m-2">
           <textarea
             ref={textareaRef}
-            value={input}       
+            value={input}
             onChange={handleInputChange}
             onKeyDown={onKeyDown}
             onFocus={handleTextareaFocus}  // ✅ Gọi typing focus handler với logging
             onBlur={handleTextareaBlur}    // ✅ Gọi typing blur handler với logging
             disabled={disabled}
             placeholder={selectedFile ? "Thêm mô tả cho file (tùy chọn)..." : placeholder}
-            className={`w-full px-3 py-2 border border-[var(--border)] rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-[var(--background)] text-[var(--foreground)] transition-all text-sm ${
-              disabled ? "opacity-50 cursor-not-allowed" : ""
-            }`}
+            className={`w-full px-3 py-2 border border-[var(--border)] rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-[var(--background)] text-[var(--foreground)] transition-all text-sm ${disabled ? "opacity-50 cursor-not-allowed" : ""
+              }`}
             rows={1}
             style={{
               minHeight: "32px",

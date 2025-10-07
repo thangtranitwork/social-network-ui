@@ -130,7 +130,7 @@ export default function useMessageNotification(userId) {
     
     if (imageExtensions.includes(extension)) return 'ảnh';
     if (videoExtensions.includes(extension)) return 'video';
-    return 'file';
+    return 'tập tin';
   }, []);
 
   // Hàm helper để rút gọn nội dung tin nhắn
@@ -269,7 +269,10 @@ export default function useMessageNotification(userId) {
         let toastMessage = '';
         let notificationBody = '';
 
-        if (messageData.content && messageData.content.trim()) {
+        if (messageData.type === "GIF" && messageData.content) {
+          toastMessage = `📎 ${senderName} đã gửi một GIF`;
+          notificationBody = `${senderName} đã gửi một GIF`;
+        } else if (messageData.content && messageData.content.trim()) {
           // Tin nhắn có nội dung text - rút gọn nếu quá dài
           const truncatedContent = truncateMessage(messageData.content.trim(), 30);
           toastMessage = `💬 ${senderName}: ${truncatedContent}`;

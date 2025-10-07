@@ -17,6 +17,7 @@ import MessageItem from "./MessageItem";
 import ChatInput from "./ChatInput";
 import FilePreviewInChat from "../ui-components/FilePreviewInChat";
 import TypingIndicator from "../ui-components/TypingIndicator";
+import { set } from "nprogress";
 
 export default function ChatBox({ chatId, targetUser, onBack, onChatCreated }) {
   // State management
@@ -92,15 +93,15 @@ export default function ChatBox({ chatId, targetUser, onBack, onChatCreated }) {
     if (!bottomElementRef.current || !hasMore || loadingMore) return;
 
     const observer = new IntersectionObserver(
-        (entries) => {
-          if (entries[0].isIntersecting && !isLoadingMoreRef.current) {
-            isLoadingMoreRef.current = true;
-            loadMoreMessages().finally(() => {
-              isLoadingMoreRef.current = false;
-            });
-          }
-        },
-        { root: messagesContainerRef.current, rootMargin: '0px', threshold: 0.1 }
+      (entries) => {
+        if (entries[0].isIntersecting && !isLoadingMoreRef.current) {
+          isLoadingMoreRef.current = true;
+          loadMoreMessages().finally(() => {
+            isLoadingMoreRef.current = false;
+          });
+        }
+      },
+      { root: messagesContainerRef.current, rootMargin: '0px', threshold: 0.1 }
     );
 
     observer.observe(bottomElementRef.current);
@@ -290,6 +291,29 @@ export default function ChatBox({ chatId, targetUser, onBack, onChatCreated }) {
     }
   };
 
+    const handleSendGif = async (url) => {
+    if (!targetUser?.username || !canSendMessage) {
+      if (!canSendMessage) toast.error("Không thể gửi gif do bạn đã bị chặn");
+      return;
+    }
+
+    try {
+      setUploading(true);
+      await api.post("/v1/chat/send-gif", {
+        url,
+        username: targetUser?.username,
+      });
+    } catch (err) {
+      console.error("Error sending GIF:", err);
+      toast.error("Lỗi khi gửi GIF. Vui lòng thử lại.");
+    } finally {
+      setUploading(false);
+    }
+
+    console.log("Selected GIF:", url);
+  }
+
+
   const handleCancelFile = () => {
     if (filePreview?.startsWith("blob:")) URL.revokeObjectURL(filePreview);
     setSelectedFile(null);
@@ -367,78 +391,78 @@ export default function ChatBox({ chatId, targetUser, onBack, onChatCreated }) {
     if (!config) return null;
 
     return (
-        <div className={`mx-4 mb-3 p-3 rounded-lg border ${config.bgColor} ${config.borderColor}`}>
-          <div className="flex items-center gap-2">
-            <div className="flex-shrink-0">
-              <svg className={`w-5 h-5 ${config.textColor}`} fill="currentColor" viewBox="0 0 20 20">
-                <path fillRule="evenodd" d="M13.477 14.89A6 6 0 015.11 6.524l8.367 8.368zm1.414-1.414L6.524 5.11a6 6 0 018.367 8.367zM18 10a8 8 0 11-16 0 8 8 0 0116 0z" clipRule="evenodd" />
-              </svg>
-            </div>
-            <p className={`text-sm font-medium ${config.textColor}`}>
-              {config.message}
-            </p>
+      <div className={`mx-4 mb-3 p-3 rounded-lg border ${config.bgColor} ${config.borderColor}`}>
+        <div className="flex items-center gap-2">
+          <div className="flex-shrink-0">
+            <svg className={`w-5 h-5 ${config.textColor}`} fill="currentColor" viewBox="0 0 20 20">
+              <path fillRule="evenodd" d="M13.477 14.89A6 6 0 015.11 6.524l8.367 8.368zm1.414-1.414L6.524 5.11a6 6 0 018.367 8.367zM18 10a8 8 0 11-16 0 8 8 0 0116 0z" clipRule="evenodd" />
+            </svg>
           </div>
+          <p className={`text-sm font-medium ${config.textColor}`}>
+            {config.message}
+          </p>
         </div>
+      </div>
     );
   };
 
   const renderMessages = () => {
     if (loading && currentChatId) {
       return (
-          <div className="text-center py-4">
-            <div className="inline-block animate-spin rounded-full h-6 w-6 border-b-2 border-blue-500"></div>
-            <p className="text-sm text-[var(--muted-foreground)] mt-2">Đang tải tin nhắn...</p>
-          </div>
+        <div className="text-center py-4">
+          <div className="inline-block animate-spin rounded-full h-6 w-6 border-b-2 border-blue-500"></div>
+          <p className="text-sm text-[var(--muted-foreground)] mt-2">Đang tải tin nhắn...</p>
+        </div>
       );
     }
 
     if (isNewChat) {
       return (
-          <div className="text-center py-8 text-[var(--muted-foreground)] text-sm">
-            Bắt đầu cuộc trò chuyện với {targetUser?.displayName || targetUser?.username}
-          </div>
+        <div className="text-center py-8 text-[var(--muted-foreground)] text-sm">
+          Bắt đầu cuộc trò chuyện với {targetUser?.displayName || targetUser?.username}
+        </div>
       );
     }
 
     if (messages?.length === 0) {
       return (
-          <p className="text-center text-sm text-[var(--muted-foreground)] py-8">
-            Chưa có tin nhắn nào
-          </p>
+        <p className="text-center text-sm text-[var(--muted-foreground)] py-8">
+          Chưa có tin nhắn nào
+        </p>
       );
     }
 
     return (
-        <>
-          <TypingIndicator isTyping={isTyping} />
+      <>
+        <TypingIndicator isTyping={isTyping} />
 
-          {loadingMore && (
-              <div className="text-center py-2">
-                <div className="inline-block animate-spin rounded-full h-4 w-4 border-b-2 border-blue-500"></div>
-                <p className="text-xs text-[var(--muted-foreground)] mt-1">Đang tải thêm tin nhắn...</p>
-              </div>
-          )}
+        {loadingMore && (
+          <div className="text-center py-2">
+            <div className="inline-block animate-spin rounded-full h-4 w-4 border-b-2 border-blue-500"></div>
+            <p className="text-xs text-[var(--muted-foreground)] mt-1">Đang tải thêm tin nhắn...</p>
+          </div>
+        )}
 
-          {!hasMore && totalMessages > 20 && (
-              <div className="text-center py-2">
-                <p className="text-xs text-[var(--muted-foreground)]">Đã hiển thị tất cả tin nhắn</p>
-              </div>
-          )}
+        {!hasMore && totalMessages > 20 && (
+          <div className="text-center py-2">
+            <p className="text-xs text-[var(--muted-foreground)]">Đã hiển thị tất cả tin nhắn</p>
+          </div>
+        )}
 
-          {messages.map((msg) => (
-              <MessageItem
-                  key={msg.id}
-                  msg={msg}
-                  targetUser={targetUser}
-                  selectedMessage={selectedMessage}
-                  onMessageClick={handleMessageClick}
-                  onEditMessage={handleEditMessage}
-                  onDeleteMessage={handleDeleteMessage}
-              />
-          ))}
+        {messages.map((msg) => (
+          <MessageItem
+            key={msg.id}
+            msg={msg}
+            targetUser={targetUser}
+            selectedMessage={selectedMessage}
+            onMessageClick={handleMessageClick}
+            onEditMessage={handleEditMessage}
+            onDeleteMessage={handleDeleteMessage}
+          />
+        ))}
 
-          <div ref={bottomElementRef} className="h-1" />
-        </>
+        <div ref={bottomElementRef} className="h-1" />
+      </>
     );
   };
 
@@ -446,70 +470,71 @@ export default function ChatBox({ chatId, targetUser, onBack, onChatCreated }) {
   const isInputDisabled = !isConnected || isSendingMessage || isCreatingChat || uploading || !canSendMessage;
 
   const inputPlaceholder = !canSendMessage
-      ? isBlockedByOther
-          ? "Bạn đã bị chặn, không thể gửi tin nhắn"
-          : "Bạn đã chặn người này"
-      : isCreatingChat
-          ? "Đang tạo cuộc trò chuyện..."
-          : isSendingMessage
-              ? "Đang gửi tin nhắn..."
-              : isNewChat
-                  ? `Nhắn tin cho ${targetUser?.displayName || targetUser?.username}...`
-                  : "Nhập tin nhắn...";
+    ? isBlockedByOther
+      ? "Bạn đã bị chặn, không thể gửi tin nhắn"
+      : "Bạn đã chặn người này"
+    : isCreatingChat
+      ? "Đang tạo cuộc trò chuyện..."
+      : isSendingMessage
+        ? "Đang gửi tin nhắn..."
+        : isNewChat
+          ? `Nhắn tin cho ${targetUser?.displayName || targetUser?.username}...`
+          : "Nhập tin nhắn...";
 
   return (
-      <div className="flex flex-col h-full w-full bg-[var(--card)] text-[var(--foreground)] rounded-2xl overflow-hidden shadow-sm">
-        <ChatHeader
-            targetUser={targetUser}
-            isConnected={isNewChat ? true : isConnected}
-            onBack={onBack}
-            onCall={() => makeCall(targetUser?.username, false)}
-            onVideoCall={() => makeCall(targetUser?.username, true)}
-        />
+    <div className="flex flex-col h-full w-full bg-[var(--card)] text-[var(--foreground)] rounded-2xl overflow-hidden shadow-sm">
+      <ChatHeader
+        targetUser={targetUser}
+        isConnected={isNewChat ? true : isConnected}
+        onBack={onBack}
+        onCall={() => makeCall(targetUser?.username, false)}
+        onVideoCall={() => makeCall(targetUser?.username, true)}
+      />
 
-        <div
-            ref={messagesContainerRef}
-            className="flex-1 px-4 py-3 overflow-y-auto space-y-2 bg-transparent flex flex-col-reverse"
-            style={{
-              scrollBehavior: 'smooth',
-              overscrollBehavior: 'contain'
-            }}
-        >
-          {renderMessages()}
-        </div>
-
-        {renderBlockedStatus()}
-
-        {canSendMessage && (
-            <FilePreviewInChat
-                selectedFile={selectedFile}
-                filePreview={filePreview}
-                onCancel={handleCancelFile}
-            />
-        )}
-
-        {canSendMessage && (
-            <ChatInput
-                input={input}
-                setInput={setInput}
-                isConnected={!isInputDisabled}
-                selectedFile={selectedFile}
-                editingMessage={editingMessage}
-                uploading={uploading}
-                disabled={isInputDisabled}
-                loading={isSendingMessage || isCreatingChat}
-                onSend={handleSend}
-                onSendFile={handleSendFile}
-                onSaveEdit={handleSaveEdit}
-                onCancelEdit={handleCancelEdit}
-                onCancelFile={handleCancelFile}
-                onFileSelect={handleFileSelect}
-                onKeyDown={handleKeyDown}
-                placeholder={inputPlaceholder}
-                onFocus={handleInputFocus}
-                onBlur={handleInputBlur}
-            />
-        )}
+      <div
+        ref={messagesContainerRef}
+        className="flex-1 px-4 py-3 overflow-y-auto space-y-2 bg-transparent flex flex-col-reverse"
+        style={{
+          scrollBehavior: 'smooth',
+          overscrollBehavior: 'contain'
+        }}
+      >
+        {renderMessages()}
       </div>
+
+      {renderBlockedStatus()}
+
+      {canSendMessage && (
+        <FilePreviewInChat
+          selectedFile={selectedFile}
+          filePreview={filePreview}
+          onCancel={handleCancelFile}
+        />
+      )}
+
+      {canSendMessage && (
+        <ChatInput
+          input={input}
+          setInput={setInput}
+          isConnected={!isInputDisabled}
+          selectedFile={selectedFile}
+          editingMessage={editingMessage}
+          uploading={uploading}
+          disabled={isInputDisabled}
+          loading={isSendingMessage || isCreatingChat}
+          onSend={handleSend}
+          onSendFile={handleSendFile}
+          onSendGif={handleSendGif}
+          onSaveEdit={handleSaveEdit}
+          onCancelEdit={handleCancelEdit}
+          onCancelFile={handleCancelFile}
+          onFileSelect={handleFileSelect}
+          onKeyDown={handleKeyDown}
+          placeholder={inputPlaceholder}
+          onFocus={handleInputFocus}
+          onBlur={handleInputBlur}
+        />
+      )}
+    </div>
   );
 }

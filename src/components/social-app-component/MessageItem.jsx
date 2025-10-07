@@ -38,6 +38,7 @@ const getFileTypeFromUrl = (url) => {
 
 const isImageFile = (fileType) => fileType?.startsWith('image/');
 const isVideoFile = (fileType) => fileType?.startsWith('video/');
+const isGifMessage = (msg) => msg.type === 'GIF' && msg.content;
 
 const formatFileSize = (bytes) => {
   if (!bytes) return '';
@@ -272,6 +273,9 @@ function MessageItem({
       );
     }
 
+    if (isGifMessage(msg)) {
+      return <img src={msg.content} alt="GIF" className="rounded-lg" />;
+    }
     return renderTextWithLinks(msg.content);
   }, [
     isDeleted,
