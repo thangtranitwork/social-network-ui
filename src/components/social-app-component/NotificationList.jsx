@@ -4,6 +4,13 @@ import useAppStore from '@/store/ZustandStore';
 import api from '@/utils/axios';
 import PostModal from '@/components/social-app-component/PostModal';
 import toast from 'react-hot-toast';
+import Avatar from '../ui-components/Avatar';
+import dayjs from "dayjs";
+import "dayjs/locale/vi";
+import relativeTime from "dayjs/plugin/relativeTime";
+
+dayjs.extend(relativeTime);
+dayjs.locale("vi");
 
 function formatNotificationText(n) {
   const name = n.creator?.givenName || "Người dùng";
@@ -40,8 +47,8 @@ export default function NotificationList() {
   const [isLoadingPost, setIsLoadingPost] = useState(false);
   const [comments, setComments] = useState([]);
   const [loadingComments, setLoadingComments] = useState(false);
-  
-  const { 
+
+  const {
     notifications,
     isLoadingNotifications: loading,
     error,
@@ -72,10 +79,10 @@ export default function NotificationList() {
   };
 
   const handleNotificationClick = async (notification) => {
-    console.log('Notification clicked:', notification);   
- 
+    console.log('Notification clicked:', notification);
+
     // Handle navigation based on notification type
-    if (notification.targetType === 'USER' || notification.targetType==="REQUEST" && notification.targetId) {
+    if (notification.targetType === 'USER' || notification.targetType === "REQUEST" && notification.targetId) {
       // Navigate to user profile
       router.push(`/profile/${notification.creator.username}`);
     } else if ((notification.targetType === 'POST' && notification.targetId)) {
@@ -86,7 +93,7 @@ export default function NotificationList() {
         console.log('Post fetch response:', response);
         console.log('Response data:', response.data);
         console.log('Response body:', response.data.body);
-        
+
         if (response.data.body) {
           setSelectedPost(response.data.body);
           setIsPostModalOpen(true);
@@ -112,7 +119,7 @@ export default function NotificationList() {
         console.log('Post fetch response:', response);
         console.log('Response data:', response.data);
         console.log('Response body:', response.data.body);
-        
+
         if (response.data.body) {
           setSelectedPost(response.data.body);
           setIsPostModalOpen(true);
@@ -168,32 +175,38 @@ export default function NotificationList() {
                     key={n.id || idx}
                     onClick={() => handleNotificationClick(n)}
                     className={`
-                      bg-[var(--card)] border border-[var(--border)] p-3 rounded-xl shadow-sm
-                      cursor-pointer hover:bg-[var(--accent)] transition-colors
-                    
-                      ${isLoadingPost ? 'opacity-50 cursor-wait' : ''}
-                    `}
+        bg-[var(--card)] border border-[var(--border)] p-3 rounded-xl shadow-sm
+        cursor-pointer hover:bg-[var(--accent)] transition-colors flex items-start gap-3
+        ${isLoadingPost ? "opacity-50 cursor-wait" : ""}
+      `}
                   >
-                    <div className="flex items-start justify-between">
-                      <div className="flex-1">
-                        <div className="flex items-center gap-2">
-                          <p className="text-sm text-[var(--foreground)] font-medium">
-                            {formatNotificationText(n)}
-                          </p>
-                        </div>
-                        <p className="text-xs text-[var(--muted-foreground)] mt-1">
-                          {new Date(n.sentAt).toLocaleString()}
+                    {/* Ảnh đại diện người tạo */}
+                    <Avatar
+                      src={n.creator?.profilePictureUrl}
+                      alt="avatar"
+                      className="w-10 h-10 rounded-full object-cover flex-shrink-0 border border-[var(--border)]"
+                    />
+
+                    {/* Nội dung thông báo */}
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2">
+                        <p className="text-sm text-[var(--foreground)] font-medium">
+                          {formatNotificationText(n)}
                         </p>
                       </div>
-
-                      {/* {!n.isRead && (
-                        <div className="w-2 h-2 bg-blue-500 rounded-full flex-shrink-0 mt-1">
-                        </div>
-                      )} */}
+                      <p className="text-xs text-[var(--muted-foreground)] mt-1">
+                        {dayjs(n.sentAt).fromNow()}
+                      </p>
                     </div>
+
+                    {/* Chấm xanh nếu chưa đọc */}
+                    {/* {!n.isRead && (
+        <div className="w-2 h-2 bg-blue-500 rounded-full flex-shrink-0 mt-1"></div>
+      )} */}
                   </div>
                 ))}
               </div>
+
             )}
           </div>
         </div>
@@ -211,10 +224,10 @@ export default function NotificationList() {
             onClose={closePostModal}
             onLikeToggle={async () => {
               try {
-                const endpoint = selectedPost.liked 
-                  ? `/v1/posts/unlike/${selectedPost.id}` 
+                const endpoint = selectedPost.liked
+                  ? `/v1/posts/unlike/${selectedPost.id}`
                   : `/v1/posts/like/${selectedPost.id}`;
-                
+
                 if (selectedPost.liked) {
                   await api.delete(endpoint);
                 } else {
@@ -238,9 +251,9 @@ export default function NotificationList() {
             }}
             onCommentUpdate={(commentId, liked) => {
               // Update comment like status
-              setComments(prev => 
-                prev.map(comment => 
-                  comment.id === commentId 
+              setComments(prev =>
+                prev.map(comment =>
+                  comment.id === commentId
                     ? { ...comment, liked, likeCount: liked ? comment.likeCount + 1 : comment.likeCount - 1 }
                     : comment
                 )
