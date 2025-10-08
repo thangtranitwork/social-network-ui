@@ -17,6 +17,14 @@ export const STORE_EVENTS = {
   BLOCK_STATUS_UPDATED: 'block_status_updated',
 };
 
+const ensureNotificationsLoadedFn = (get) => () => {
+  const { notifications, isLoadingNotifications } = get();
+  if (notifications.length === 0 && !isLoadingNotifications) {
+    console.log('📊 Auto-fetching notifications (empty list)...');
+    get().fetchNotifications(true).catch(console.error);
+  }
+};
+
 const useAppStore = create(
     devtools((set, get) => ({
       // ============ USER STATE ============

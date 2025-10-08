@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import useAppStore from '@/store/ZustandStore';
 import api from '@/utils/axios';
@@ -16,25 +16,25 @@ function formatNotificationText(n) {
   const name = n.creator?.givenName || "Người dùng";
   switch (n.action) {
     case "SENT_ADD_FRIEND_REQUEST":
-      return `${name} đã gửi lời mời kết bạn 💌`;
+      return `${name} đã gửi lời mời kết bạn`;
     case "BE_FRIEND":
-      return `${name} đã trở thành bạn bè 👥`;
+      return `${name} đã trở thành bạn bè`;
     case "POST":
-      return `${name} đã đăng một bài viết mới 📰`;
+      return `${name} đã đăng một bài viết mới`;
     case "SHARE":
-      return `${name} đã chia sẻ bài viết của bạn 📰`;
+      return `${name} đã chia sẻ bài viết của bạn`;
     case "LIKE_POST":
-      return `${name} đã thích bài viết của bạn ❤️`;
+      return `${name} đã thích bài viết của bạn`;
     case "COMMENT":
-      return `${name} đã bình luận về bài viết của bạn 💬`;
+      return `${name} đã bình luận về bài viết của bạn`;
     case "REPLY_COMMENT":
-      return `${name} đã trả lời bình luận của bạn 💬`;
+      return `${name} đã trả lời bình luận của bạn`;
     case "LIKE_COMMENT":
-      return `${name} đã thích bình luận của bạn ❤️`;
+      return `${name} đã thích bình luận của bạn`;
     case "DELETE_POST":
-      return `${name} đã xóa bài viết của bạn ❌`;
+      return `${name} đã xóa bài viết của bạn`;
     case "DELETE_COMMENT":
-      return `${name} đã xóa bình luận của bạn ❌`;
+      return `${name} đã xóa bình luận của bạn`;
     default:
       return `🔔 Có thông báo mới từ ${name}`;
   }
@@ -55,7 +55,6 @@ export default function NotificationList() {
     ensureNotificationsLoaded,
     markNotificationAsRead
   } = useAppStore();
-  console.log(notifications)
   useEffect(() => {
     // Tự động fetch notifications nếu danh sách rỗng
     ensureNotificationsLoaded();
@@ -145,10 +144,10 @@ export default function NotificationList() {
     setComments([]);
   };
 
-    const truncateContent = useCallback((content, maxLength = 30) => {
-      if (!content || content.length <= maxLength) return content;
-      return content.substring(0, maxLength) + '...';
-    }, []);
+  const truncateContent = useCallback((content, maxLength = 30) => {
+    if (!content || content.length <= maxLength) return content;
+    return content.substring(0, maxLength) + '...';
+  }, []);
 
   return (
     <>
@@ -192,14 +191,24 @@ export default function NotificationList() {
                       className="w-10 h-10 rounded-full object-cover flex-shrink-0 border border-[var(--border)]"
                     />
 
-                    {/* Nội dung thông báo */}
-                    <div className="flex-1">
+                    {/* Nội dung thông báo - tiêu đề + nội dung rút gọn ở hàng dưới */}
+                    <div className="flex-1 flex flex-col">
                       <div className="flex items-center gap-2">
                         <p className="text-sm text-[var(--foreground)] font-medium">
                           {formatNotificationText(n)}
                         </p>
                       </div>
-                      <p className="text-xs text-[var(--muted-foreground)] mt-1">
+
+                      {n?.shortenedContent ? (
+                        <p className="text-xs text-[var(--muted-foreground)] mt-1">
+                          {truncateContent(n.shortenedContent, 80)}
+                        </p>
+                      ) : null}
+
+                      <p
+                        className="text-xs text-[var(--muted-foreground)] mt-1"
+                        title={dayjs(n.sentAt).format("HH:mm DD/MM")}
+                      >
                         {dayjs(n.sentAt).fromNow()}
                       </p>
                     </div>

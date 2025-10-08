@@ -118,7 +118,6 @@ export default function SidebarNavigation() {
 
       // ✅ Fetch notifications (always fetch to get latest state)
       await fetchNotifications(true); // force refresh
-
       // ✅ Show notifications dropdown
       setShowNotifications(true);
       
