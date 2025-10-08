@@ -51,7 +51,7 @@ export default function GifPicker({ onSend }) {
             {/* Nút mở GIF picker */}
             <button
                 onClick={() => setShowGifPicker((prev) => !prev)}
-                className="p-2 rounded-full hover:bg-gray-100"
+                className="p-2 rounded-full0"
                 title="Gửi GIF"
             >
                 <div role="img" aria-label="Icon file with controls" className="w-5 h-5">

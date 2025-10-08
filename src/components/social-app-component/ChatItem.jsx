@@ -54,11 +54,14 @@ function ChatItem({ chat, onClick, selected }) {
       // ✅ Tin nhắn thường
       if (deleted) {
         content = "Tin nhắn đã bị thu hồi";
+      } else if (type === "VOICE") {
+        content = "[Tin nhắn thoại]";
       } else if (attachment) {
         content = "[Tệp đính kèm]";
       } else if (type === "GIF") {
         content = "[GIF đính kèm]";
-      } else {
+      }
+      else {
         content = msgContent?.slice(0, 60) || "Tin nhắn đã bị xoá";
       }
       content = senderPrefix + content;

@@ -1,22 +1,22 @@
 "use client";
 
-import { useEffect, useRef, useState, useCallback } from "react";
-import { 
-  subscribe, 
-  unsubscribe,
+import {
   getStompClient,
-  stompClientSingleton 
+  stompClientSingleton,
+  subscribe,
+  unsubscribe
 } from "@/utils/socket";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 
-import { toast } from "react-hot-toast";
+import { useCall } from "@/context/CallContext";
 import useAppStore from "@/store/ZustandStore";
-import { useRouter } from "next/navigation";
 import { playSound } from "@/utils/playSound";
-import {useCall} from "@/context/CallContext";
+import { useRouter } from "next/navigation";
+import { toast } from "react-hot-toast";
 
 export default function useMessageNotification(userId) {
-  const {endCall}=useCall();
+  const { endCall } = useCall();
   const subscriptionRef = useRef(null);
   const [currentUserId, setCurrentUserId] = useState(null);
   const [isSubscribed, setIsSubscribed] = useState(false);
@@ -28,7 +28,7 @@ export default function useMessageNotification(userId) {
   });
   const router = useRouter();
 
-  const {  onMessageReceived, selectChat } = useAppStore();
+  const { onMessageReceived, selectChat } = useAppStore();
 
   // Initialize current user ID
   useEffect(() => {
@@ -59,7 +59,7 @@ export default function useMessageNotification(userId) {
   useEffect(() => {
     const checkNotificationPermission = async () => {
       console.log('🔍 Checking notification permission...');
-      
+
       if (!('Notification' in window)) {
         console.warn('⚠️ Browser does not support notifications');
         setNotificationPermission('denied');
@@ -67,7 +67,7 @@ export default function useMessageNotification(userId) {
       }
 
       console.log('📋 Current Notification.permission:', Notification.permission);
-      
+
       if (Notification.permission === 'default') {
         console.log('📋 Requesting notification permission...');
         const permission = await Notification.requestPermission();
@@ -93,7 +93,7 @@ export default function useMessageNotification(userId) {
 
       if ('serviceWorker' in navigator) {
         const registration = await navigator.serviceWorker.ready;
-        
+
         if (registration.active) {
           registration.active.postMessage({
             type: 'SIMULATE_PUSH',
@@ -121,13 +121,13 @@ export default function useMessageNotification(userId) {
   // Hàm helper để xác định loại file
   const getFileType = useCallback((attachment, attachmentName) => {
     if (!attachment && !attachmentName) return 'file';
-    
+
     const fileName = attachmentName || attachment;
     const extension = fileName.split('.').pop()?.toLowerCase();
-    
+
     const imageExtensions = ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp', 'svg'];
     const videoExtensions = ['mp4', 'avi', 'mov', 'wmv', 'flv', 'webm', 'mkv'];
-    
+
     if (imageExtensions.includes(extension)) return 'ảnh';
     if (videoExtensions.includes(extension)) return 'video';
     return 'tập tin';
@@ -187,17 +187,17 @@ export default function useMessageNotification(userId) {
           duration: 3000,
           position: "top-right",
         });
-        
+
         // PWA notification cho tin nhắn bị xóa
         await showPWANotification('Tin nhắn đã bị xóa', {
           body: 'Một tin nhắn vừa bị xóa khỏi cuộc trò chuyện',
           tag: `delete-${messageData.chatId}`,
-          data: { 
-            type: 'delete', 
-            chatId: messageData.chatId 
+          data: {
+            type: 'delete',
+            chatId: messageData.chatId
           }
         });
-        
+
         return;
       }
 
@@ -208,13 +208,13 @@ export default function useMessageNotification(userId) {
             duration: 3000,
             position: "top-right",
           });
-          
+
           // PWA notification cho tin nhắn được chỉnh sửa
           await showPWANotification('Tin nhắn đã được chỉnh sửa', {
             body: `${senderName} đã chỉnh sửa tin nhắn`,
             tag: `edit-${messageData.chatId}`,
-            data: { 
-              type: 'edit', 
+            data: {
+              type: 'edit',
               chatId: messageData.chatId,
               senderId: messageData.sender?.id
             }
@@ -233,10 +233,6 @@ export default function useMessageNotification(userId) {
         return;
       }
 
-
-
-
-
       const newMessage = {
         ...messageData,
         isOwnMessage: messageData.sender?.id === currentUserId,
@@ -252,13 +248,13 @@ export default function useMessageNotification(userId) {
       // Toast thông báo kèm click handler và PWA notification
       if (messageData.sender && !newMessage.isOwnMessage) {
         const senderName = messageData.sender.username || messageData.sender.givenName || "ai đó";
-        
+
         // Phát âm thanh
         try {
-          playSound("pocpoc.mp3", { 
-            loop: false, 
-            volume: 0.7, 
-            duration: 3000 
+          playSound("pocpoc.mp3", {
+            loop: false,
+            volume: 0.7,
+            duration: 3000
           });
           console.log("🔊 Playing notification sound for NEW_MESSAGE");
         } catch (soundError) {
@@ -272,15 +268,20 @@ export default function useMessageNotification(userId) {
         if (messageData.type === "GIF" && messageData.content) {
           toastMessage = `📎 ${senderName} đã gửi một GIF`;
           notificationBody = `${senderName} đã gửi một GIF`;
-        } else if (messageData.content && messageData.content.trim()) {
+        }
+        if (messageData.type === "VOICE") {
+          toastMessage = `📎 ${senderName} đã gửi một tin nhắn thoại`;
+          notificationBody = `${senderName} đã gửi một tin nhắn thoại`;
+        }
+        else if (messageData.content && messageData.content.trim()) {
           // Tin nhắn có nội dung text - rút gọn nếu quá dài
           const truncatedContent = truncateMessage(messageData.content.trim(), 30);
           toastMessage = `💬 ${senderName}: ${truncatedContent}`;
-          
+
           // Cho PWA notification có thể dài hơn một chút
           const truncatedNotificationContent = truncateMessage(messageData.content.trim(), 50);
           notificationBody = `${senderName}: ${truncatedNotificationContent}`;
-        } else if (messageData.attachment || messageData.attachmentName) {
+        } else if (messageData.attachment || messageData.attachmentName && (messageData.type === "FILE")) {
           // Tin nhắn có file đính kèm
           const fileType = getFileType(messageData.attachment, messageData.attachmentName);
           toastMessage = `📎 ${senderName} đã gửi một ${fileType}`;
@@ -315,14 +316,14 @@ export default function useMessageNotification(userId) {
         const notificationResult = await showPWANotification('Tin nhắn mới', {
           body: notificationBody,
           tag: `message-${messageData.id}`,
-          data: { 
-            type: 'message', 
+          data: {
+            type: 'message',
             chatId: messageData.chatId,
             messageId: messageData.id,
             senderId: messageData.sender?.id
           }
         });
-        
+
         console.log('📱 PWA notification result:', notificationResult);
       }
 
@@ -348,13 +349,13 @@ export default function useMessageNotification(userId) {
     let retryCount = 0;
     const maxRetries = 3;
     const retryDelay = 2000;
-    
+
     const setupSubscription = async () => {
       try {
         const destination = `/message/${userId}`;
-        
+
         console.log(`🔌 Setting up subscription for ${destination}...`);
-        
+
         // Đảm bảo có connection trước khi subscribe
         const client = await getStompClient();
         if (!client || !client.connected) {
@@ -364,7 +365,7 @@ export default function useMessageNotification(userId) {
         // Subscribe to messages
         const subscription = await subscribe(destination, (message) => {
           if (!isMounted) return;
-          
+
           try {
             const messageData = JSON.parse(message.body);
             handleMessage(messageData);
@@ -384,7 +385,7 @@ export default function useMessageNotification(userId) {
       } catch (error) {
         console.error("❌ Error setting up subscription:", error);
         setIsSubscribed(false);
-        
+
         // Retry logic
         if (retryCount < maxRetries && isMounted) {
           retryCount++;
@@ -402,7 +403,7 @@ export default function useMessageNotification(userId) {
 
     return () => {
       isMounted = false;
-      
+
       if (subscriptionRef.current) {
         const destination = `/message/${userId}`;
         unsubscribe(destination);
@@ -417,9 +418,9 @@ export default function useMessageNotification(userId) {
   useEffect(() => {
     const handleSWMessage = (event) => {
       console.log('📱 Received SW message:', event.data);
-      
+
       const { type, action, data } = event.data;
-      
+
       if (type === 'NOTIFICATION_ACTION') {
         if (action === 'view' || action === 'reply') {
           if (data?.chatId) {
@@ -434,7 +435,7 @@ export default function useMessageNotification(userId) {
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.addEventListener('message', handleSWMessage);
     }
-    
+
     return () => {
       if ('serviceWorker' in navigator) {
         navigator.serviceWorker.removeEventListener('message', handleSWMessage);

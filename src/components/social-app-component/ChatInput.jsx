@@ -2,6 +2,7 @@
 
 import { useEffect, useRef } from "react";
 import GifPicker from "./GifPicker";
+import VoiceRecorder from "./VoiceRecorder";
 
 export default function ChatInput({
   input,
@@ -15,6 +16,7 @@ export default function ChatInput({
   onSend,
   onSendFile,
   onSendGif,
+  onSendVoice,
   onSaveEdit,
   onCancelEdit,
   onCancelFile,
@@ -209,7 +211,15 @@ export default function ChatInput({
           <GifPicker onSend={onSendGif} />
 
         </div>
+        <div disabled={disabled || loading}
+          className={`flex items-center justify-center w-8 h-8 rounded-full transition-colors ${disabled || loading
+            ? "text-gray-400 cursor-not-allowed"
+            : "text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-gray-700 dark:hover:text-gray-300"
+            }`}
+          title="Gửi GIF">
+          <VoiceRecorder onSend={onSendVoice} />
 
+        </div>
         {/* Input field */}
         <div className="flex-1 m-2">
           <textarea

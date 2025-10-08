@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useEffect, useCallback, useMemo } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import toast from "react-hot-toast";
 
 import useChat from "@/hooks/useChat";
@@ -12,12 +12,11 @@ import { useCall } from "@/context/CallContext";
 import useTypingNotification from "@/hooks/useTypingNotification";
 
 // Components
-import ChatHeader from "./ChatHeader";
-import MessageItem from "./MessageItem";
-import ChatInput from "./ChatInput";
 import FilePreviewInChat from "../ui-components/FilePreviewInChat";
 import TypingIndicator from "../ui-components/TypingIndicator";
-import { set } from "nprogress";
+import ChatHeader from "./ChatHeader";
+import ChatInput from "./ChatInput";
+import MessageItem from "./MessageItem";
 
 export default function ChatBox({ chatId, targetUser, onBack, onChatCreated }) {
   // State management
@@ -291,7 +290,27 @@ export default function ChatBox({ chatId, targetUser, onBack, onChatCreated }) {
     }
   };
 
-    const handleSendGif = async (url) => {
+  const handleSendVoice = async (blob) => {
+    if (!blob || !currentChatId || !targetUser?.username || !canSendMessage) {
+      if (!canSendMessage) toast.error("Không thể gửi tin nhắn thoại do bạn đã bị chặn");
+      return;
+    }
+
+    try {
+      setUploading(true);
+      const formData = new FormData();
+      formData.append("voiceFile", blob);
+      formData.append("username", targetUser.username);
+      await api.post(`/v1/chat/send-voice`, formData);
+      handleCancelFile();
+    } catch {
+      toast.error("Lỗi khi gửi tin nhắn thoại");
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const handleSendGif = async (url) => {
     if (!targetUser?.username || !canSendMessage) {
       if (!canSendMessage) toast.error("Không thể gửi gif do bạn đã bị chặn");
       return;
@@ -312,6 +331,7 @@ export default function ChatBox({ chatId, targetUser, onBack, onChatCreated }) {
 
     console.log("Selected GIF:", url);
   }
+
 
 
   const handleCancelFile = () => {
@@ -525,6 +545,7 @@ export default function ChatBox({ chatId, targetUser, onBack, onChatCreated }) {
           onSend={handleSend}
           onSendFile={handleSendFile}
           onSendGif={handleSendGif}
+          onSendVoice={handleSendVoice}
           onSaveEdit={handleSaveEdit}
           onCancelEdit={handleCancelEdit}
           onCancelFile={handleCancelFile}

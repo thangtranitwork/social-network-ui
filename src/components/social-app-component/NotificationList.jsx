@@ -145,6 +145,11 @@ export default function NotificationList() {
     setComments([]);
   };
 
+    const truncateContent = useCallback((content, maxLength = 30) => {
+      if (!content || content.length <= maxLength) return content;
+      return content.substring(0, maxLength) + '...';
+    }, []);
+
   return (
     <>
       <div className="max-w-4xl w-full mx-auto">

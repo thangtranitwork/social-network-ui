@@ -1,16 +1,24 @@
 "use client";
 
-import { useState, useRef, useEffect, memo, useMemo, useCallback } from "react";
+import { renderTextWithLinks } from "@/hooks/renderTextWithLinks";
 import clsx from "clsx";
 import dayjs from "dayjs";
 import relativeTime from "dayjs/plugin/relativeTime";
 import {
-  MoreVertical, Edit, Trash2, Download,
-  FileText, Image, Film, Music, X,
-  Check
+  Check,
+  Download,
+  Edit,
+  FileText,
+  Film,
+  Image,
+  MoreVertical,
+  Music,
+  Trash2,
+  X
 } from "lucide-react";
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Avatar from "../ui-components/Avatar";
-import {renderTextWithLinks} from "@/hooks/renderTextWithLinks";
+import VoiceMessage from "./VoiceMessage";
 
 dayjs.extend(relativeTime);
 
@@ -39,6 +47,7 @@ const getFileTypeFromUrl = (url) => {
 const isImageFile = (fileType) => fileType?.startsWith('image/');
 const isVideoFile = (fileType) => fileType?.startsWith('video/');
 const isGifMessage = (msg) => msg.type === 'GIF' && msg.content;
+const isVoiceMessage = (msg) => msg.type === 'VOICE' && msg.attachment;
 
 const formatFileSize = (bytes) => {
   if (!bytes) return '';
@@ -82,13 +91,13 @@ const FileIcon = memo(({ fileType }) => {
 FileIcon.displayName = 'FileIcon';
 
 function MessageItem({
-                       msg,
-                       targetUser,
-                       selectedMessage,
-                       onMessageClick,
-                       onEditMessage,
-                       onDeleteMessage
-                     }) {
+  msg,
+  targetUser,
+  selectedMessage,
+  onMessageClick,
+  onEditMessage,
+  onDeleteMessage
+}) {
   const [modalOpen, setModalOpen] = useState(false);
   const [currentFile, setCurrentFile] = useState(null);
   const [currentFileType, setCurrentFileType] = useState(null);
@@ -165,6 +174,16 @@ function MessageItem({
     setModalOpen(false);
   }, []);
 
+  function formatDuration(seconds) {
+    const m = Math.floor(seconds / 60)
+      .toString()
+      .padStart(2, "0");
+    const s = Math.floor(seconds % 60)
+      .toString()
+      .padStart(2, "0");
+    return `${m}:${s}`;
+  }
+
   // Calculate popup position based on message position in viewport
   useEffect(() => {
     if (isSelected && buttonRef.current) {
@@ -186,17 +205,17 @@ function MessageItem({
     const renderMediaPreview = (url, fileType) => {
       if (isImageFile(fileType)) {
         return (
-            <div className="cursor-pointer rounded-lg overflow-hidden" onClick={() => handlePreviewClick(url, fileType)}>
-              <img src={url} alt="Preview" className="max-w-full max-h-64 object-contain rounded-lg border border-[var(--border)]" />
-            </div>
+          <div className="cursor-pointer rounded-lg overflow-hidden" onClick={() => handlePreviewClick(url, fileType)}>
+            <img src={url} alt="Preview" className="max-w-full max-h-64 object-contain rounded-lg border border-[var(--border)]" />
+          </div>
         );
       } else if (isVideoFile(fileType)) {
         return (
-            <div className="cursor-pointer rounded-lg overflow-hidden" onClick={() => handlePreviewClick(url, fileType)}>
-              <video className="max-w-full max-h-64 rounded-lg border border-[var(--border)]">
-                <source src={url} type={fileType} />
-              </video>
-            </div>
+          <div className="cursor-pointer rounded-lg overflow-hidden" onClick={() => handlePreviewClick(url, fileType)}>
+            <video className="max-w-full max-h-64 rounded-lg border border-[var(--border)]">
+              <source src={url} type={fileType} />
+            </video>
+          </div>
         );
       }
       return null;
@@ -215,18 +234,18 @@ function MessageItem({
       const truncatedFilename = truncateFilename(filename);
 
       return (
-          <div className="flex items-center gap-2 p-2 rounded-lg max-w-full">
-            <FileIcon fileType={fileType} />
-            <div className="flex-1 min-w-0">
-              <div className="font-medium" title={filename}>
-                {truncatedFilename}
-              </div>
-              {size && <div className="text-xs opacity-70">{formatFileSize(size)}</div>}
+        <div className="flex items-center gap-2 p-2 rounded-lg max-w-full">
+          <FileIcon fileType={fileType} />
+          <div className="flex-1 min-w-0">
+            <div className="font-medium" title={filename}>
+              {truncatedFilename}
             </div>
-            <a href={url} download className="p-1 rounded hover:bg-black/10 flex-shrink-0">
-              <Download className="w-4 h-4" />
-            </a>
+            {size && <div className="text-xs opacity-70">{formatFileSize(size)}</div>}
           </div>
+          <a href={url} download className="p-1 rounded hover:bg-black/10 flex-shrink-0">
+            <Download className="w-4 h-4" />
+          </a>
+        </div>
       );
     };
   }, [MediaPreview]);
@@ -245,37 +264,42 @@ function MessageItem({
         const durationStr = `${minutes}:${seconds.toString().padStart(2, "0")}`;
 
         return (
-            <>
-              📞 Cuộc gọi đã kết thúc
-              <div className="text-xs opacity-70 mt-1">
-                Thời lượng: {durationStr}
-              </div>
-            </>
+          <>
+            📞 Cuộc gọi đã kết thúc
+            <div className="text-xs opacity-70 mt-1">
+              Thời lượng: {durationStr}
+            </div>
+          </>
         );
       }
     }
 
-    if (msg.attachment) {
+    if (msg.attachment && msg.type === "FILE") {
       const filename = msg.attachmentName || getFilenameFromUrl(msg.attachment);
       return renderFileInfo(
-          msg.attachment,
-          getFileTypeFromUrl(msg.attachment),
-          filename
+        msg.attachment,
+        getFileTypeFromUrl(msg.attachment),
+        filename
       );
     }
 
-    if (msg.attachedFile) {
+    if (msg.attachedFile && msg.type === "FILE") {
       return renderFileInfo(
-          msg.attachedFile.url,
-          msg.attachedFile.contentType,
-          msg.attachedFile.originalFilename,
-          msg.attachedFile.size
+        msg.attachedFile.url,
+        msg.attachedFile.contentType,
+        msg.attachedFile.originalFilename,
+        msg.attachedFile.size
       );
     }
 
     if (isGifMessage(msg)) {
       return <img src={msg.content} alt="GIF" className="rounded-lg" />;
     }
+
+    if (isVoiceMessage(msg)) {
+      return <VoiceMessage msg={msg} />;
+    }
+
     return renderTextWithLinks(msg.content);
   }, [
     isDeleted,
@@ -292,127 +316,127 @@ function MessageItem({
   ]);
 
   return (
-      <>
-        <div className={clsx("flex items-start gap-2 group message-container", {
-          "justify-end": isSelf,
-          "justify-start": !isSelf,
+    <>
+      <div className={clsx("flex items-start gap-2 group message-container", {
+        "justify-end": isSelf,
+        "justify-start": !isSelf,
+      })}>
+        {!isSelf && (
+          <Avatar
+            src={targetUser?.profilePictureUrl}
+            className="flex-shrink-0 mt-1 "
+          />
+        )}
+
+        <div className={clsx("flex items-start gap-2 max-w-[80%]", {
+          "flex-row-reverse": isSelf,
+          "flex-row": !isSelf,
         })}>
-          {!isSelf && (
-              <Avatar
-                  src={targetUser?.profilePictureUrl}
-                  className="flex-shrink-0 mt-1 "
-              />
-          )}
+          <div className="relative flex items-start gap-1">
+            {/* More button - bên trái bubble */}
+            {isSelf && !isDeleted && showMoreButton && (
+              <div className="relative">
+                <button
+                  ref={buttonRef}
+                  onClick={handleMessageClick}
+                  className="text-[var(--muted-foreground)] hover:text-[var(--foreground)] p-1 rounded-full hover:bg-[var(--muted)] transition-all opacity-0 group-hover:opacity-100"
+                >
+                  <MoreVertical className="w-4 h-4" />
+                </button>
 
-          <div className={clsx("flex items-start gap-2 max-w-[80%]", {
-            "flex-row-reverse": isSelf,
-            "flex-row": !isSelf,
-          })}>
-            <div className="relative flex items-start gap-1">
-              {/* More button - bên trái bubble */}
-              {isSelf && !isDeleted && showMoreButton && (
-                  <div className="relative">
-                    <button
-                        ref={buttonRef}
-                        onClick={handleMessageClick}
-                        className="text-[var(--muted-foreground)] hover:text-[var(--foreground)] p-1 rounded-full hover:bg-[var(--muted)] transition-all opacity-0 group-hover:opacity-100"
-                    >
-                      <MoreVertical className="w-4 h-4" />
-                    </button>
-
-                    {isSelected && (
-                        <div
-                            className={clsx(
-                                "absolute left-0 mt-1 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 p-1 z-10 min-w-[100px]",
-                                popupPosition === 'top' ? 'bottom-full mb-1' : 'top-full mt-1'
-                            )}
-                            onClick={(e) => e.stopPropagation()}
-                        >
-                          {canEdit && (
-                              <button
-                                  onClick={handleEditMessage}
-                                  className="flex items-center gap-2 px-3 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded w-full text-left"
-                              >
-                                <Edit className="w-4 h-4" />
-                                <span>Sửa</span>
-                              </button>
-                          )}
-                          <button
-                              onClick={handleDeleteMessage}
-                              className="flex items-center gap-2 px-3 py-2 text-sm text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded w-full text-left"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                            <span>Xóa</span>
-                          </button>
-                        </div>
+                {isSelected && (
+                  <div
+                    className={clsx(
+                      "absolute left-0 mt-1 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 p-1 z-10 min-w-[100px]",
+                      popupPosition === 'top' ? 'bottom-full mb-1' : 'top-full mt-1'
                     )}
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    {canEdit && (
+                      <button
+                        onClick={handleEditMessage}
+                        className="flex items-center gap-2 px-3 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded w-full text-left"
+                      >
+                        <Edit className="w-4 h-4" />
+                        <span>Sửa</span>
+                      </button>
+                    )}
+                    <button
+                      onClick={handleDeleteMessage}
+                      className="flex items-center gap-2 px-3 py-2 text-sm text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded w-full text-left"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                      <span>Xóa</span>
+                    </button>
                   </div>
+                )}
+              </div>
+            )}
+
+            {/* Message bubble */}
+            <div
+              className={clsx(
+                "rounded-xl px-3 py-2 text-sm inline-block max-w-[60%] break-words",
+                isDeleted
+                  ? "bg-gray-200 text-gray-500 italic dark:bg-gray-700 dark:text-gray-400"
+                  : isSelf
+                    ? "bg-blue-500 text-white"
+                    : "bg-[var(--muted)] text-[var(--foreground)]"
               )}
+              style={{
+                wordBreak: 'break-word',
+                whiteSpace: 'pre-wrap',
+                maxWidth: '100%'
+              }}
+            >
+              {messageContent}
 
-              {/* Message bubble */}
-              <div
-                  className={clsx(
-                      "rounded-xl px-3 py-2 text-sm inline-block max-w-[60%] break-words",
-                      isDeleted
-                          ? "bg-gray-200 text-gray-500 italic dark:bg-gray-700 dark:text-gray-400"
-                          : isSelf
-                              ? "bg-blue-500 text-white"
-                              : "bg-[var(--muted)] text-[var(--foreground)]"
-                  )}
-                  style={{
-                    wordBreak: 'break-word',
-                    whiteSpace: 'pre-wrap',
-                    maxWidth: '100%'
-                  }}
-              >
-                {messageContent}
-
-                <div className="text-xs mt-1 opacity-70 flex items-center justify-between gap-2">
-                  {isUpdated && !isDeleted && (
-                      <span className="flex items-center gap-1">
+              <div className="text-xs mt-1 opacity-70 flex items-center justify-between gap-2">
+                {isUpdated && !isDeleted && (
+                  <span className="flex items-center gap-1">
                     <Edit className="w-3 h-3" />
                     <span>đã chỉnh sửa</span>
                   </span>
-                  )}
-                  <span className="ml-auto">{timeSent}</span>
-                  {isSelf && !isDeleted && isReading && (
-                      <Check size={12}/>
-                  )}
-                </div>
+                )}
+                <span className="ml-auto">{timeSent}</span>
+                {isSelf && !isDeleted && isReading && (
+                  <Check size={12} />
+                )}
               </div>
             </div>
           </div>
         </div>
+      </div>
 
-        {modalOpen && (
-            <div className="fixed inset-0 bg-black/90 z-50 flex items-center justify-center p-4">
-              <button
-                  onClick={handleModalClose}
-                  className="absolute top-4 right-4 text-white hover:text-gray-300"
+      {modalOpen && (
+        <div className="fixed inset-0 bg-black/90 z-50 flex items-center justify-center p-4">
+          <button
+            onClick={handleModalClose}
+            className="absolute top-4 right-4 text-white hover:text-gray-300"
+          >
+            <X className="w-8 h-8" />
+          </button>
+
+          <div className="max-w-[90vw] max-h-[90vh] flex items-center justify-center">
+            {isImageFile(currentFileType) ? (
+              <img
+                src={currentFile}
+                alt="Xem phóng to"
+                className="max-w-full max-h-full object-contain"
+              />
+            ) : isVideoFile(currentFileType) ? (
+              <video
+                controls
+                autoPlay
+                className="max-w-full max-h-full"
               >
-                <X className="w-8 h-8" />
-              </button>
-
-              <div className="max-w-[90vw] max-h-[90vh] flex items-center justify-center">
-                {isImageFile(currentFileType) ? (
-                    <img
-                        src={currentFile}
-                        alt="Xem phóng to"
-                        className="max-w-full max-h-full object-contain"
-                    />
-                ) : isVideoFile(currentFileType) ? (
-                    <video
-                        controls
-                        autoPlay
-                        className="max-w-full max-h-full"
-                    >
-                      <source src={currentFile} type={currentFileType} />
-                    </video>
-                ) : null}
-              </div>
-            </div>
-        )}
-      </>
+                <source src={currentFile} type={currentFileType} />
+              </video>
+            ) : null}
+          </div>
+        </div>
+      )}
+    </>
   );
 }
 
