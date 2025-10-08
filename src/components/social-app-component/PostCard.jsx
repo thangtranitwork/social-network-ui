@@ -1,20 +1,17 @@
 "use client"
 
-import { useEffect, useState, memo, useCallback, lazy, Suspense } from "react"
-import Avatar from "../ui-components/Avatar"
-import Card from "../ui-components/Card"
-import { Heart, MessageCircle, SendHorizonal, MoreVertical, Share2 } from "lucide-react"
-import ImageView from "../ui-components/ImageView"
-import { useRouter } from "next/navigation"
-import toast from "react-hot-toast"
+import { renderTextWithLinks } from "@/hooks/renderTextWithLinks"
+import adminApi from "@/utils/adminInterception"
+import api, { getUserId } from "@/utils/axios"
 import dayjs from "dayjs"
 import relativeTime from "dayjs/plugin/relativeTime"
-import api from "@/utils/axios"
-import { getUserId } from "@/utils/axios"
-import Modal from "../ui-components/Modal"
-import {isAdmin} from "@/hooks/isAdmin"
-import { renderTextWithLinks} from "@/hooks/renderTextWithLinks";
-import adminApi from "@/utils/adminInterception";
+import { Heart, MessageCircle, MessageSquareShare, MoreVertical, SendHorizonal, Share2 } from "lucide-react"
+import { useRouter } from "next/navigation"
+import { lazy, memo, Suspense, useCallback, useEffect, useState } from "react"
+import toast from "react-hot-toast"
+import Avatar from "../ui-components/Avatar"
+import Card from "../ui-components/Card"
+import ImageView from "../ui-components/ImageView"
 
 // Dynamic imports for heavy components
 const PostModal = lazy(() => import("./PostModal"))
@@ -24,15 +21,15 @@ const SharePostModal = lazy(() => import("./SharePostModal"))
 dayjs.extend(relativeTime)
 
 const PostCard = memo(function PostCard({
-                                            post,
-                                            liked,
-                                            onLikeToggle,
-                                            onPostDeleted,
-                                            isPriority = false,
-                                            isAdmin = false,
-                                            size = "default",
-                                            className = ""
-                                        }) {
+    post,
+    liked,
+    onLikeToggle,
+    onPostDeleted,
+    isPriority = false,
+    isAdmin = false,
+    size = "default",
+    className = ""
+}) {
     const [isMobile, setIsMobile] = useState(undefined)
     const [activeImageIndex, setActiveImageIndex] = useState(null)
     const [showModal, setShowModal] = useState(false)
@@ -200,10 +197,10 @@ const PostCard = memo(function PostCard({
         if (!confirm(confirmMessage)) return
         setDeleting(true)
         try {
-            if(isAdmin){
+            if (isAdmin) {
                 await adminApi.delete(`/v1/posts/${currentPost.id}`)
             }
-            else{
+            else {
                 await api.delete(`/v1/posts/${currentPost.id}`)
             }
             toast.success("Đã xóa bài viết!")
@@ -502,40 +499,51 @@ const PostCard = memo(function PostCard({
                 )}
                 {!isAdmin &&
                     (<div className="flex mt-3 gap-4 text-[var(--muted-foreground)]">
-                    <button
-                        onClick={(e) => {
-                            e.stopPropagation()
-                            handleLikeToggle()
-                        }}
-                        className={`p-2 rounded-full hover:bg-[var(--input)] transition-colors ${isLiking ? 'opacity-70' : ''}`}
-                        disabled={isLiking}
-                        aria-label={optimisticLiked ? "Unlike post" : "Like post"}
-                        title={optimisticLiked ? "Unlike post" : "Like post"}
-                    >
-                        <Heart className={`h-5 w-5 transition-colors ${optimisticLiked ? "fill-red-500 text-red-500" : ""}`} />
-                    </button>
+                        <button
+                            onClick={(e) => {
+                                e.stopPropagation()
+                                handleLikeToggle()
+                            }}
+                            className={`p-2 rounded-full hover:bg-[var(--input)] transition-colors ${isLiking ? 'opacity-70' : ''}`}
+                            disabled={isLiking}
+                            aria-label={optimisticLiked ? "Unlike post" : "Like post"}
+                            title={optimisticLiked ? "Unlike post" : "Like post"}
+                        >
+                            <Heart className={`h-5 w-5 transition-colors ${optimisticLiked ? "fill-red-500 text-red-500" : ""}`} />
+                        </button>
 
-                    <button
-                        onClick={handleMessageCircleClick}
-                        className="p-2 rounded-full hover:bg-[var(--input)]"
-                        aria-label="Comment on post"
-                        title="Comment on post"
-                    >
-                        <MessageCircle className="h-5 w-5" />
-                    </button>
+                        <button
+                            onClick={handleMessageCircleClick}
+                            className="p-2 rounded-full hover:bg-[var(--input)]"
+                            aria-label="Comment on post"
+                            title="Comment on post"
+                        >
+                            <MessageCircle className="h-5 w-5" />
+                        </button>
 
-                    <button
-                        onClick={(e) => {
-                            e.stopPropagation()
-                            handleShare()
-                        }}
-                        className="p-2 rounded-full hover:bg-[var(--input)]"
-                        aria-label="Share post"
-                        title="Share post"
-                    >
-                        <SendHorizonal className="h-5 w-5" />
-                    </button>
-                </div>)
+                        <button
+                            onClick={(e) => {
+                                e.stopPropagation()
+                                handleShare()
+                            }}
+                            className="p-2 rounded-full hover:bg-[var(--input)]"
+                            aria-label="Share post"
+                            title="Share post"
+                        >
+                            <SendHorizonal className="h-5 w-5" />
+                        </button>
+                        <button
+                            onClick={(e) => {
+                                e.stopPropagation()
+                                handleShare()
+                            }}
+                            className="p-2 rounded-full hover:bg-[var(--input)]"
+                            aria-label="Sent to chat"
+                            title="Sent to chat"
+                        >
+                            <MessageSquareShare className="h-5 w-5" />
+                        </button>
+                    </div>)
                 }
 
                 <p className="text-xs mt-1">
