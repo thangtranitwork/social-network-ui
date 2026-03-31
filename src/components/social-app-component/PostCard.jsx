@@ -12,11 +12,13 @@ import toast from "react-hot-toast"
 import Avatar from "../ui-components/Avatar"
 import Card from "../ui-components/Card"
 import ImageView from "../ui-components/ImageView"
+import useAppStore from "@/store/ZustandStore"
 
 // Dynamic imports for heavy components
 const PostModal = lazy(() => import("./PostModal"))
 const EditPostModal = lazy(() => import("./EditPostModal"))
 const SharePostModal = lazy(() => import("./SharePostModal"))
+const ShareToChatModal = lazy(() => import("./ShareToChatModal"))
 
 dayjs.extend(relativeTime)
 
@@ -38,6 +40,7 @@ const PostCard = memo(function PostCard({
     const [comments, setComments] = useState([])
     const [loadingComments, setLoadingComments] = useState(false)
     const [showShareModal, setShowShareModal] = useState(false)
+    const [showShareToChatModal, setShowShareToChatModal] = useState(false)
     const [deleting, setDeleting] = useState(false)
     const [currentPost, setCurrentPost] = useState(post)
     const [currentCommentFilter, setCurrentCommentFilter] = useState('RELEVANT') // New state for comment filter
@@ -49,7 +52,7 @@ const PostCard = memo(function PostCard({
     const [optimisticLiked, setOptimisticLiked] = useState(liked)
     const [optimisticLikeCount, setOptimisticLikeCount] = useState(post.likeCount || 0)
     const [isLiking, setIsLiking] = useState(false)
-
+    const {chatList} = useAppStore();
     const router = useRouter()
     const isModalOpen = activeImageIndex !== null || showModal
 
@@ -187,6 +190,10 @@ const PostCard = memo(function PostCard({
 
     const handleShare = () => {
         setShowShareModal(true)
+    }
+
+    const handleShareToChat = () => {
+        setShowShareToChatModal(true)
     }
 
     const handleDeletePost = useCallback(async () => {
@@ -535,7 +542,7 @@ const PostCard = memo(function PostCard({
                         <button
                             onClick={(e) => {
                                 e.stopPropagation()
-                                handleShare()
+                                handleShareToChat()
                             }}
                             className="p-2 rounded-full hover:bg-[var(--input)]"
                             aria-label="Sent to chat"
@@ -599,6 +606,17 @@ const PostCard = memo(function PostCard({
                     <SharePostModal
                         isOpen={showShareModal}
                         onClose={() => setShowShareModal(false)}
+                        post={currentPost}
+                    />
+                </Suspense>
+            )}
+
+            {/* Share to Chat Modal */}
+            {showShareToChatModal && (
+                <Suspense fallback={<div>Loading...</div>}>
+                    <ShareToChatModal
+                        isOpen={showShareToChatModal}
+                        onClose={() => setShowShareToChatModal(false)}
                         post={currentPost}
                     />
                 </Suspense>
