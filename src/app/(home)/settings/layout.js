@@ -32,6 +32,10 @@ const groupedMenuItems = [
     items: [
       { id: "display", icon: Sun, label: "Hiển thị" },
     ]
+  },
+  {
+    title: "Version 1.0.0",
+    items: []
   }
 ];
 
