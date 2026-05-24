@@ -150,7 +150,6 @@ async function handleTokenRefresh(originalRequest) {
         if (token) {
           originalRequest.headers.Authorization = `Bearer ${token}`;
           resolve(api(originalRequest));
-          alert("token refreshed");
         } else {
           reject(new Error("Failed to refresh token"));
         }

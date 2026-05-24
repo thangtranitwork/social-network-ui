@@ -174,18 +174,35 @@ const useAppStore = create(
       },
 
       // Handle received message
-      onMessageReceived: (message, isCurrentChatOpen = false) => {
+      onMessageReceived: (message) => {
+        const { selectedChatId } = get();
+        const isCurrentChatOpen = selectedChatId === message.chatId;
+        const currentUserId = typeof window !== 'undefined' ? localStorage.getItem("userId") : null;
+        const isOwnMessage = message.sender?.id === currentUserId;
+
         set(state => {
           const updatedChats = state.chatList
               .map(chat => {
                 if (chat.chatId === message.chatId || chat.id === message.chatId) {
                   return {
                     ...chat,
+                    latestMessage: {
+                      id: message.id,
+                      content: message.content,
+                      sentAt: message.sentAt || message.createdAt,
+                      sender: message.sender,
+                      messageType: message.messageType || message.type,
+                      attachment: message.attachment,
+                      attachments: message.attachments,
+                      deleted: message.deleted || false,
+                    },
                     lastMessage: message,
-                    updatedAt: message.createdAt,
+                    updatedAt: message.createdAt || message.sentAt,
                     notReadMessageCount: isCurrentChatOpen
                         ? 0
-                        : (chat.notReadMessageCount || 0) + 1
+                        : isOwnMessage
+                            ? (chat.notReadMessageCount || 0)
+                            : (chat.notReadMessageCount || 0) + 1
                   };
                 }
                 return chat;

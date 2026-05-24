@@ -139,40 +139,7 @@ export default function useMessageNotification(userId) {
     return content.substring(0, maxLength) + '...';
   }, []);
 
-  // Hàm helper để cập nhật chatList
-  const updateChatList = useCallback((newMessage, chatId) => {
-    console.log("🔄 Processing message for chatList:", newMessage);
-    const { chatList } = useAppStore.getState();
-    console.log("📜 Current chatList:", chatList);
 
-    const foundChat = chatList.find((c) => c.chatId === chatId);
-    if (foundChat) {
-      const updatedChat = {
-        ...foundChat,
-        latestMessage: {
-          id: newMessage.id,
-          content: newMessage.content,
-          sentAt: newMessage.sentAt,
-          sender: newMessage.sender,
-          messageType: newMessage.messageType,
-          attachment: newMessage.attachment,
-          attachments: newMessage.attachments,
-          deleted: newMessage.deleted || false,
-        },
-        updatedAt: newMessage.sentAt,
-      };
-      const otherChats = chatList.filter((c) => c.chatId !== chatId);
-      const newChatList = [...otherChats, updatedChat].sort(
-        (a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
-      );
-
-      useAppStore.setState({ chatList: newChatList.map((chat) => ({ ...chat })) });
-
-      console.log("✅ ChatList updated successfully!");
-    } else {
-      console.warn(`⚠️ Không tìm thấy chat với chatId: ${chatId}`);
-    }
-  }, []);
 
   // Hàm xử lý tin nhắn nhận được
   const handleMessage = useCallback(async (messageData) => {
@@ -182,6 +149,21 @@ export default function useMessageNotification(userId) {
 
     try {
       // Command xử lý riêng
+      // ✅ Handle system commands (except message mutations like DELETE and EDIT)
+      if (messageData.command && messageData.command !== "DELETE" && messageData.command !== "EDIT") {
+        if (messageData.command === "END_CALL") {
+          console.log(messageData);
+          toast(`Cuộc gọi đã kết thúc`, {
+            duration: 3000,
+            position: "top-right",
+          });
+          if (typeof endCall === "function") {
+            endCall();
+          }
+        }
+        return;
+      }
+
       if (messageData.command === "DELETE") {
         toast(`🗑️ Tin nhắn đã bị xóa`, {
           duration: 3000,
@@ -223,27 +205,12 @@ export default function useMessageNotification(userId) {
         return;
       }
 
-      if (messageData.command === "END_CALL") {
-        console.log(messageData)
-        toast(`Cuộc gọi đã kết thúc`, {
-          duration: 3000,
-          position: "top-right",
-        });
-        endCall();
-        return;
-      }
-
       const newMessage = {
         ...messageData,
         isOwnMessage: messageData.sender?.id === currentUserId,
       };
 
-      // Cập nhật chat list
-      if (messageData.chatId) {
-        requestAnimationFrame(() => {
-          updateChatList(newMessage, messageData.chatId);
-        });
-      }
+
 
       // Toast thông báo kèm click handler và PWA notification
       if (messageData.sender && !newMessage.isOwnMessage) {
@@ -339,7 +306,7 @@ export default function useMessageNotification(userId) {
     } catch (error) {
       console.error("❌ Failed to process message:", error);
     }
-  }, [currentUserId, showPWANotification, getFileType, truncateMessage, updateChatList, onMessageReceived, selectChat, router]);
+  }, [currentUserId, showPWANotification, getFileType, truncateMessage, onMessageReceived, selectChat, router]);
 
   // Setup subscription với singleton
   useEffect(() => {

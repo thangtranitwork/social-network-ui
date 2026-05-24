@@ -10,6 +10,7 @@ import { Comment } from "./Comment";
 import { useRouter } from "next/navigation";
 import { useComments, useForm } from "@/hooks/useComment";
 import api from "@/utils/axios";
+import { uploadFile } from "@/utils/fileUpload";
 import toast from "react-hot-toast";
 import {renderTextWithLinks} from "@/hooks/renderTextWithLinks";
 import SharePostModal from "@/components/social-app-component/SharePostModal";
@@ -121,17 +122,15 @@ export default function PostModal({
     try {
       console.log("Submitting reply:", { content, file, commentId });
 
-      const formData = new FormData();
-      formData.append("originalCommentId", commentId);
-      formData.append("content", content);
+      let fileId = null;
       if (file) {
-        formData.append("file", file);
+        fileId = await uploadFile(file);
       }
 
-      const res = await api.post(`/v1/comments/reply`, formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        },
+      const res = await api.post(`/v1/posts/reply-comment`, {
+        originalCommentId: commentId,
+        content: content,
+        fileId: fileId
       });
 
       console.log("Reply response:", res.data);
@@ -154,15 +153,15 @@ export default function PostModal({
   // ✅ Handle main comment submission with optimistic updates
   const handleMainCommentSubmit = useCallback(async (content, file) => {
     try {
-      const formData = new FormData();
-      formData.append("content", content);
-      formData.append("postId", post.id); // Always use the main post ID for comments
-      if (file) formData.append("file", file);
+      let fileId = null;
+      if (file) {
+        fileId = await uploadFile(file);
+      }
 
-      const res = await api.post("/v1/comments", formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        },
+      const res = await api.post("/v1/posts/comment", {
+        content: content,
+        postId: post.id,
+        fileId: fileId
       });
 
       const newComment = res.data.body;

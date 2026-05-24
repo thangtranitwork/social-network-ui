@@ -1,9 +1,9 @@
 import { cookies } from 'next/headers'
 import { redirect } from 'next/navigation'
 
-export default function RootPage() {
+export default async function RootPage() {
   // Get cookies on server side
-  const cookieStore = cookies()
+  const cookieStore = await cookies()
   const token = cookieStore.get('accessToken')?.value || cookieStore.get('token')?.value
   const userId = cookieStore.get('userId')?.value
   

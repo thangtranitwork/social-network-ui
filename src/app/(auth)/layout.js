@@ -1,14 +1,6 @@
-import {Inter, Roboto_Mono} from "next/font/google";
-
-const geistSans = Inter({
-    variable: "--font-geist-sans",
-    subsets: ["latin"],
-});
-
-const geistMono = Roboto_Mono({
-    variable: "--font-geist-mono",
-    subsets: ["latin"],
-});
+// Use system fonts to avoid Google Fonts network fetch (IPv6 issues on some networks)
+const geistSans = { variable: "--font-geist-sans" };
+const geistMono = { variable: "--font-geist-mono" };
 export const metadata = {
     title: "PocPoc - Đăng nhập / Đăng ký",
     description: "PocPoc là nơi bạn gặp gỡ bạn mới, chia sẻ câu chuyện và luôn được là chính mình. Đăng nhập hoặc tạo tài khoản miễn phí để bắt đầu kết nối!",

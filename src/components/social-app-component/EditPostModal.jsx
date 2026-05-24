@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
+import { uploadMultipleFiles } from "@/utils/fileUpload";
 import Modal from "../ui-components/Modal";
 import ImagePreview from "../ui-components/ImagePreview";
 import toast from "react-hot-toast";
@@ -135,25 +136,33 @@ export default function EditPostModal({ isOpen, onClose, post, onPostUpdated }) 
       
       // 2. Update content và files nếu có thay đổi
       if (hasContentChange || hasFileChanges) {
-        const formData = new FormData();
-        
-        // Thêm content
-        formData.append("content", newContent);
-        
-        // Thêm các URL file cần xóa
-        if (canEditFiles) {
-          filesToDelete.forEach((url) => formData.append("deleteOldFileUrls", url));
-          
-          // Thêm các file mới
-          newFiles.forEach((fileObj) => formData.append("newFiles", fileObj.file));
+        // Upload new files if any
+        let newFileIds = [];
+        if (newFiles.length > 0) {
+          const filesToUpload = newFiles.map(f => f.file);
+          newFileIds = await uploadMultipleFiles(filesToUpload);
         }
-        
-        const contentRes = await api.patch(`/v1/posts/update-content/${post.id}`, formData, {
-          headers: { "Content-Type": "multipart/form-data" },
+
+        // Extract IDs from URLs for files to delete
+        const deleteOldFileIds = filesToDelete.map(url => {
+          try {
+            const path = new URL(url).pathname;
+            const parts = path.split('/');
+            return parts[parts.length - 1];
+          } catch (e) {
+            // Fallback if not a valid URL
+            return url;
+          }
+        });
+
+        const res = await api.patch(`/v1/posts/update-content/${post.id}`, {
+          content: newContent,
+          newFiles: newFileIds,
+          deleteOldFileIds: deleteOldFileIds
         });
         
-        if (contentRes.data.code !== 200) {
-          throw new Error(contentRes.data.message || "Lỗi khi cập nhật content!");
+        if (res.data.code !== 200) {
+          throw new Error(res.data.message || "Lỗi khi cập nhật content!");
         }
         
         // Cập nhật post data
@@ -161,12 +170,7 @@ export default function EditPostModal({ isOpen, onClose, post, onPostUpdated }) 
         
         // Cập nhật files nếu có thay đổi
         if (canEditFiles && hasFileChanges) {
-          // Files còn lại sau khi xóa
-          const remainingOldFiles = (post.files || []).filter(url => !filesToDelete.includes(url));
-          // Files mới từ server response
-          const newFilesFromServer = contentRes.data.body?.files || [];
-          // Combine lại
-          updatedPost.files = [...remainingOldFiles, ...newFilesFromServer];
+          updatedPost.files = res.data.body?.files || updatedPost.files;
         }
       }
       

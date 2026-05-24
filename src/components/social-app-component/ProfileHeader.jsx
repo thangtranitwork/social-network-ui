@@ -44,14 +44,14 @@ export default function ProfileHeader({
     try {
       const res = await api.post(`/v1/blocks/${routeUsername}`);
       if (res.data.code === 200) {
-        alert(`Đã chặn ${routeUsername}`);
+        toast.success(`Đã chặn ${routeUsername}`);
         setIsDropdownOpen(false);
       } else {
         console.warn("Chặn thất bại:", res.data.message);
       }
     } catch (error) {
       console.error("Lỗi khi chặn người dùng:", error);
-      alert("Có lỗi xảy ra khi chặn người dùng.");
+      toast.error("Có lỗi xảy ra khi chặn người dùng.");
     }
   };
 

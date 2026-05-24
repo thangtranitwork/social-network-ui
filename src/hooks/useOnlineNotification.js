@@ -77,7 +77,9 @@ export default function useOnlineNotification(userId) {
           
           try {
             const data = JSON.parse(message.body);
-            handleOnlineStatus(data);
+            if (data.command === "ONLINE_STATUS") {
+              handleOnlineStatus(data);
+            }
           } catch (error) {
             console.error("❌ Parse online status error:", error, "Raw message:", message.body);
           }

@@ -21,11 +21,12 @@ export const metadata = {
     description: "Mạng xã hội kết nối mọi người",
     siteName: "PocPoc",
   },
-  viewport: {
-    width: "device-width",
-    initialScale: 1,
-    userScalable: false,
-  },
+};
+
+export const viewport = {
+  width: "device-width",
+  initialScale: 1,
+  userScalable: false,
 };
 
 export default function RootLayout({ children }) {

@@ -125,7 +125,6 @@ export default function PWAManager({ children }) {
 
   // Test notification function
   const sendTestNotification = () => {
-    alert('Sending test notification...');
     if ('serviceWorker' in navigator && notificationPermission === 'granted') {
       navigator.serviceWorker.ready.then((registration) => {
         // Test message notification

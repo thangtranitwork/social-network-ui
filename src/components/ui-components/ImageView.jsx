@@ -8,8 +8,30 @@ import { Volume2, VolumeX } from "lucide-react";
    Utils
 ========================= */
 
-const isVideo = (url) =>
-    typeof url === "string" && /\.(mp4|webm|ogg)$/i.test(url);
+
+const isVideo = (url = "") => {
+    if (typeof url !== "string" || !url.trim()) {
+        return false;
+    }
+
+    try {
+        // Parse URL an toàn cho presigned URL
+        const pathname = new URL(url).pathname.toLowerCase();
+        console.log("pathname", pathname);
+        return [
+            ".mp4",
+            ".webm",
+            ".ogg",
+            ".mov",
+            ".m4v",
+        ].some((ext) => pathname.endsWith(ext));
+    } catch {
+        // Fallback nếu không phải URL hợp lệ
+        const cleanUrl = url.split(/[?#]/)[0].trim().toLowerCase();
+
+        return /\.(mp4|webm|ogg|mov|m4v)$/i.test(cleanUrl);
+    }
+};
 
 /* =========================
    Reusable Components

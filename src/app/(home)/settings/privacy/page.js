@@ -1,4 +1,5 @@
 "use client";
+import toast from "react-hot-toast";
 import React, { useState, useEffect } from "react";
 
 export default function PrivacySettings() {
@@ -31,7 +32,7 @@ export default function PrivacySettings() {
 
   const handleSave = () => {
     localStorage.setItem("defaultPrivacy", privacy.defaultPostPrivacy);
-    alert("Đã lưu cài đặt quyền riêng tư bài viết!");
+    toast.success("Đã lưu cài đặt quyền riêng tư bài viết!");
   };
 
   return (

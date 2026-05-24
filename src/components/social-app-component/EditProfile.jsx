@@ -4,6 +4,7 @@ import { useState } from "react"
 import Avatar from "../ui-components/Avatar"
 import Input from "../ui-components/Input"
 import api, { refreshTokenManually, setAuthToken, setUserName } from "@/utils/axios"
+import { uploadFile } from "@/utils/fileUpload"
 import axios from "axios"
 export default function EditProfileModal({ profileData, onSave }) {
   const [formData, setFormData] = useState({
@@ -52,32 +53,58 @@ export default function EditProfileModal({ profileData, onSave }) {
           formData.firstname !== profileData.givenName ||
           formData.lastname !== profileData.familyName,
         request: () =>
-          api.patch(
-            `/v1/users/update-name?givenName=${encodeURIComponent(
-              formData.firstname
-            )}&familyName=${encodeURIComponent(formData.lastname)}`
-          ),
+          fetch(`${process.env.NEXT_PUBLIC_API_URL}/v1/users/update-name`, {
+            method: "PATCH",
+            headers: {
+              Authorization: `Bearer ${token}`,
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              givenName: formData.firstname,
+              familyName: formData.lastname,
+            }),
+          }).then((res) => {
+            if (!res.ok) {
+              return res.json().then((err) => {
+                throw err
+              })
+            }
+            return res.json()
+          }),
         errorKey: "name",
       },
       {
         label: "Username",
         check: formData.username !== profileData.username,
         request: () =>
-          api.patch(
-            `/v1/users/update-username?username=${encodeURIComponent(formData.username)}`
-          ),
+          fetch(`${process.env.NEXT_PUBLIC_API_URL}/v1/users/update-username`, {
+            method: "PATCH",
+            headers: {
+              Authorization: `Bearer ${token}`,
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ username: formData.username }),
+          }).then((res) => {
+            if (!res.ok) {
+              return res.json().then((err) => {
+                throw err
+              })
+            }
+            return res.json()
+          }),
         errorKey: "username",
       },
       {
         label: "Bio",
         check: formData.bio !== profileData.bio,
         request: () =>
-          fetch(`${process.env.NEXT_PUBLIC_API_URL}/v1/users/update-bio?bio=${encodeURIComponent(formData.bio)}`, {
+          fetch(`${process.env.NEXT_PUBLIC_API_URL}/v1/users/update-bio`, {
             method: "PATCH",
             headers: {
               Authorization: `Bearer ${token}`,
               "Content-Type": "application/json",
             },
+            body: JSON.stringify({ bio: formData.bio }),
           }).then((res) => {
             if (!res.ok) {
               return res.json().then((err) => {
@@ -91,12 +118,9 @@ export default function EditProfileModal({ profileData, onSave }) {
       {
         label: "Avatar",
         check: !!avatarFile,
-        request: () => {
-          const form = new FormData()
-          form.append("file", avatarFile)
-          return api.patch("/v1/users/update-profile-picture", form, {
-            headers: { "Content-Type": "multipart/form-data" },
-          })
+        request: async () => {
+          const fileId = await uploadFile(avatarFile)
+          return api.patch("/v1/users/update-profile-picture", { fileId })
         },
         errorKey: "avatar",
       },

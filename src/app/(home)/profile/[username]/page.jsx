@@ -306,7 +306,7 @@ export default function ProfilePage() {
             {activeTab === "posts" ? (
                 <>
                   {loading && posts.length === 0 ? (
-                      <div className="space-y-6 w-full flex flex-col items-center px-8">
+                      <div className="space-y-6 w-full flex flex-col items-center">
                         {loadingSkeletons}
                       </div>
                   ) : filteredPosts.length > 0 ? (

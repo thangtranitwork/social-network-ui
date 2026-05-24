@@ -67,8 +67,7 @@ export default function useChat(chatId) {
           deleted: newMessage.deleted || false
         },
         updatedAt: newMessage.sentAt,
-        notReadMessageCount:
-          (foundChat.notReadMessageCount || 0) + (newMessage.isOwnMessage ? 0 : 1),
+        notReadMessageCount: 0,
       };
       
       console.log("🆕 UpdatedChat latestMessage:", updatedChat.latestMessage);
@@ -165,22 +164,16 @@ export default function useChat(chatId) {
     try {
       const data = JSON.parse(message.body);
 
-      // ✅ Xử lý typing notifications
-      if (data.command === "TYPING" || data.command === "STOP_TYPING") {
-        handleTypingNotification(data);
-        return;
-      }
-
-      // ✅ UPDATED: Xử lý block/unblock notifications
-      if (data.command === "HAS_BEEN_BLOCKED" || data.command === "HAS_BEEN_UNBLOCKED") {
-        handleBlockNotification(data);
-        return;
-      }
-
-      // ✅ UPDATED: Xử lý READING command
-      if (data.command === "READING") {
-        console.log("👁️ READING received:", data);
-        handleReadingNotification(data);
+      // ✅ Handle system commands (except message mutations like DELETE and EDIT)
+      if (data.command && data.command !== "DELETE" && data.command !== "EDIT") {
+        if (data.command === "TYPING" || data.command === "STOP_TYPING") {
+          handleTypingNotification(data);
+        } else if (data.command === "HAS_BEEN_BLOCKED" || data.command === "HAS_BEEN_UNBLOCKED") {
+          handleBlockNotification(data);
+        } else if (data.command === "READING") {
+          console.log("👁️ READING received:", data);
+          handleReadingNotification(data);
+        }
         return;
       }
 
@@ -217,9 +210,10 @@ export default function useChat(chatId) {
       
       // Cập nhật messages state - thêm vào đầu mảng (tin nhắn mới nhất)
       setMessages((prev) => {
-        console.log("📝 Previous messages count:", prev.length);
+        if (prev.some(m => m.id === newMessage.id)) {
+          return prev.map(m => m.id === newMessage.id ? newMessage : m);
+        }
         const newMessages = [newMessage, ...prev];
-        console.log("📝 New messages count:", newMessages.length);
         return newMessages;
       });
 
@@ -287,7 +281,11 @@ export default function useChat(chatId) {
       const olderMessages = res.data.body || [];
       
       if (olderMessages.length > 0) {
-        setMessages(prev => [...prev, ...olderMessages]);
+        setMessages(prev => {
+          const existingIds = new Set(prev.map(m => m.id));
+          const newUnique = olderMessages.filter(m => !existingIds.has(m.id));
+          return [...prev, ...newUnique];
+        });
         setTotalMessages(prev => prev + olderMessages.length);
         setHasMore(olderMessages.length === limit);
         

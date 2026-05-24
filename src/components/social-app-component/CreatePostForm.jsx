@@ -3,6 +3,7 @@
 import React, { useRef, useState, useEffect } from "react";
 import Modal from "@/components/ui-components/Modal";
 import api from "@/utils/axios";
+import { uploadMultipleFiles } from "@/utils/fileUpload";
 import toast from "react-hot-toast";
 import ImagePreview from "../ui-components/ImagePreview";
 
@@ -103,14 +104,16 @@ export default function NewPostModal({ isOpen, onClose }) {
     if ((media.length === 0 && !content.trim()) || !privacy || isLoading) return;
 
     setIsLoading(true);
-    const formData = new FormData();
-    formData.append("content", content);
-    formData.append("privacy", privacy);
-    media.forEach((item) => formData.append("files", item.file));
-
     try {
-      const res = await api.post("/v1/posts/post", formData, {
-        headers: { "Content-Type": "multipart/form-data" },
+      // 1. Upload all files using presigned URLs
+      const filesToUpload = media.map(item => item.file);
+      const fileIds = await uploadMultipleFiles(filesToUpload);
+
+      // 2. Submit post with file IDs
+      const res = await api.post("/v1/posts/post", {
+        content: content,
+        privacy: privacy,
+        files: fileIds
       });
 
       if (res.data.code === 200) {

@@ -2,6 +2,7 @@
 const nextConfig = {
   // Image optimization configuration
   reactStrictMode: false,
+  optimizeFonts: false, // Disable auto-fetch from Google Fonts (avoids IPv6 ENETUNREACH)
   images: {
     // Vercel-friendly domains
     domains: [

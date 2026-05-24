@@ -272,11 +272,11 @@ export default function HomePage() {
   // Memoized render logic
   const renderContent = useMemo(() => {
     if (!currentUser) {
-      return <div className="space-y-6 w-full flex flex-col items-center px-8">{loadingSkeletons}</div>
+      return <div className="space-y-6 w-full flex flex-col items-center">{loadingSkeletons}</div>
     }
 
     if (loading) {
-      return <div className="space-y-6 w-full flex flex-col items-center px-8">{loadingSkeletons}</div>
+      return <div className="space-y-6 w-full flex flex-col items-center">{loadingSkeletons}</div>
     }
 
     if (filteredPosts.length > 0) {

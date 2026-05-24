@@ -1,5 +1,6 @@
 "use client";
 
+import { uploadFile } from "@/utils/fileUpload";
 import { useCallback, useEffect, useRef, useState } from "react";
 import toast from "react-hot-toast";
 
@@ -50,16 +51,29 @@ export default function ChatBox({ chatId, targetUser, onBack, onChatCreated }) {
   const hasBlockedOther = blockStatus === "BLOCKED";
 
   const { messages, loading, loadingMore, hasMore, totalMessages, loadMoreMessages, isTyping } = useChat(currentChatId);
-  const { setupSubscription, cleanupSubscription } = useTypingNotification(currentChatId);
   const { sendMessage, isConnected } = useSendMessage({
     chatId: currentChatId,
     receiverUsername: targetUser?.username,
   });
   const { initializeCall, makeCall } = useCall();
+  const [isTypingState, setIsTypingState] = useState(false);
 
   // Handlers
-  const handleInputFocus = useCallback(() => setupSubscription(), [setupSubscription]);
-  const handleInputBlur = useCallback(() => cleanupSubscription(), [cleanupSubscription]);
+  const handleInputFocus = useCallback(() => {
+    if (!isTypingState && currentChatId) {
+      setIsTypingState(true);
+      const { sendMessage: socketSendMessage } = require("@/utils/socket");
+      socketSendMessage(`/chat/${currentChatId}`, { command: "TYPING", chatId: currentChatId });
+    }
+  }, [isTypingState, currentChatId]);
+
+  const handleInputBlur = useCallback(() => {
+    if (isTypingState && currentChatId) {
+      setIsTypingState(false);
+      const { sendMessage: socketSendMessage } = require("@/utils/socket");
+      socketSendMessage(`/chat/${currentChatId}`, { command: "STOP_TYPING", chatId: currentChatId });
+    }
+  }, [isTypingState, currentChatId]);
 
   // Effects
   useEffect(() => {
@@ -277,10 +291,11 @@ export default function ChatBox({ chatId, targetUser, onBack, onChatCreated }) {
 
     try {
       setUploading(true);
-      const formData = new FormData();
-      formData.append("attachment", selectedFile);
-      formData.append("username", targetUser.username);
-      await api.post(`/v1/chat/send-file`, formData);
+      const fileId = await uploadFile(selectedFile);
+      await api.post(`/v1/chat/send-file`, {
+        username: targetUser.username,
+        fileId: fileId,
+      });
       toast.success("File đã được gửi!");
       handleCancelFile();
     } catch {
@@ -298,10 +313,11 @@ export default function ChatBox({ chatId, targetUser, onBack, onChatCreated }) {
 
     try {
       setUploading(true);
-      const formData = new FormData();
-      formData.append("voiceFile", blob);
-      formData.append("username", targetUser.username);
-      await api.post(`/v1/chat/send-voice`, formData);
+      const fileId = await uploadFile(new File([blob], "voice.mp3", { type: "audio/mpeg" }));
+      await api.post(`/v1/chat/send-voice`, {
+        username: targetUser.username,
+        fileId: fileId,
+      });
       handleCancelFile();
     } catch {
       toast.error("Lỗi khi gửi tin nhắn thoại");
