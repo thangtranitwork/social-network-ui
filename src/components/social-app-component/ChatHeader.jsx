@@ -15,16 +15,29 @@ export default function ChatHeader({
   onMoreOptions,
 }) {
   const router = useRouter()
-   const handleProfileClick = (e, user) => {
-    e.stopPropagation() // Ngăn không cho bubble up tới card click
-    router.push(`/profile/${user.username}`)
+  const isGroup = targetUser?.isGroup || false
+
+  const handleProfileClick = (e, user) => {
+    e.stopPropagation()
+    if (!isGroup && user?.username) {
+      router.push(`/profile/${user.username}`)
+    }
   }
+
   let statusText = "Offline 🔴"
-  if (targetUser?.isOnline) {
+  if (isGroup) {
+    statusText = "Cuộc trò chuyện nhóm"
+  } else if (targetUser?.isOnline) {
     statusText = "Online 🟢"
   } else if (targetUser?.lastOnline) {
     statusText = `${dayjs(targetUser.lastOnline).fromNow()}`
   }
+
+  const displayName = isGroup
+    ? (targetUser?.name || "Trò chuyện nhóm")
+    : `${targetUser?.givenName || ""} ${targetUser?.familyName || ""}`.trim() || targetUser?.username || "";
+
+  const avatarUrl = isGroup ? targetUser?.avatar : targetUser?.profilePictureUrl;
 
   return (
     <div className="flex items-center justify-between gap-3 p-3 py-1 border-b border-[var(--border)]">
@@ -32,23 +45,23 @@ export default function ChatHeader({
           <button onClick={onBack} className="text-[var(--muted-foreground)] hover:text-foreground">
           <ArrowLeft className="w-3 h-3" />
         </button>
-      <div className="flex items-center" onClick={(e) => {handleProfileClick(e, targetUser)}}>
-      <Avatar src={targetUser?.profilePictureUrl} size="sm" />
-
+      <div className={`flex items-center ${!isGroup ? "cursor-pointer" : ""}`} onClick={(e) => {handleProfileClick(e, targetUser)}}>
+      <Avatar src={avatarUrl} size="sm" isGroup={isGroup} />
+ 
       <div className="flex-1 px-2">
-        <div className="font-semibold text-base">{targetUser?.givenName}</div>
+        <div className="font-semibold text-base">{displayName}</div>
         <div className="text-sm text-[var(--muted-foreground)]">
           {statusText}
         </div>
       </div>
       </div>
         </div>
-
+ 
       {/* Action buttons */}
       <div className="flex items-center gap-2">
         <button
           onClick={() => {
-            console.log("[DEBUG] Voice call button clicked → username:", targetUser?.username)
+            console.log("[DEBUG] Voice call button clicked → isGroup:", isGroup, "username:", targetUser?.username)
             onCall && onCall()
           }}
           className="p-2 text-[var(--muted-foreground)] hover:text-foreground hover:bg-[var(--accent)] rounded-full transition-colors"
@@ -59,7 +72,7 @@ export default function ChatHeader({
 
         <button
           onClick={() => {
-            console.log("[DEBUG] Video call button clicked → username:", targetUser?.username)
+            console.log("[DEBUG] Video call button clicked → isGroup:", isGroup, "username:", targetUser?.username)
             onVideoCall && onVideoCall()
           }}
           className="p-2 text-[var(--muted-foreground)] hover:text-foreground hover:bg-[var(--accent)] rounded-full transition-colors"
@@ -67,7 +80,7 @@ export default function ChatHeader({
         >
           <Video className="w-5 h-5" />
         </button>
-
+ 
         <button
           onClick={() => {
             console.log("[DEBUG] More options clicked")

@@ -265,7 +265,7 @@ export default function useMessageNotification(userId) {
             <div
               onClick={() => {
                 selectChat(messageData.chatId);
-                router.push("/chats");
+                router.push(`/chats?chatId=${messageData.chatId}`);
                 toast.dismiss(t.id);
               }}
               className="cursor-pointer"
@@ -392,7 +392,7 @@ export default function useMessageNotification(userId) {
         if (action === 'view' || action === 'reply') {
           if (data?.chatId) {
             selectChat(data.chatId);
-            router.push("/chats");
+            router.push(`/chats?chatId=${data.chatId}`);
           }
         }
       }

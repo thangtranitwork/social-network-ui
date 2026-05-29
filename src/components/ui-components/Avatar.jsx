@@ -8,6 +8,7 @@ export default function Avatar({
   width,
   height,
   className = "",
+  isGroup = false,
   ...props
 }) {
   const [hasError, setHasError] = useState(false);
@@ -16,8 +17,23 @@ export default function Avatar({
   const previousSrcRef = useRef(src);
 
   const defaultSrc = "/defaultAvatar.png";
-  const imageSrc = !src || hasError ? defaultSrc : src;
-  const isExternalUrl = imageSrc.startsWith("http://") || imageSrc.startsWith("https://");
+
+  // A src is only usable if it is an absolute URL, a relative path, or a data URL.
+  // Raw storage IDs (e.g. "abc-123.jpg") are NOT valid and must be rejected.
+  const isValidSrc = (s) =>
+    !!s &&
+    (s.startsWith("http://") ||
+      s.startsWith("https://") ||
+      s.startsWith("data:") ||
+      s.startsWith("/"));
+
+  const validSrc = isValidSrc(src) ? src : null;
+  const imageSrc = validSrc || defaultSrc;
+  const isExternalUrl =
+    imageSrc.startsWith("http://") ||
+    imageSrc.startsWith("https://") ||
+    imageSrc.startsWith("data:");
+  const showGroupFallback = isGroup && !validSrc;
 
   const finalWidth = width ?? 48;
   const finalHeight = height ?? 48;
@@ -32,7 +48,8 @@ export default function Avatar({
       setHasError(false);
       setImageLoaded(false);
 
-      if (src && src !== defaultSrc) {
+      // Only show loading spinner for valid, non-default srcs
+      if (validSrc && validSrc !== defaultSrc) {
         setIsLoading(true);
       } else {
         setIsLoading(false);
@@ -40,6 +57,7 @@ export default function Avatar({
 
       previousSrcRef.current = src;
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [src]);
 
   const handleError = useCallback(() => {
@@ -52,6 +70,34 @@ export default function Avatar({
     setIsLoading(false);
     setImageLoaded(true);
   }, []);
+
+  if (showGroupFallback) {
+    return (
+      <div
+        className={clsx(
+          "relative flex items-center justify-center rounded-full overflow-hidden bg-gradient-to-br from-blue-500 to-indigo-600 shadow-inner",
+          shouldApplyDefaultSize && "w-12 h-12",
+          className
+        )}
+        style={hasExplicitSize ? { width: finalWidth, height: finalHeight } : undefined}
+        {...props}
+      >
+        <svg
+          className="w-1/2 h-1/2 text-white drop-shadow-sm"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2.5"
+          viewBox="0 0 24 24"
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"
+          />
+        </svg>
+      </div>
+    );
+  }
 
   return (
     <div

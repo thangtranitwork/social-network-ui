@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import api from "@/utils/axios";
 import ChatList from "@/components/social-app-component/ChatList";
 import ChatBox from "@/components/social-app-component/ChatBox";
 import useAppStore from "@/store/ZustandStore";
@@ -21,8 +22,10 @@ export default function ChatLayoutInner() {
   const chatIdFromUrl = searchParams.get("chatId");
 
   const chatList = useAppStore((state) => state.chatList);
+  const chatsLoaded = useAppStore((state) => state.chatsLoaded);
   const fetchChatList = useAppStore((state) => state.fetchChatList);
   const clearChatSelection = useAppStore((state) => state.clearChatSelection);
+  const virtualChatUser = useAppStore((state) => state.virtualChatUser);
 
   usePageMetadata(pageMetadata.chats());
 
@@ -32,26 +35,77 @@ export default function ChatLayoutInner() {
   }, []);
 
   useEffect(() => {
-    if (chatIdFromUrl && chatList.length > 0) {
+    if (chatIdFromUrl) {
+      // 1. Try to find in chatList
       const selectedChat = chatList.find(
-        (chat) => chat.chatId === chatIdFromUrl || chat.id === chatIdFromUrl
+        (chat) => chat.chatId === chatIdFromUrl || chat.id === chatIdFromUrl || chat.target?.id === chatIdFromUrl || chat.target?.username === chatIdFromUrl
       );
       if (selectedChat) {
-        setSelectedChatId(chatIdFromUrl);
-        setTargetUser(selectedChat.target);
+        setSelectedChatId(selectedChat.chatId);
+        if (selectedChat.isGroup) {
+          setTargetUser({
+            isGroup: true,
+            name: selectedChat.name,
+            avatar: selectedChat.avatar,
+            adminId: selectedChat.adminId,
+          });
+        } else {
+          setTargetUser(selectedChat.target);
+        }
+      } else if (virtualChatUser && (virtualChatUser.id === chatIdFromUrl || virtualChatUser.username === chatIdFromUrl)) {
+        // 2. If it matches the virtual chat in memory
+        setSelectedChatId(null);
+        setTargetUser(virtualChatUser);
+      } else if (chatsLoaded) {
+        // 3. Fallback: dynamic fetch on refresh/direct load only if chats list has loaded
+        const fetchAndSetVirtualUser = async () => {
+          try {
+            const res = await api.get(`/v1/users/${chatIdFromUrl}`);
+            if (res.data.code === 200 && res.data.body) {
+              const u = res.data.body;
+              const virtualData = {
+                id: u.id,
+                username: u.username,
+                givenName: u.givenName,
+                familyName: u.familyName,
+                profilePictureUrl: u.profilePictureUrl,
+                online: u.online || false
+              };
+              setSelectedChatId(null);
+              setTargetUser(virtualData);
+            }
+          } catch (e) {
+            console.error("Failed to fetch virtual user on refresh:", e);
+            setSelectedChatId(null);
+            setTargetUser(null);
+          }
+        };
+        fetchAndSetVirtualUser();
       }
+    } else if (virtualChatUser) {
+      setSelectedChatId(null);
+      setTargetUser(virtualChatUser);
     } else {
       setSelectedChatId(null);
       setTargetUser(null);
     }
-  }, [chatIdFromUrl, chatList]);
+  }, [chatIdFromUrl, chatList, virtualChatUser, chatsLoaded]);
 
-  const handleSelectChat = (chatId, user) => {
+  const handleSelectChat = (chatId, user, chat) => {
     const params = new URLSearchParams(window.location.search);
     params.set("chatId", chatId);
     router.push(`/chats?${params.toString()}`, { scroll: false });
     setSelectedChatId(chatId);
-    setTargetUser(user);
+    if (chat?.isGroup) {
+      setTargetUser({
+        isGroup: true,
+        name: chat.name,
+        avatar: chat.avatar,
+        adminId: chat.adminId,
+      });
+    } else {
+      setTargetUser(user);
+    }
   };
 
   const handleChatCreated = async (newChatId, user) => {
@@ -65,6 +119,44 @@ export default function ChatLayoutInner() {
       setChatListKey((prev) => prev + 1);
     } catch (error) {
       console.error("❌ Error in chat creation flow:", error);
+    }
+  };
+
+  const handleChatUpdated = async (updatedChatId, updatedData) => {
+    try {
+      const isOptimisticAvatarPreview =
+        updatedData?.avatar && updatedData.avatar.startsWith("data:");
+
+      if (isOptimisticAvatarPreview) {
+        // Just apply the local base64 preview immediately – skip server fetch
+        if (selectedChatId === updatedChatId) {
+          setTargetUser((prev) => ({ ...prev, avatar: updatedData.avatar }));
+        }
+        return;
+      }
+
+      // Server-sync call: refresh chat list, then derive resolved avatar from server data
+      const freshChats = await fetchChatList();
+      if (selectedChatId === updatedChatId) {
+        // Apply non-avatar fields from updatedData (e.g. name)
+        const safeUpdate = { ...updatedData };
+        delete safeUpdate.avatar; // don't use raw fileId from optimistic call
+
+        // Pull the server-resolved avatar from the refreshed list
+        if (freshChats && Array.isArray(freshChats)) {
+          const refreshedChat = freshChats.find(
+            (c) => (c.chatId || c.id) === updatedChatId
+          );
+          if (refreshedChat?.avatar) {
+            safeUpdate.avatar = refreshedChat.avatar;
+          }
+        }
+
+        setTargetUser((prev) => ({ ...prev, ...safeUpdate }));
+      }
+      setChatListKey((prev) => prev + 1);
+    } catch (error) {
+      console.error("❌ Error in chat update flow:", error);
     }
   };
 
@@ -113,6 +205,7 @@ export default function ChatLayoutInner() {
             targetUser={targetUser}
             onBack={handleBackToList}
             onChatCreated={handleChatCreated}
+            onChatUpdated={handleChatUpdated}
           />
         </main>
       )}

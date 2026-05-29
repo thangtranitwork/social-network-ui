@@ -38,6 +38,7 @@ const useAppStore = create(
 
       // ============ CHAT STATE ============
       chatList: [],
+      chatsLoaded: false,
       conversationMap: new Map(),
       isLoadingChats: false,
       error: null,
@@ -81,6 +82,7 @@ const useAppStore = create(
           set({
             chatList: reversedData,
             isLoadingChats: false,
+            chatsLoaded: true,
             error: null,
             unreadMessageCount: unreadCount
           });
@@ -94,6 +96,7 @@ const useAppStore = create(
 
           set({
             isLoadingChats: false,
+            chatsLoaded: true,
             error: errorMessage,
             chatList: [],
             unreadMessageCount: 0
@@ -401,6 +404,7 @@ const useAppStore = create(
       clearAllData: () => {
         set({
           chatList: [],
+          chatsLoaded: false,
           filterType: "RELEVANT",
           conversationMap: new Map(),
           selectedChatId: null,

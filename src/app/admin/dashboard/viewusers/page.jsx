@@ -6,6 +6,7 @@ import api from "@/utils/axios";
 import UserHeader from '@/components/social-app-component/UserHeader';
 import { useRouter } from 'next/navigation';
 import adminApi from "@/utils/adminInterception";
+import toast from "react-hot-toast";
 
 const UsersPage = () => {
   const [users, setUsers] = useState([]);
@@ -27,6 +28,68 @@ const UsersPage = () => {
 
   const goBackToAdmin = () => {
     router.push('/admin/dashboard/users');
+  };
+
+  const handleSuspendUser = async (e, userId) => {
+    e.stopPropagation();
+    const durationInput = prompt("Nhập số giây khóa tài khoản (ví dụ: 300 cho 5 phút, 86400 cho 1 ngày):", "300");
+    if (!durationInput) return;
+    const duration = parseInt(durationInput);
+    if (isNaN(duration) || duration <= 0) {
+      toast.error("Thời gian khóa không hợp lệ!");
+      return;
+    }
+
+    try {
+      const res = await adminApi.post(`/v1/admin/users/${userId}/suspend`, {
+        duration_seconds: duration
+      });
+      if (res.data.code === 200) {
+        toast.success("Đã khóa tài khoản thành công!");
+        setUsers(prevUsers => prevUsers.map(u => {
+          if (u.id === userId) {
+            return {
+              ...u,
+              suspended: true,
+              suspendedUntil: res.data.body?.suspendedUntil || new Date(Date.now() + duration * 1000).toISOString()
+            };
+          }
+          return u;
+        }));
+      } else {
+        toast.error("Không thể khóa tài khoản: " + res.data.message);
+      }
+    } catch (err) {
+      toast.error("Lỗi khi khóa tài khoản!");
+      console.error(err);
+    }
+  };
+
+  const handleUnsuspendUser = async (e, userId) => {
+    e.stopPropagation();
+    if (!confirm("Bạn có chắc chắn muốn mở khóa tài khoản này?")) return;
+
+    try {
+      const res = await adminApi.post(`/v1/admin/users/${userId}/unsuspend`);
+      if (res.data.code === 200) {
+        toast.success("Đã mở khóa tài khoản thành công!");
+        setUsers(prevUsers => prevUsers.map(u => {
+          if (u.id === userId) {
+            return {
+              ...u,
+              suspended: false,
+              suspendedUntil: ""
+            };
+          }
+          return u;
+        }));
+      } else {
+        toast.error("Không thể mở khóa tài khoản: " + res.data.message);
+      }
+    } catch (err) {
+      toast.error("Lỗi khi mở khóa tài khoản!");
+      console.error(err);
+    }
   };
 
   // Format date function
@@ -174,182 +237,218 @@ const UsersPage = () => {
   // User Card Component
   const UserCard = ({ user }) => (
     <div 
-      className="bg-[var(--card)] rounded-xl shadow-sm border border-border p-6 hover:shadow-md transition-shadow cursor-pointer"
+      className="bg-[var(--card)] rounded-xl shadow-sm border border-border p-6 hover:shadow-md transition-shadow cursor-pointer flex flex-col justify-between"
       onClick={() => goToProfile(user.username)}
     >
-      {/* Header Section */}
-      <div className="flex items-start gap-4 mb-4">
-        <div className="relative">
-          {user.profilePictureUrl ? (
-            <img 
-              src={user.profilePictureUrl} 
-              alt={`${user.givenName} ${user.familyName}`}
-              className="w-16 h-16 rounded-full object-cover border-2 border-border"
-            />
-          ) : (
-            <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center">
-              <span className="text-white font-bold text-xl">
-                {user.givenName?.charAt(0)}{user.familyName?.charAt(0)}
+      <div>
+        {/* Header Section */}
+        <div className="flex items-start gap-4 mb-4">
+          <div className="relative">
+            {user.profilePictureUrl ? (
+              <img 
+                src={user.profilePictureUrl} 
+                alt={`${user.givenName} ${user.familyName}`}
+                className="w-16 h-16 rounded-full object-cover border-2 border-border"
+              />
+            ) : (
+              <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center">
+                <span className="text-white font-bold text-xl">
+                  {user.givenName?.charAt(0)}{user.familyName?.charAt(0)}
+                </span>
+              </div>
+            )}
+            {/* Online Status */}
+            <div className={`absolute -bottom-1 -right-1 w-5 h-5 rounded-full border-2 border-card ${
+              user.isOnline ? 'bg-green-500' : 'bg-gray-400'
+            }`}></div>
+          </div>
+          
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-2 mb-1">
+              <h3 className="text-lg font-bold text-card-foreground truncate">
+                {user.givenName} {user.familyName}
+              </h3>
+              {user.verified && (
+                <ShieldCheck className="w-5 h-5 text-blue-500" />
+              )}
+            </div>
+            <p className="text-sm text-muted-foreground truncate">
+              @{user.username}
+            </p>
+            <div className="flex items-center gap-1 mt-1">
+              <Clock className="w-4 h-4 text-muted-foreground" />
+              <span className="text-sm text-muted-foreground">
+                {formatLastOnline(user.lastOnline, user.isOnline)}
               </span>
             </div>
-          )}
-          {/* Online Status */}
-          <div className={`absolute -bottom-1 -right-1 w-5 h-5 rounded-full border-2 border-card ${
-            user.isOnline ? 'bg-green-500' : 'bg-gray-400'
-          }`}></div>
-        </div>
-        
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2 mb-1">
-            <h3 className="text-lg font-bold text-card-foreground truncate">
-              {user.givenName} {user.familyName}
-            </h3>
-            {user.verified && (
-              <ShieldCheck className="w-5 h-5 text-blue-500" />
+            {user.suspended && (
+              <div className="mt-2 inline-flex items-center gap-1 px-2.5 py-0.5 rounded text-xs font-semibold bg-red-100 text-red-850 dark:bg-red-950/40 dark:text-red-400 border border-red-200 dark:border-red-900">
+                <UserX className="w-3.5 h-3.5" />
+                Khóa đến: {new Date(user.suspendedUntil).toLocaleString('vi-VN')}
+              </div>
             )}
           </div>
-          <p className="text-sm text-muted-foreground truncate">
-            @{user.username}
-          </p>
-          <div className="flex items-center gap-1 mt-1">
-            <Clock className="w-4 h-4 text-muted-foreground" />
-            <span className="text-sm text-muted-foreground">
-              {formatLastOnline(user.lastOnline, user.isOnline)}
-            </span>
-          </div>
         </div>
-      </div>
 
-      {/* Bio Section */}
+        {/* Bio Section */}
         <div className="mb-4">
-  <p className="text-foreground text-sm leading-relaxed line-clamp-2 h-12">
-    {user.bio ? user.bio : "Không có tiểu sử"}
-  </p>
-</div>
-
-
-      {/* User Info Grid */}
-      <div className=" gap-8 my-2">
-      <div className="flex gap-2 justify-between" >
-        <div className="flex items-center gap-2">
-          <Mail className="w-4 h-4 text-muted-foreground" />
-          <span className="text-sm text-muted-foreground truncate">
-            {user.email}
-          </span>
+          <p className="text-foreground text-sm leading-relaxed line-clamp-2 h-12">
+            {user.bio ? user.bio : "Không có tiểu sử"}
+          </p>
         </div>
-        <div className="flex items-center gap-2">
-          <Calendar className="w-4 h-4 text-muted-foreground" />
-          <span className="text-sm text-muted-foreground">
-            {calculateAge(user.birthdate)} tuổi
-          </span>
+
+        {/* User Info Grid */}
+        <div className=" gap-8 my-2">
+          <div className="flex gap-2 justify-between" >
+            <div className="flex items-center gap-2">
+              <Mail className="w-4 h-4 text-muted-foreground" />
+              <span className="text-sm text-muted-foreground truncate">
+                {user.email || "N/A"}
+              </span>
+            </div>
+            <div className="flex items-center gap-2">
+              <Calendar className="w-4 h-4 text-muted-foreground" />
+              <span className="text-sm text-muted-foreground">
+                {calculateAge(user.birthdate)} tuổi
+              </span>
+            </div>
+          </div>
+          <div className="flex items-center gap-2 py-2">
+            <UserCheck className="w-4 h-4 text-muted-foreground" />
+            <span className="text-sm text-muted-foreground">
+              Tham gia: {formatDate(user.registrationDate)}
+            </span>
+          </div>
+          <div className="flex items-center gap-2 mb-2">
+            <Calendar className="w-4 h-4 text-muted-foreground" />
+            <span className="text-sm text-muted-foreground">
+              Sinh: {formatDate(user.birthdate)}
+            </span>
+          </div>
         </div>
+
+        {/* Statistics Section */}
+        <div className="grid grid-cols-3 gap-4 pt-4 border-t border-border">
+          <div className="text-center">
+            <div className="flex items-center justify-center gap-1 mb-1">
+              <Users className="w-4 h-4 text-blue-500" />
+              <span className="font-bold text-card-foreground">
+                {user.friendCount || 0}
+              </span>
+            </div>
+            <p className="text-xs text-muted-foreground">Bạn bè</p>
+          </div>
+          <div className="text-center">
+            <div className="flex items-center justify-center gap-1 mb-1">
+              <FileText className="w-4 h-4 text-green-500" />
+              <span className="font-bold text-card-foreground">
+                {user.postCount || 0}
+              </span>
+            </div>
+            <p className="text-xs text-muted-foreground">Bài viết</p>
+          </div>
+          <div className="text-center">
+            <div className="flex items-center justify-center gap-1 mb-1">
+              <MessageCircle className="w-4 h-4 text-purple-500" />
+              <span className="font-bold text-card-foreground">
+                {user.messageCount || 0}
+              </span>
+            </div>
+            <p className="text-xs text-muted-foreground">Tin nhắn</p>
+          </div>
+        </div>
+
+        {/* Additional Stats */}
+        <div className="grid grid-cols-5 gap-2 mt-3 pt-3 border-t border-border">
+          <div className="text-center">
+            <div className="flex items-center justify-center gap-1">
+              <MessageSquareText className="w-3 h-3 text-blue-400" />
+              <span className="text-xs font-medium text-muted-foreground">
+                {user.commentCount || 0}
+              </span>
+            </div>
+            <p className="text-xs text-muted-foreground">Bình luận</p>
+          </div>
+          <div className="text-center">
+            <div className="flex items-center justify-center gap-1">
+              <Phone className="w-3 h-3 text-green-400" />
+              <span className="text-xs font-medium text-muted-foreground">
+                {user.callCount || 0}
+              </span>
+            </div>
+            <p className="text-xs text-muted-foreground">Cuộc gọi</p>
+          </div>
+          <div className="text-center">
+            <div className="flex items-center justify-center gap-1">
+              <Send className="w-3 h-3 text-blue-400" />
+              <span className="text-xs font-medium text-muted-foreground">
+                {user.requestSentCount || 0}
+              </span>
+            </div>
+            <p className="text-xs text-muted-foreground">Đã gửi</p>
+          </div>
+          <div className="text-center">
+            <div className="flex items-center justify-center gap-1">
+              <Inbox className="w-3 h-3 text-orange-400" />
+              <span className="text-xs font-medium text-muted-foreground">
+                {user.requestReceivedCount || 0}
+              </span>
+            </div>
+            <p className="text-xs text-muted-foreground">Đã nhận</p>
+          </div>
+          <div className="text-center">
+            <div className="flex items-center justify-center gap-1">
+              <Upload className="w-3 h-3 text-indigo-400" />
+              <span className="text-xs font-medium text-muted-foreground">
+                {user.uploadedFileCount || 0}
+              </span>
+            </div>
+            <p className="text-xs text-muted-foreground">Tệp</p>
+          </div>
+        </div>
+
+        {/* Block count if exists */}
+        {user.blockCount > 0 && (
+          <div className="mt-3 pt-3 border-t border-border">
+            <div className="flex items-center justify-center gap-1">
+              <UserX className="w-4 h-4 text-red-500" />
+              <span className="text-sm text-red-600 dark:text-red-400">
+                {user.blockCount} người bị chặn
+              </span>
+            </div>
+          </div>
+        )}
       </div>
-        <div className="flex items-center gap-2 py-2">
-          <UserCheck className="w-4 h-4 text-muted-foreground" />
-          <span className="text-sm text-muted-foreground">
-            Tham gia: {formatDate(user.registrationDate)}
-          </span>
-        </div>
-                <div className="flex items-center gap-2">
-          <Calendar className="w-4 h-4 text-muted-foreground" />
-          <span className="text-sm text-muted-foreground">
-            Sinh: {formatDate(user.birthdate)}
-          </span>
-        </div>
+
+      {/* Action Buttons */}
+      <div className="mt-4 pt-3 border-t border-border flex justify-end gap-2">
+        {user.suspended ? (
+          <>
+            <button
+              onClick={(e) => handleUnsuspendUser(e, user.id)}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors bg-green-50 hover:bg-green-100 dark:bg-green-950/20 dark:hover:bg-green-950/40 text-green-600 dark:text-green-400"
+            >
+              <UserCheck className="w-4 h-4" />
+              Mở khóa
+            </button>
+            <button
+              onClick={(e) => handleSuspendUser(e, user.id)}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors bg-orange-50 hover:bg-orange-100 dark:bg-orange-950/20 dark:hover:bg-orange-950/40 text-orange-600 dark:text-orange-400"
+            >
+              <Clock className="w-4 h-4" />
+              Thay đổi thời gian khóa
+            </button>
+          </>
+        ) : (
+          <button
+            onClick={(e) => handleSuspendUser(e, user.id)}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors bg-red-50 hover:bg-red-100 dark:bg-red-950/20 dark:hover:bg-red-950/40 text-red-600 dark:text-red-400"
+          >
+            <UserX className="w-4 h-4" />
+            Khóa tài khoản
+          </button>
+        )}
       </div>
-
-
-      {/* Statistics Section */}
-      <div className="grid grid-cols-3 gap-4 pt-4 border-t border-border">
-        <div className="text-center">
-          <div className="flex items-center justify-center gap-1 mb-1">
-            <Users className="w-4 h-4 text-blue-500" />
-            <span className="font-bold text-card-foreground">
-              {user.friendCount || 0}
-            </span>
-          </div>
-          <p className="text-xs text-muted-foreground">Bạn bè</p>
-        </div>
-        <div className="text-center">
-          <div className="flex items-center justify-center gap-1 mb-1">
-            <FileText className="w-4 h-4 text-green-500" />
-            <span className="font-bold text-card-foreground">
-              {user.postCount || 0}
-            </span>
-          </div>
-          <p className="text-xs text-muted-foreground">Bài viết</p>
-        </div>
-        <div className="text-center">
-          <div className="flex items-center justify-center gap-1 mb-1">
-            <MessageCircle className="w-4 h-4 text-purple-500" />
-            <span className="font-bold text-card-foreground">
-              {user.messageCount || 0}
-            </span>
-          </div>
-          <p className="text-xs text-muted-foreground">Tin nhắn</p>
-        </div>
-      </div>
-
-      {/* Additional Stats */}
-      <div className="grid grid-cols-5 gap-2 mt-3 pt-3 border-t border-border">
-        <div className="text-center">
-          <div className="flex items-center justify-center gap-1">
-            <MessageSquareText className="w-3 h-3 text-blue-400" />
-            <span className="text-xs font-medium text-muted-foreground">
-              {user.commentCount || 0}
-            </span>
-          </div>
-          <p className="text-xs text-muted-foreground">Bình luận</p>
-        </div>
-        <div className="text-center">
-          <div className="flex items-center justify-center gap-1">
-            <Phone className="w-3 h-3 text-green-400" />
-            <span className="text-xs font-medium text-muted-foreground">
-              {user.callCount || 0}
-            </span>
-          </div>
-          <p className="text-xs text-muted-foreground">Cuộc gọi</p>
-        </div>
-        <div className="text-center">
-          <div className="flex items-center justify-center gap-1">
-            <Send className="w-3 h-3 text-blue-400" />
-            <span className="text-xs font-medium text-muted-foreground">
-              {user.requestSentCount || 0}
-            </span>
-          </div>
-          <p className="text-xs text-muted-foreground">Đã gửi</p>
-        </div>
-        <div className="text-center">
-          <div className="flex items-center justify-center gap-1">
-            <Inbox className="w-3 h-3 text-orange-400" />
-            <span className="text-xs font-medium text-muted-foreground">
-              {user.requestReceivedCount || 0}
-            </span>
-          </div>
-          <p className="text-xs text-muted-foreground">Đã nhận</p>
-        </div>
-        <div className="text-center">
-          <div className="flex items-center justify-center gap-1">
-            <Upload className="w-3 h-3 text-indigo-400" />
-            <span className="text-xs font-medium text-muted-foreground">
-              {user.uploadedFileCount || 0}
-            </span>
-          </div>
-          <p className="text-xs text-muted-foreground">Tệp tải lên</p>
-        </div>
-      </div>
-
-      {/* Block count if exists */}
-      {user.blockCount > 0 && (
-        <div className="mt-3 pt-3 border-t border-border">
-          <div className="flex items-center justify-center gap-1">
-            <UserX className="w-4 h-4 text-red-500" />
-            <span className="text-sm text-red-600 dark:text-red-400">
-              {user.blockCount} người bị chặn
-            </span>
-          </div>
-        </div>
-      )}
     </div>
   );
 

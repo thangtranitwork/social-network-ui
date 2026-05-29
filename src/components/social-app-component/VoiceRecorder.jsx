@@ -1,7 +1,7 @@
 "use client";
 import React, { useState, useRef, useEffect } from "react";
 
-export default function VoiceRecorder({ onSend }) {
+export default function VoiceRecorder({ onSend, disabled }) {
   const [isRecording, setIsRecording] = useState(false);
   const [isStopped, setIsStopped] = useState(false);
   const [audioUrl, setAudioUrl] = useState(null);
@@ -142,21 +142,30 @@ export default function VoiceRecorder({ onSend }) {
   };
 
   return (
-    <div className="relative inline-block p-2">
-      {error && <div className="text-red-500 mb-2">{error}</div>}
+    <div className="relative flex items-center justify-center">
+      {error && (
+        <div className="absolute bottom-12 left-0 text-xs text-red-450 bg-[var(--card)] border border-red-500/20 px-3 py-1.5 rounded-xl z-50 shadow-lg min-w-[200px]">
+          {error}
+        </div>
+      )}
 
       {/* Nút micro mặc định */}
       {!isRecording && !isStopped && (
         <button
           type="button"
           onClick={handleStart}
+          disabled={disabled}
           aria-label="Start recording"
-          className="flex items-center justify-center w-10 h-10 rounded-full text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-gray-700 dark:hover:text-gray-300"
+          className={`flex items-center justify-center w-9 h-9 rounded-xl transition-all ${
+            disabled
+              ? "text-[var(--muted-foreground)] opacity-50 cursor-not-allowed"
+              : "text-[var(--muted-foreground)] hover:bg-[var(--accent)] hover:text-[var(--foreground)]"
+          }`}
+          title="Ghi âm giọng nói"
         >
           <svg
             aria-hidden="true"
-            width="18"
-            height="18"
+            className="w-5 h-5"
             viewBox="0 0 24 24"
             fill="none"
             stroke="currentColor"
@@ -171,108 +180,124 @@ export default function VoiceRecorder({ onSend }) {
 
       {/* Panel hiện khi đang ghi âm hoặc đã ghi xong */}
       {(isRecording || (isStopped && audioUrl)) && (
-        <div
-          className="absolute bottom-14 left-1/2 -translate-x-1/2 flex items-center bg-white border rounded-lg shadow-md p-2 min-w-[180px] space-x-2 z-50 dark:bg-gray-900"
-          role="dialog"
-          aria-label="Recording controls"
-        >
-          {audioUrl && (
-            <audio ref={audioRef} src={audioUrl} preload="auto" hidden />
-          )}
+        <>
+          <div 
+            className="fixed inset-0 z-40" 
+            onClick={handleCancel}
+          />
+          <div
+            className="absolute bottom-12 left-0 flex items-center bg-[var(--card)] border border-[var(--border)] rounded-2xl shadow-2xl p-2.5 min-w-[220px] space-x-3.5 z-50 text-[var(--foreground)] animate-in fade-in slide-in-from-bottom-2 duration-200"
+            role="dialog"
+            aria-label="Recording controls"
+          >
+            {audioUrl && (
+              <audio ref={audioRef} src={audioUrl} preload="auto" hidden />
+            )}
 
-          {/* Khi đang ghi âm */}
-          {isRecording && (
-            <>
-              <button
-                onClick={handleStop}
-                aria-label="Stop recording"
-                className="flex items-center justify-center w-8 h-8 rounded-full text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800"
-              >
-                <svg
-                  aria-hidden="true"
-                  width="18"
-                  height="18"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="1.5"
+            {/* Khi đang ghi âm */}
+            {isRecording && (
+              <div className="flex items-center space-x-3 w-full justify-between px-1">
+                <div className="flex items-center space-x-2">
+                  <span className="relative flex h-2 w-2">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+                    <span className="relative inline-flex rounded-full h-2 w-2 bg-red-500"></span>
+                  </span>
+                  <span className="text-xs font-mono text-[var(--muted-foreground)]">
+                    {new Date(seconds * 1000).toISOString().substr(14, 5)}
+                  </span>
+                </div>
+                <button
+                  type="button"
+                  onClick={handleStop}
+                  aria-label="Stop recording"
+                  className="flex items-center justify-center w-7 h-7 rounded-lg text-red-500 hover:bg-red-500/10 transition-colors"
+                  title="Dừng ghi"
                 >
-                  <rect x="6" y="6" width="12" height="12" rx="2" />
-                </svg>
-              </button>
-              <span className="text-sm font-mono">
-                {new Date(seconds * 1000).toISOString().substr(14, 5)}
-              </span>
-            </>
-          )}
+                  <svg
+                    aria-hidden="true"
+                    className="w-4 h-4"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                  >
+                    <rect x="6" y="6" width="12" height="12" rx="2" />
+                  </svg>
+                </button>
+              </div>
+            )}
 
-          {/* Khi đã ghi xong */}
-          {isStopped && audioUrl && (
-            <>
-              <button
-                onClick={handlePlayPause}
-                aria-label="Play/Pause"
-                className="flex items-center justify-center w-8 h-8 rounded-full text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800"
-              >
-                <svg
-                  aria-hidden="true"
-                  width="18"
-                  height="18"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="1.5"
+            {/* Khi đã ghi xong */}
+            {isStopped && audioUrl && (
+              <div className="flex items-center space-x-2 w-full justify-between">
+                <button
+                  type="button"
+                  onClick={handlePlayPause}
+                  aria-label="Play/Pause"
+                  className="flex items-center justify-center w-7 h-7 rounded-lg text-[var(--foreground)] hover:bg-[var(--accent)] transition-colors"
+                  title="Nghe lại"
                 >
-                  <polygon points="7,6 17,12 7,18" />
-                  <rect x="3" y="6" width="2" height="12" />
-                </svg>
-              </button>
+                  <svg
+                    aria-hidden="true"
+                    className="w-4 h-4"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                  >
+                    <polygon points="7,6 17,12 7,18" />
+                  </svg>
+                </button>
 
-              <button
-                onClick={handleSend}
-                aria-label="Send recording"
-                className="flex items-center justify-center w-8 h-8 rounded-full text-blue-500 hover:bg-blue-100 dark:hover:bg-blue-900"
-              >
-                <svg
-                  aria-hidden="true"
-                  width="18"
-                  height="18"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="1.5"
-                >
-                  <path d="M22 2L11 13" />
-                  <path d="M22 2l-7 20 -3-9-9-3 19-8z" />
-                </svg>
-              </button>
+                <span className="text-xs font-mono text-[var(--muted-foreground)]">
+                  {new Date(seconds * 1000).toISOString().substr(14, 5)}
+                </span>
 
-              <button
-                onClick={handleCancel}
-                aria-label="Cancel recording"
-                className="flex items-center justify-center w-8 h-8 rounded-full text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800"
-              >
-                <svg
-                  aria-hidden="true"
-                  width="18"
-                  height="18"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="1.5"
-                >
-                  <path d="M3 6h18" />
-                  <path d="M8 6v12a2 2 0 0 0 2 2h4a2 2 0 0 0 2-2V6" />
-                  <path d="M10 6V4a2 2 0 0 1 2-2h0a2 2 0 0 1 2 2v2" />
-                </svg>
-              </button>
+                <div className="flex items-center space-x-1">
+                  <button
+                    type="button"
+                    onClick={handleCancel}
+                    aria-label="Cancel recording"
+                    className="flex items-center justify-center w-7 h-7 rounded-lg text-[var(--muted-foreground)] hover:bg-[var(--accent)] hover:text-red-500 transition-colors"
+                    title="Xóa bản ghi"
+                  >
+                    <svg
+                      aria-hidden="true"
+                      className="w-4 h-4"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                    >
+                      <path d="M3 6h18" />
+                      <path d="M8 6v12a2 2 0 0 0 2 2h4a2 2 0 0 0 2-2V6" />
+                    </svg>
+                  </button>
 
-              <span className="text-sm font-mono">
-                {new Date(seconds * 1000).toISOString().substr(14, 5)}
-              </span>
-            </>
-          )}
-        </div>
+                  <button
+                    type="button"
+                    onClick={handleSend}
+                    aria-label="Send recording"
+                    className="flex items-center justify-center w-7 h-7 rounded-lg text-blue-500 hover:bg-blue-500/10 transition-colors"
+                    title="Gửi âm thanh"
+                  >
+                    <svg
+                      aria-hidden="true"
+                      className="w-4 h-4"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                    >
+                      <path d="M22 2L11 13" />
+                      <path d="M22 2l-7 20 -3-9-9-3 19-8z" />
+                    </svg>
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        </>
       )}
     </div>
   );

@@ -1,7 +1,7 @@
 export default function PostSkeleton () {
     return (
         <div
-            className="w-full max-w-[600px] bg-[var(--card)] rounded-xl border border-[var(--border)] p-4 shadow-sm animate-pulse my-2"
+            className="w-full bg-[var(--card)] rounded-2xl border border-[var(--border)] p-5 shadow-md animate-pulse my-2"
         >
             {/* Header skeleton */}
             <div className="flex items-start justify-between gap-3 mb-2">

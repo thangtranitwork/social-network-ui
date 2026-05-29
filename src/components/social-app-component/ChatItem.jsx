@@ -11,21 +11,23 @@ dayjs.extend(relativeTime);
 dayjs.locale("vi");
 
 function ChatItem({ chat, onClick, selected }) {
-  const { chatId, latestMessage, target, notReadMessageCount } = chat;
+  const { chatId, latestMessage, target, notReadMessageCount, isGroup, name, avatar } = chat;
 
-  const isOnline = target?.isOnline || false;
+  const isOnline = !isGroup && (target?.isOnline || false);
   const isUnread = notReadMessageCount > 0;
-  const displayName =
-    `${target?.givenName || ""} ${target?.familyName || ""}`.trim() ||
-    target?.username ||
-    "Unknown User";
+  const displayName = isGroup
+    ? (name || "Trò chuyện nhóm")
+    : `${target?.givenName || ""} ${target?.familyName || ""}`.trim() ||
+      target?.username ||
+      "Unknown User";
+  const avatarUrl = isGroup ? avatar : target?.profilePictureUrl;
 
   let content = "Chưa có tin nhắn nào";
   let sentTime = "";
 
   if (latestMessage) {
     const isSenderTarget = latestMessage.sender?.id === target?.id;
-    const senderPrefix = isSenderTarget ? "" : "Bạn: ";
+    const senderPrefix = isSenderTarget ? "" : isGroup ? `${latestMessage.sender?.givenName || latestMessage.sender?.username || "Ai đó"}: ` : "Bạn: ";
     const {
       type,
       callId,
@@ -80,21 +82,24 @@ function ChatItem({ chat, onClick, selected }) {
       {/* Avatar */}
       <div className="relative">
         <Avatar
-          src={target?.profilePictureUrl}
+          src={avatarUrl}
           alt={displayName}
           className="w-12 h-12"
+          isGroup={isGroup}
         />
 
-        <div className="absolute bottom-0 right-0">
-          <div
-            className={`w-3.5 h-3.5 rounded-full border-2 border-background ${isOnline ? "bg-green-500" : "bg-gray-400"
-              }`}
-          >
-            {isOnline && (
-              <div className="absolute inset-0 w-3.5 h-3.5 bg-green-500 rounded-full animate-pulse opacity-75" />
-            )}
+        {!isGroup && (
+          <div className="absolute bottom-0 right-0">
+            <div
+              className={`w-3.5 h-3.5 rounded-full border-2 border-background ${isOnline ? "bg-green-500" : "bg-gray-400"
+                }`}
+            >
+              {isOnline && (
+                <div className="absolute inset-0 w-3.5 h-3.5 bg-green-500 rounded-full animate-pulse opacity-75" />
+              )}
+            </div>
           </div>
-        </div>
+        )}
       </div>
 
       {/* Info */}
@@ -153,6 +158,11 @@ const areEqual = (prevProps, nextProps) => {
   if (prev.target?.givenName !== next.target?.givenName) return false;
   if (prev.target?.familyName !== next.target?.familyName) return false;
   if (prev.target?.username !== next.target?.username) return false;
+
+  // So sánh group info
+  if (prev.isGroup !== next.isGroup) return false;
+  if (prev.name !== next.name) return false;
+  if (prev.avatar !== next.avatar) return false;
 
   // So sánh latest message
   const prevMsg = prev.latestMessage;

@@ -20,6 +20,18 @@ const nextConfig = {
         pathname: '/v1/files/**',
       },
       {
+        protocol: 'http',
+        hostname: 'localhost',
+        port: '11111',
+        pathname: '/v1/files/**',
+      },
+      {
+        protocol: 'http',
+        hostname: 'localhost',
+        port: '10000',
+        pathname: '/v1/files/**',
+      },
+      {
         protocol: 'https',
         hostname: 'api.pocpoc.online',
         pathname: '/v1/files/**',

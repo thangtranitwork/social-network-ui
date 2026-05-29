@@ -16,9 +16,7 @@ const isVideo = (url = "") => {
     }
 
     try {
-        // Parse URL an toàn cho presigned URL
         const pathname = new URL(url).pathname.toLowerCase();
-        console.log("pathname", pathname);
         return [
             ".mp4",
             ".webm",
@@ -27,9 +25,7 @@ const isVideo = (url = "") => {
             ".m4v",
         ].some((ext) => pathname.endsWith(ext));
     } catch {
-        // Fallback nếu không phải URL hợp lệ
         const cleanUrl = url.split(/[?#]/)[0].trim().toLowerCase();
-
         return /\.(mp4|webm|ogg|mov|m4v)$/i.test(cleanUrl);
     }
 };
@@ -85,14 +81,15 @@ export default function MediaCarousel({ media, page, setPage }) {
 
     return (
         <div
-            className="relative bg-black overflow-hidden w-full flex items-center justify-center min-h-[400px]"
+            className="relative bg-black overflow-hidden w-full h-full flex items-center justify-center"
+            style={{ minHeight: "400px" }}
             onTouchStart={handleTouchStart}
             onTouchEnd={handleTouchEnd}
         >
             <AnimatePresence initial={false} custom={page.direction}>
                 <motion.div
                     key={currentIndex}
-                    className="flex items-center justify-center w-full h-full"
+                    className="absolute inset-0 flex items-center justify-center"
                     custom={page.direction}
                     variants={variants}
                     initial="enter"
@@ -107,20 +104,21 @@ export default function MediaCarousel({ media, page, setPage }) {
                             autoPlay
                             controls
                             className="max-w-full max-h-full object-contain"
+                            style={{ maxHeight: "100%", maxWidth: "100%" }}
                             src={currentMedia}
                             onError={() => setHasError(true)}
                         />
                     ) : (
-                        <Image
-                            src={currentMedia}
-                            alt={`Post media ${currentIndex + 1}`}
-                            width={0}
-                            height={0}
-                            sizes="100vw"
-                            unoptimized
-                            className="max-w-full max-h-full object-contain"
-                            onError={() => setHasError(true)}
-                        />
+                        <div className="relative w-full h-full">
+                            <Image
+                                src={currentMedia}
+                                alt={`Post media ${currentIndex + 1}`}
+                                fill
+                                unoptimized
+                                className="object-contain"
+                                onError={() => setHasError(true)}
+                            />
+                        </div>
                     )}
                 </motion.div>
             </AnimatePresence>
@@ -144,7 +142,7 @@ export default function MediaCarousel({ media, page, setPage }) {
             )}
 
             {isValidMedia && media.length > 1 && (
-                <div className="absolute bottom-4 left-1/2 -translate-x-1/2 bg-black/50 text-white px-2 py-1 rounded text-sm">
+                <div className="absolute bottom-4 left-1/2 -translate-x-1/2 bg-black/50 text-white px-2 py-1 rounded text-sm z-10">
                     {currentIndex + 1} / {media.length}
                 </div>
             )}

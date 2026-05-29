@@ -205,7 +205,7 @@ const PostCard = memo(function PostCard({
         setDeleting(true)
         try {
             if (isAdmin) {
-                await adminApi.delete(`/v1/posts/${currentPost.id}`)
+                await adminApi.delete(`/v1/admin/posts/${currentPost.id}`)
             }
             else {
                 await api.delete(`/v1/posts/${currentPost.id}`)

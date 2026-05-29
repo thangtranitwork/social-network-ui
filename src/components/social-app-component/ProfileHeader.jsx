@@ -90,7 +90,7 @@ export default function ProfileHeader({
       
       selectChat(chatId);
       
-      router.push('/chats');
+      router.push(`/chats?chatId=${chatId}`);
       return;
     }
 
@@ -105,7 +105,7 @@ export default function ProfileHeader({
     console.log("🆕 Creating virtual chat:", virtualChatData);
     showVirtualChat(targetUserId, virtualChatData);
     
-    router.push('/chats');
+    router.push(`/chats?chatId=${targetUserId}`);
   };
 
   const cancelFriendRequest = async () => {

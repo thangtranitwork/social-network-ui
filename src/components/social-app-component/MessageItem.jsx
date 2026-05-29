@@ -19,6 +19,8 @@ import {
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Avatar from "../ui-components/Avatar";
 import VoiceMessage from "./VoiceMessage";
+import { useCall } from "@/context/CallContext";
+import { getUserName } from "@/utils/axios";
 
 dayjs.extend(relativeTime);
 
@@ -103,10 +105,12 @@ function MessageItem({
   const [currentFileType, setCurrentFileType] = useState(null);
   const [popupPosition, setPopupPosition] = useState('bottom');
   const buttonRef = useRef(null);
+  const { makeCall } = useCall();
 
   // Memoized computed values
   const computedValues = useMemo(() => {
-    const isSelf = msg.sender?.id !== targetUser?.id;
+    const currentUserId = typeof window !== 'undefined' ? localStorage.getItem("userId") : null;
+    const isSelf = msg.sender?.id === currentUserId;
     const isSelected = selectedMessage === msg.id;
     const timeSent = dayjs(msg.sentAt).fromNow();
     const isDeleted = msg.deleted === true;
@@ -250,26 +254,46 @@ function MessageItem({
     };
   }, [MediaPreview]);
 
-  // Memoized message content
   const messageContent = useMemo(() => {
     if (isDeleted) return "Tin nhắn đã bị thu hồi";
 
     if (msg.type === "CALL" && msg.callId) {
-      if (msg.answered === false) {
+      const isGroup = targetUser?.isGroup;
+      const isActive = !msg.endAt;
+
+      if (msg.answered === false && !isGroup) {
         return <>📞 Cuộc gọi nhỡ</>;
       } else {
-        const durationSec = dayjs(msg.endAt).diff(dayjs(msg.callAt), "second");
-        const minutes = Math.floor(durationSec / 60);
-        const seconds = durationSec % 60;
-        const durationStr = `${minutes}:${seconds.toString().padStart(2, "0")}`;
+        const durationSec = msg.endAt ? dayjs(msg.endAt).diff(dayjs(msg.callAt), "second") : 0;
+        const durationStr = formatDuration(durationSec);
 
         return (
-          <>
-            📞 Cuộc gọi đã kết thúc
-            <div className="text-xs opacity-70 mt-1">
-              Thời lượng: {durationStr}
+          <div className="flex flex-col gap-2 min-w-[120px]">
+            <div className="flex items-center gap-2">
+              <Phone size={14} className={isActive && isGroup ? "text-green-500 animate-pulse" : ""} />
+              <span className="font-semibold">
+                {isGroup ? (isActive ? "Cuộc gọi nhóm đang diễn ra" : "Cuộc gọi nhóm đã kết thúc") : "Cuộc gọi đã kết thúc"}
+              </span>
             </div>
-          </>
+            
+            {isActive && isGroup && (
+              <button 
+                onClick={(e) => {
+                    e.stopPropagation();
+                    makeCall(getUserName(), msg.isVideoCall, msg.chatId);
+                }}
+                className="w-full bg-green-500 hover:bg-green-600 text-white py-1.5 rounded-lg text-xs font-bold transition-all active:scale-95 flex items-center justify-center gap-1 shadow-sm"
+              >
+                Tham gia
+              </button>
+            )}
+
+            {msg.endAt && (
+              <div className="text-[10px] opacity-70 border-t border-white/20 pt-1">
+                Thời lượng: {durationStr}
+              </div>
+            )}
+          </div>
         );
       }
     }
@@ -323,7 +347,7 @@ function MessageItem({
       })}>
         {!isSelf && (
           <Avatar
-            src={targetUser?.profilePictureUrl}
+            src={msg.sender?.profilePictureUrl}
             className="flex-shrink-0 mt-1 "
           />
         )}
@@ -332,76 +356,83 @@ function MessageItem({
           "flex-row-reverse": isSelf,
           "flex-row": !isSelf,
         })}>
-          <div className="relative flex items-start gap-1">
-            {/* More button - bên trái bubble */}
-            {isSelf && !isDeleted && showMoreButton && (
-              <div className="relative">
-                <button
-                  ref={buttonRef}
-                  onClick={handleMessageClick}
-                  className="text-[var(--muted-foreground)] hover:text-[var(--foreground)] p-1 rounded-full hover:bg-[var(--muted)] transition-all opacity-0 group-hover:opacity-100"
-                >
-                  <MoreVertical className="w-4 h-4" />
-                </button>
-
-                {isSelected && (
-                  <div
-                    className={clsx(
-                      "absolute left-0 mt-1 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 p-1 z-10 min-w-[100px]",
-                      popupPosition === 'top' ? 'bottom-full mb-1' : 'top-full mt-1'
-                    )}
-                    onClick={(e) => e.stopPropagation()}
-                  >
-                    {canEdit && (
-                      <button
-                        onClick={handleEditMessage}
-                        className="flex items-center gap-2 px-3 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded w-full text-left"
-                      >
-                        <Edit className="w-4 h-4" />
-                        <span>Sửa</span>
-                      </button>
-                    )}
-                    <button
-                      onClick={handleDeleteMessage}
-                      className="flex items-center gap-2 px-3 py-2 text-sm text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded w-full text-left"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                      <span>Xóa</span>
-                    </button>
-                  </div>
-                )}
-              </div>
+          <div className="flex flex-col gap-0.5 max-w-full">
+            {!isSelf && targetUser?.isGroup && (
+              <span className="text-xs text-muted-foreground ml-1">
+                {msg.sender?.givenName || msg.sender?.username || "Ai đó"}
+              </span>
             )}
+            <div className="relative flex items-start gap-1">
+              {/* More button - bên trái bubble */}
+              {isSelf && !isDeleted && showMoreButton && (
+                <div className="relative">
+                  <button
+                    ref={buttonRef}
+                    onClick={handleMessageClick}
+                    className="text-[var(--muted-foreground)] hover:text-[var(--foreground)] p-1 rounded-full hover:bg-[var(--muted)] transition-all opacity-0 group-hover:opacity-100"
+                  >
+                    <MoreVertical className="w-4 h-4" />
+                  </button>
 
-            {/* Message bubble */}
-            <div
-              className={clsx(
-                "rounded-xl px-3 py-2 text-sm inline-block max-w-[60%] break-words",
-                isDeleted
-                  ? "bg-gray-200 text-gray-500 italic dark:bg-gray-700 dark:text-gray-400"
-                  : isSelf
-                    ? "bg-blue-500 text-white"
-                    : "bg-[var(--muted)] text-[var(--foreground)]"
+                  {isSelected && (
+                    <div
+                      className={clsx(
+                        "absolute left-0 mt-1 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 p-1 z-10 min-w-[100px]",
+                        popupPosition === 'top' ? 'bottom-full mb-1' : 'top-full mt-1'
+                      )}
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      {canEdit && (
+                        <button
+                          onClick={handleEditMessage}
+                          className="flex items-center gap-2 px-3 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded w-full text-left"
+                        >
+                          <Edit className="w-4 h-4" />
+                          <span>Sửa</span>
+                        </button>
+                      )}
+                      <button
+                        onClick={handleDeleteMessage}
+                        className="flex items-center gap-2 px-3 py-2 text-sm text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded w-full text-left"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                        <span>Xóa</span>
+                      </button>
+                    </div>
+                  )}
+                </div>
               )}
-              style={{
-                wordBreak: 'break-word',
-                whiteSpace: 'pre-wrap',
-                maxWidth: '100%'
-              }}
-            >
-              {messageContent}
 
-              <div className="text-xs mt-1 opacity-70 flex items-center justify-between gap-2">
-                {isUpdated && !isDeleted && (
-                  <span className="flex items-center gap-1">
-                    <Edit className="w-3 h-3" />
-                    <span>đã chỉnh sửa</span>
-                  </span>
+              {/* Message bubble */}
+              <div
+                className={clsx(
+                  "rounded-xl px-3 py-2 text-sm inline-block max-w-[60%] break-words",
+                  isDeleted
+                    ? "bg-gray-200 text-gray-500 italic dark:bg-gray-700 dark:text-gray-400"
+                    : isSelf
+                      ? "bg-blue-500 text-white"
+                      : "bg-[var(--muted)] text-[var(--foreground)]"
                 )}
-                <span className="ml-auto">{timeSent}</span>
-                {isSelf && !isDeleted && isReading && (
-                  <Check size={12} />
-                )}
+                style={{
+                  wordBreak: 'break-word',
+                  whiteSpace: 'pre-wrap',
+                  maxWidth: '100%'
+                }}
+              >
+                {messageContent}
+
+                <div className="text-xs mt-1 opacity-70 flex items-center justify-between gap-2">
+                  {isUpdated && !isDeleted && (
+                    <span className="flex items-center gap-1">
+                      <Edit className="w-3 h-3" />
+                      <span>đã chỉnh sửa</span>
+                    </span>
+                  )}
+                  <span className="ml-auto">{timeSent}</span>
+                  {isSelf && !isDeleted && isReading && (
+                    <Check size={12} />
+                  )}
+                </div>
               </div>
             </div>
           </div>

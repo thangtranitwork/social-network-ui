@@ -342,9 +342,9 @@ export const Comment = memo(({
             }
         }, [comments.deleteComment]),
 
-        likeReply: useCallback(async (replyId, isLiked) => {
+        likeReply: useCallback(async (replyId, liked) => {
             try {
-                await comments.likeComment(replyId, isLiked);
+                await comments.likeComment(replyId, liked);
             } catch (error) {
                 console.error("Error liking reply:", error);
                 toast.error("Có lỗi xảy ra khi thích phản hồi");

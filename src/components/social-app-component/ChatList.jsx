@@ -1,9 +1,10 @@
 "use client";
 import { usePathname } from "next/navigation";
-import { ChevronDown, ChevronUp, SearchIcon, RefreshCw } from "lucide-react";
+import { ChevronDown, ChevronUp, SearchIcon, RefreshCw, Users } from "lucide-react";
 import ChatItem from "./ChatItem";
-import Input from "../ui-components/Input";
 import Avatar from "../ui-components/Avatar";
+import Modal from "../ui-components/Modal";
+import CreateGroupModal from "./CreateGroupModal";
 import { useEffect, useRef, useState } from "react";
 import api from "@/utils/axios";
 import useAppStore from "@/store/ZustandStore";
@@ -18,6 +19,7 @@ export default function ChatList({ onSelectChat, selectedChatId }) {
     fetchChatList,
     markChatAsRead,
     refreshChatList,
+    virtualChatUser,
     error: storeError
   } = useAppStore();
 
@@ -26,6 +28,7 @@ export default function ChatList({ onSelectChat, selectedChatId }) {
   const [searchResults, setSearchResults] = useState(null);
   const [isSearching, setIsSearching] = useState(false);
   const [fetchAttempted, setFetchAttempted] = useState(false);
+  const [isCreateGroupOpen, setIsCreateGroupOpen] = useState(false);
   const listRef = useRef(null);
   const isChatsPage = pathname === "/chats";
 
@@ -75,6 +78,13 @@ export default function ChatList({ onSelectChat, selectedChatId }) {
         behavior: 'smooth'
       });    }
   }, [chatList]);
+
+  const handleGroupCreated = async (newChatId, newGroup) => {
+    if (typeof fetchChatList === "function") {
+      await fetchChatList();
+    }
+    onSelectChat(newChatId, newGroup, { ...newGroup, chatId: newChatId });
+  };
 
   // Improved chat selection handler
   const handleChatSelect = async (chat) => {
@@ -139,12 +149,32 @@ export default function ChatList({ onSelectChat, selectedChatId }) {
     return () => clearTimeout(timeout);
   }, [searchTerm]);
 
-  const filteredChats = searchResults ?? chatList;
+  // If we have a virtualChatUser, and they are not already in the chatList, create a mock chat item
+  const mockVirtualChat = virtualChatUser && !chatList.some(
+    (c) => c.chatId === virtualChatUser.id || c.id === virtualChatUser.id || c.target?.id === virtualChatUser.id || c.target?.username === virtualChatUser.username
+  ) ? {
+    chatId: virtualChatUser.id,
+    id: virtualChatUser.id,
+    target: {
+      id: virtualChatUser.id,
+      username: virtualChatUser.username,
+      givenName: virtualChatUser.givenName,
+      familyName: virtualChatUser.familyName,
+      profilePictureUrl: virtualChatUser.profilePictureUrl,
+      onlineStatus: { isOnline: virtualChatUser.online }
+    },
+    latestMessage: null,
+    notReadMessageCount: 0,
+    updatedAt: new Date().toISOString(),
+  } : null;
+
+  const baseChats = mockVirtualChat ? [...chatList, mockVirtualChat] : chatList;
+  const filteredChats = searchResults ?? baseChats;
 
   // Create unique chats for collapsed view with online status
   const uniqueChats = [
     ...new Map(
-        chatList.map(chat => [
+        baseChats.map(chat => [
           chat.target?.userId || chat.target?.id || chat.target?.username,
           chat
         ])
@@ -194,7 +224,7 @@ export default function ChatList({ onSelectChat, selectedChatId }) {
   }
 
   // Enhanced empty state
-  if (!isLoadingChats && chatList.length === 0 && fetchAttempted) {
+  if (!isLoadingChats && baseChats.length === 0 && fetchAttempted) {
     return (
         <div className="p-4 text-center text-muted-foreground">
           <div className="mb-2">Chưa có cuộc trò chuyện nào</div>
@@ -249,10 +279,10 @@ export default function ChatList({ onSelectChat, selectedChatId }) {
               )}
             </div>
             <span className="text-xs md:text-sm text-muted-foreground hidden md:inline">
-            {chatList.length > 3 ? `và +${chatList.length - 3}  đoạn chat khác` : `${chatList.length} cuộc trò chuyện`}
+            {baseChats.length > 3 ? `và +${baseChats.length - 3}  đoạn chat khác` : `${baseChats.length} cuộc trò chuyện`}
           </span>
             <span className="text-xs text-muted-foreground md:hidden">
-            {chatList.length}
+            {baseChats.length}
           </span>
             <ChevronDown className="h-3 w-3 md:h-4 md:w-4 text-muted-foreground" />
           </div>
@@ -295,16 +325,26 @@ export default function ChatList({ onSelectChat, selectedChatId }) {
             </div>
         )}
 
-        {/* Search bar */}
+        {/* Search bar & Create Group button */}
         <div className="px-2 md:px-3 py-1 md:py-2 border-b hidden md:block">
-          <div className="relative">
-            <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input
-                placeholder="Tìm kiếm đoạn chat"
-                className="w-full "
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-            />
+          <div className="flex items-center gap-2">
+            <div className="relative flex-1">
+              <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <input
+                  type="text"
+                  placeholder="Tìm kiếm đoạn chat"
+                  className="w-full pl-9 pr-4 py-1.5 text-sm bg-[var(--background)] border border-[var(--border)] rounded-lg outline-none text-[var(--foreground)] placeholder-muted-foreground"
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+              />
+            </div>
+            <button
+                onClick={() => setIsCreateGroupOpen(true)}
+                className="p-2 bg-[var(--accent)] hover:bg-[var(--accent)]/80 text-foreground rounded-lg transition-colors border border-[var(--border)]"
+                title="Tạo nhóm"
+            >
+              <Users className="h-4 w-4" />
+            </button>
           </div>
         </div>
 
@@ -320,7 +360,7 @@ export default function ChatList({ onSelectChat, selectedChatId }) {
                       <div key={chat.chatId}>
                         <ChatItem
                             chat={chat}
-                            selected={selectedChatId === (chat.chatId)}
+                            selected={selectedChatId === chat.chatId || (selectedChatId === null && virtualChatUser && (chat.chatId === virtualChatUser.id || chat.target?.id === virtualChatUser.id))}
                             onClick={() => handleChatSelect(chat)}
                         />
                       </div>
@@ -331,6 +371,17 @@ export default function ChatList({ onSelectChat, selectedChatId }) {
               </div>
           )}
         </div>
+
+        <Modal
+          isOpen={isCreateGroupOpen}
+          onClose={() => setIsCreateGroupOpen(false)}
+          size="small"
+        >
+          <CreateGroupModal
+            onClose={() => setIsCreateGroupOpen(false)}
+            onChatCreated={handleGroupCreated}
+          />
+        </Modal>
       </div>
   );
 }

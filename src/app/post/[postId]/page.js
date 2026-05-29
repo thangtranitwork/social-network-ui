@@ -59,7 +59,7 @@ export default function PostPage() {
                 const postData = response.data.body;
 
                 setPost(postData);
-                setLiked(postData.isLiked || false);
+                setLiked(postData.liked || false);
                 setLikeCount(postData.likeCount || 0);
 
             } catch (err) {

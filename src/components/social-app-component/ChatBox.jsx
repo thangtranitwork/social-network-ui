@@ -18,10 +18,17 @@ import TypingIndicator from "../ui-components/TypingIndicator";
 import ChatHeader from "./ChatHeader";
 import ChatInput from "./ChatInput";
 import MessageItem from "./MessageItem";
+import ChatDetailsSidebar from "./ChatDetailsSidebar";
 
-export default function ChatBox({ chatId, targetUser, onBack, onChatCreated }) {
+export default function ChatBox({ chatId, targetUser, onBack, onChatCreated, onChatUpdated }) {
   // State management
   const [input, setInput] = useState("");
+  const [showDetails, setShowDetails] = useState(false);
+
+  useEffect(() => {
+    setShowDetails(false);
+  }, [chatId]);
+
   const [uploading, setUploading] = useState(false);
   const [selectedMessage, setSelectedMessage] = useState(null);
   const [editingMessage, setEditingMessage] = useState(null);
@@ -523,55 +530,69 @@ export default function ChatBox({ chatId, targetUser, onBack, onChatCreated }) {
         targetUser={targetUser}
         isConnected={isNewChat ? true : isConnected}
         onBack={onBack}
-        onCall={() => makeCall(targetUser?.username, false)}
-        onVideoCall={() => makeCall(targetUser?.username, true)}
+        onCall={() => makeCall(targetUser?.username, false, currentChatId)}
+        onVideoCall={() => makeCall(targetUser?.username, true, currentChatId)}
+        onMoreOptions={() => setShowDetails((prev) => !prev)}
       />
 
-      <div
-        ref={messagesContainerRef}
-        className="flex-1 px-4 py-3 overflow-y-auto space-y-2 bg-transparent flex flex-col-reverse"
-        style={{
-          scrollBehavior: 'smooth',
-          overscrollBehavior: 'contain'
-        }}
-      >
-        {renderMessages()}
+      <div className="flex flex-1 overflow-hidden relative">
+        <div className="flex-1 flex flex-col min-w-0 h-full relative">
+          <div
+            ref={messagesContainerRef}
+            className="flex-1 px-4 py-3 overflow-y-auto space-y-2 bg-transparent flex flex-col-reverse"
+            style={{
+              scrollBehavior: 'smooth',
+              overscrollBehavior: 'contain'
+            }}
+          >
+            {renderMessages()}
+          </div>
+
+          {renderBlockedStatus()}
+
+          {canSendMessage && (
+            <FilePreviewInChat
+              selectedFile={selectedFile}
+              filePreview={filePreview}
+              onCancel={handleCancelFile}
+            />
+          )}
+
+          {canSendMessage && (
+            <ChatInput
+              input={input}
+              setInput={setInput}
+              isConnected={!isInputDisabled}
+              selectedFile={selectedFile}
+              editingMessage={editingMessage}
+              uploading={uploading}
+              disabled={isInputDisabled}
+              loading={isSendingMessage || isCreatingChat}
+              onSend={handleSend}
+              onSendFile={handleSendFile}
+              onSendGif={handleSendGif}
+              onSendVoice={handleSendVoice}
+              onSaveEdit={handleSaveEdit}
+              onCancelEdit={handleCancelEdit}
+              onCancelFile={handleCancelFile}
+              onFileSelect={handleFileSelect}
+              onKeyDown={handleKeyDown}
+              placeholder={inputPlaceholder}
+              onFocus={handleInputFocus}
+              onBlur={handleInputBlur}
+            />
+          )}
+        </div>
+
+        {showDetails && (
+          <ChatDetailsSidebar
+            chatId={currentChatId}
+            targetUser={targetUser}
+            onClose={() => setShowDetails(false)}
+            onChatUpdated={onChatUpdated}
+          />
+        )}
       </div>
-
-      {renderBlockedStatus()}
-
-      {canSendMessage && (
-        <FilePreviewInChat
-          selectedFile={selectedFile}
-          filePreview={filePreview}
-          onCancel={handleCancelFile}
-        />
-      )}
-
-      {canSendMessage && (
-        <ChatInput
-          input={input}
-          setInput={setInput}
-          isConnected={!isInputDisabled}
-          selectedFile={selectedFile}
-          editingMessage={editingMessage}
-          uploading={uploading}
-          disabled={isInputDisabled}
-          loading={isSendingMessage || isCreatingChat}
-          onSend={handleSend}
-          onSendFile={handleSendFile}
-          onSendGif={handleSendGif}
-          onSendVoice={handleSendVoice}
-          onSaveEdit={handleSaveEdit}
-          onCancelEdit={handleCancelEdit}
-          onCancelFile={handleCancelFile}
-          onFileSelect={handleFileSelect}
-          onKeyDown={handleKeyDown}
-          placeholder={inputPlaceholder}
-          onFocus={handleInputFocus}
-          onBlur={handleInputBlur}
-        />
-      )}
     </div>
   );
 }

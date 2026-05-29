@@ -49,14 +49,14 @@ export default function useSendMessage({ chatId, receiverUsername }) {
         return false;
       }
 
-      if (!receiverUsername?.trim()) {
-        console.warn("⚠️ Missing receiver username");
+      if (!chatId && !receiverUsername?.trim()) {
+        console.warn("⚠️ Missing receiver username for new chat");
         return false;
       }
 
       const messageData = {
         chatId: chatId || null,
-        username: receiverUsername.trim(),
+        username: receiverUsername ? receiverUsername.trim() : "",
         text: text.trim(),
       };
 

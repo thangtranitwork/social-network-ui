@@ -120,6 +120,7 @@ class CustomSocketSingleton {
     try {
       const ws = await this.connectSocket(wsUrl);
       if (ws.readyState === WebSocket.OPEN) {
+        console.log(`📡 Sending to ${destination}:`, message);
         ws.send(JSON.stringify(message));
         return true;
       }

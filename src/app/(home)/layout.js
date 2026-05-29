@@ -19,70 +19,9 @@ import { getAuthInfo } from "@/utils/axios";
 // ✅ Import Call System
 import { CallProvider } from "@/context/CallContext";
 import { useCall } from "@/context/CallContext";
-import CallPopup from "@/components/social-app-component/CallPopup";
-import CallVideo from "@/components/social-app-component/CallVideo";
 import ThemeProvider from "@/providers/ThemeProvider";
 import { useRouter } from "next/navigation";
 import {pageMetadata, usePageMetadata} from "@/utils/clientMetadata";
-// ✅ Component để hiển thị call UI global
-function GlobalCallInterface() {
-  const { 
-    incomingCaller, 
-    currentCall, 
-    localStream, 
-    remoteStream, 
-    isCallEnding,
-    acceptCall, 
-    rejectCall 
-  } = useCall();
-  const router=useRouter();
-  // ✅ State để control việc hiển thị CallVideo
-  const [showCallVideo, setShowCallVideo] = useState(false);
-  useEffect(()=>{
-  const authInfo=getAuthInfo();
-  if(!authInfo){
-        router.push("/register")
-        return;
-  }
-  if(!authInfo.token || !authInfo.userId || !authInfo.userName)
-    router.push("/register")
-},[router])
-
-  // ✅ Hiển thị CallVideo khi có cuộc gọi active hoặc đang ending
-  useEffect(() => {
-    const shouldShow = currentCall || isCallEnding;
-    console.log("[DEBUG] CallVideo visibility - currentCall:", !!currentCall, "isCallEnding:", isCallEnding, "shouldShow:", shouldShow);
-    setShowCallVideo(shouldShow);
-  }, [currentCall, isCallEnding]);
-
-  // ✅ Callback khi CallVideo đóng
-  const handleCallVideoClose = () => {
-    console.log("[DEBUG] CallVideo closed by user");
-    setShowCallVideo(false);
-  };
-
-  return (
-    <>
-      {/* Popup cho cuộc gọi đến */}
-      {incomingCaller && !currentCall && !isCallEnding && (
-        <CallPopup
-          caller={incomingCaller}
-          onAccept={acceptCall}
-          onReject={rejectCall}
-        />
-      )}
-
-      {/* Video interface khi đang trong cuộc gọi */}
-      {showCallVideo && (
-        <CallVideo 
-          localStream={localStream} 
-          remoteStream={remoteStream}
-          onCallEnd={handleCallVideoClose}
-        />
-      )}
-    </>
-  );
-}
 
 // ✅ Hàm kiểm tra route có cần hiển thị header không
 function shouldShowHeader(pathname) {
@@ -267,9 +206,6 @@ function MainLayoutContent({ children }) {
     );
   };
 
-  // ✅ Kiểm tra có đang trong cuộc gọi để điều chỉnh UI
-  const isInCall = currentCall || isCallEnding;
-
   // ✅ Tính toán header height và padding top
   const headerHeight = showHeader ? "h-12" : "h-0";
   const contentPaddingTop = showHeader ? "pt-12" : "pt-0";
@@ -291,8 +227,8 @@ const layoutContent = (
       }} 
     />
 
-    {/* ✅ Main UI - ẩn khi đang trong cuộc gọi */}
-    <div className={`h-screen flex flex-col ${isInCall ? 'hidden' : ''}`}>
+    {/* ✅ Main UI */}
+    <div className={`h-screen flex flex-col`}>
       
       {/* ✅ Header - chỉ hiển thị khi showHeader = true */}
       {showHeader && (
@@ -315,8 +251,8 @@ const layoutContent = (
         <main className={`flex-1 ${showHeader ? 'h-[calc(100vh-64px)]' : 'h-screen'} overflow-y-auto`}>
           <div
             className={`${
-              hideRightSidebar ? "max-w-6xl" : "max-w-4xl"
-            } w-full mx-auto space-y-6 pb-[72px] md:pb-0`}
+              hideRightSidebar ? "max-w-7xl" : "max-w-5xl"
+            } w-full mx-auto space-y-6 pb-[72px] md:pb-0 px-4 sm:px-6`}
           >
             {children}
           </div>
@@ -331,9 +267,6 @@ const layoutContent = (
         <Sidebar />
       </div>
     </div>
-
-    {/* ✅ Global Call Interface - luôn hiển thị */}
-    <GlobalCallInterface />
   </>
 );
 

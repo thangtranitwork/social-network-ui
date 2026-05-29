@@ -119,21 +119,24 @@ export default function ChatInput({
       return (
         <button
           disabled
-          className="flex items-center justify-center w-8 h-8 bg-blue-500/50 text-white rounded-full cursor-not-allowed opacity-50"
+          className="flex items-center justify-center w-9 h-9 bg-blue-600/50 text-white rounded-xl cursor-not-allowed opacity-50 flex-shrink-0"
         >
-          <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-white"></div>
+          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
         </button>
       )
     }
 
+    const active = canSend()
     return (
       <button
+        type="button"
         onClick={handleSendClick}
-        disabled={!canSend()}
-        className={`flex items-center justify-center w-8 h-8 rounded-full transition-colors ${!canSend()
-          ? "bg-gray-300 text-gray-500 cursor-not-allowed"
-          : "bg-blue-500 hover:bg-blue-600 text-white"
-          }`}
+        disabled={!active}
+        className={`flex items-center justify-center w-9 h-9 rounded-xl transition-all flex-shrink-0 ${
+          !active
+            ? "bg-[var(--accent)] text-[var(--muted-foreground)] opacity-55 cursor-not-allowed"
+            : "bg-blue-600 hover:bg-blue-500 text-white shadow-sm shadow-blue-500/25 active:scale-[0.97]"
+        }`}
       >
         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
@@ -143,10 +146,10 @@ export default function ChatInput({
   }
 
   return (
-    <div className="px-4 py-2 border-t border-[var(--border)] space-y-2">
+    <div className="px-4 py-3 border-t border-[var(--border)] bg-[var(--card)]">
       {/* Editing indicator */}
       {editingMessage && (
-        <div className="flex items-center justify-between px-3 py-1.5 bg-yellow-50 dark:bg-yellow-900/20 rounded-lg">
+        <div className="flex items-center justify-between px-3 py-1.5 bg-yellow-50 dark:bg-yellow-900/20 rounded-xl mb-2">
           <div className="flex items-center space-x-2">
             <span className="text-sm">✏️</span>
             <span className="text-xs font-medium text-yellow-600 dark:text-yellow-400">Đang sửa tin nhắn</span>
@@ -164,7 +167,7 @@ export default function ChatInput({
 
       {/* File preview */}
       {selectedFile && (
-        <div className="flex items-center justify-between px-3 py-1.5 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
+        <div className="flex items-center justify-between px-3 py-1.5 bg-blue-50 dark:bg-blue-900/20 rounded-xl mb-2">
           <div className="flex items-center space-x-2 min-w-0 flex-1">
             <span className="text-sm">📎</span>
             <span className="text-xs font-medium text-blue-600 dark:text-blue-400 truncate">{selectedFile.name}</span>
@@ -182,67 +185,64 @@ export default function ChatInput({
       )}
 
       {/* Main input area */}
-      <div className="flex items-center space-x-2">
-        {/* File upload button */}
-        <button
-          onClick={handleFileClick}
-          disabled={disabled || loading}
-          className={`flex items-center justify-center w-8 h-8 rounded-full transition-colors ${disabled || loading
-            ? "text-gray-400 cursor-not-allowed"
-            : "text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-gray-700 dark:hover:text-gray-300"
+      <div className="flex items-end space-x-2">
+        {/* Actions Button Group */}
+        <div className="flex items-center space-x-1 flex-shrink-0 mb-[1px]">
+          {/* File upload button */}
+          <button
+            type="button"
+            onClick={handleFileClick}
+            disabled={disabled || loading}
+            className={`flex items-center justify-center w-9 h-9 rounded-xl transition-all ${
+              disabled || loading
+                ? "text-[var(--muted-foreground)] opacity-50 cursor-not-allowed"
+                : "text-[var(--muted-foreground)] hover:bg-[var(--accent)] hover:text-[var(--foreground)]"
             }`}
-          title="Đính kèm file"
-        >
-          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"
-            />
-          </svg>
-        </button>
-        <div disabled={disabled || loading}
-          className={`flex items-center justify-center w-8 h-8 rounded-full transition-colors ${disabled || loading
-            ? "text-gray-400 cursor-not-allowed"
-            : "text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-gray-700 dark:hover:text-gray-300"
-            }`}
-          title="Gửi GIF">
-          <GifPicker onSend={onSendGif} />
+            title="Đính kèm file"
+          >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={1.5}
+                d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"
+              />
+            </svg>
+          </button>
 
-        </div>
-        <div disabled={disabled || loading}
-          className={`flex items-center justify-center w-8 h-8 rounded-full transition-colors ${disabled || loading
-            ? "text-gray-400 cursor-not-allowed"
-            : "text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-gray-700 dark:hover:text-gray-300"
-            }`}
-          title="Gửi GIF">
-          <VoiceRecorder onSend={onSendVoice} />
+          {/* Gif picker button */}
+          <GifPicker onSend={onSendGif} disabled={disabled || loading} />
 
+          {/* Voice recorder button */}
+          <VoiceRecorder onSend={onSendVoice} disabled={disabled || loading} />
         </div>
+
         {/* Input field */}
-        <div className="flex-1 m-2">
+        <div className="flex-1 min-w-0">
           <textarea
             ref={textareaRef}
             value={input}
             onChange={handleInputChange}
             onKeyDown={onKeyDown}
-            onFocus={handleTextareaFocus}  // ✅ Gọi typing focus handler với logging
-            onBlur={handleTextareaBlur}    // ✅ Gọi typing blur handler với logging
+            onFocus={handleTextareaFocus}
+            onBlur={handleTextareaBlur}
             disabled={disabled}
             placeholder={selectedFile ? "Thêm mô tả cho file (tùy chọn)..." : placeholder}
-            className={`w-full px-3 py-2 border border-[var(--border)] rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-[var(--background)] text-[var(--foreground)] transition-all text-sm ${disabled ? "opacity-50 cursor-not-allowed" : ""
-              }`}
+            className={`w-full px-3 py-2 border border-[var(--border)] rounded-xl resize-none focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-transparent bg-[var(--background)] text-[var(--foreground)] transition-all text-sm block ${
+              disabled ? "opacity-50 cursor-not-allowed" : ""
+            }`}
             rows={1}
             style={{
-              minHeight: "32px",
-              maxHeight: "96px",
+              minHeight: "36px",
+              maxHeight: "120px",
             }}
           />
         </div>
 
         {/* Send button */}
-        {renderSendButton()}
+        <div className="flex-shrink-0 mb-[1px]">
+          {renderSendButton()}
+        </div>
 
         {/* Hidden file input */}
         <input ref={fileInputRef} type="file" onChange={onFileSelect} className="hidden" accept="*/*" />
