@@ -1,36 +1,198 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
+# 🌐 PocPoc — Social Network UI
 
-## Getting Started
+> Frontend web application for the **PocPoc** social network platform, built with **Next.js 15** and **React 18**.
 
-First, run the development server:
+---
+
+## ✨ Features
+
+- 📰 **Newsfeed** — Infinite-scroll post feed with relevance/latest filter
+- 💬 **Real-time Chat** — 1-on-1 & group messaging via WebSocket (STOMP)
+- 📞 **Voice & Video Calls** — In-app calling powered by Stringee SDK
+- 🔔 **Live Notifications** — Socket-driven notification center with unread badge
+- 👤 **User Profiles** — Profile header, posts tab, mutual friends, friend request flow
+- 🤝 **Friends System** — Friend requests, search, and friend list management
+- 🖼️ **Media Support** — Image/video carousel, voice message recording & playback
+- 🎞️ **GIF Picker** — Inline GIF search and sending in chat
+- 🌙 **Dark / Light Mode** — Theme toggle with `next-themes`
+- 🌐 **Internationalisation** — Multi-language support via `next-intl`
+- 🛡️ **Admin Dashboard** — User & post management panel
+- 📱 **PWA Ready** — Progressive Web App notification manager
+
+---
+
+## 🛠️ Tech Stack
+
+| Layer | Technology |
+|---|---|
+| Framework | [Next.js 15](https://nextjs.org) (App Router) |
+| UI Library | React 18 |
+| Styling | Tailwind CSS v4 |
+| Animations | Framer Motion |
+| State Management | Zustand (with devtools) |
+| HTTP Client | Axios |
+| Real-time | STOMP over SockJS |
+| Charts | Recharts |
+| Voice/Video | Stringee SDK |
+| Audio Waveform | WaveSurfer.js |
+| Icons | Lucide React |
+| Date Utils | Day.js |
+| Auth | JWT / js-cookie |
+| i18n | next-intl |
+
+---
+
+## 📁 Project Structure
+
+```
+src/
+├── app/
+│   ├── (auth)/          # Login / Register pages
+│   ├── (home)/          # Main app layout (auth-gated)
+│   │   ├── home/        # Newsfeed page
+│   │   ├── chats/       # Chat list + chat box
+│   │   ├── friends/     # Friends list & requests
+│   │   ├── profile/     # User profile ([username])
+│   │   ├── search/      # People / post search
+│   │   └── settings/    # Account settings
+│   ├── admin/           # Admin dashboard
+│   │   └── dashboard/
+│   │       ├── users/   # Manage users
+│   │       ├── posts/   # Manage posts
+│   │       ├── viewusers/
+│   │       └── viewposts/
+│   └── post/            # Single post page
+├── components/
+│   ├── social-app-component/   # Feature-level components
+│   │   ├── PostCard.jsx
+│   │   ├── ChatBox.jsx
+│   │   ├── ChatList.jsx
+│   │   ├── ProfileHeader.jsx
+│   │   ├── NotificationList.jsx
+│   │   ├── CallModal.jsx
+│   │   └── ...
+│   └── ui-components/          # Reusable primitives
+│       ├── Avatar.jsx
+│       ├── Button.jsx
+│       ├── Modal.jsx
+│       ├── Sidebar.jsx
+│       ├── MediaCarousel.jsx
+│       └── ...
+├── hooks/               # Custom React hooks
+│   ├── useChat.js
+│   ├── useMessageNotification.js
+│   ├── useNotificationSocket.js
+│   ├── useOnlineNotification.js
+│   ├── useTypingNotification.js
+│   └── ...
+├── store/
+│   └── ZustandStore.js  # Global state (chat, notifications, user)
+├── context/             # React context providers
+├── providers/           # App-level providers
+├── utils/               # Axios instance, helpers
+└── i18n/                # Locale config
+```
+
+---
+
+## 🚀 Getting Started
+
+### Prerequisites
+
+- **Node.js** >= 18
+- **npm** >= 9
+- Backend API running (see [`social-network-go`](../social-network-go))
+
+### Installation
+
+```bash
+# Clone the repo
+git clone <repo-url>
+cd social-network-ui
+
+# Install dependencies
+npm install
+```
+
+### Environment Variables
+
+Create a `.env.local` file at the project root:
+
+```env
+NEXT_PUBLIC_API_BASE_URL=http://localhost:80
+NEXT_PUBLIC_STOMP_URL=ws://localhost:80/ws
+NEXT_PUBLIC_STRINGEE_TOKEN=<your-stringee-token>
+```
+
+> Adjust the URLs to match your backend / API gateway setup.
+
+### Development
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+App runs on **http://localhost:10000**
 
-You can start editing the page by modifying `app/page.js`. The page auto-updates as you edit the file.
+### Build & Start (Production)
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```bash
+npm run build
+npm start        # serves on port 10000
+```
 
-## Learn More
+### Lint
 
-To learn more about Next.js, take a look at the following resources:
+```bash
+npm run lint
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+---
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## 🔌 API & Real-time
 
-## Deploy on Vercel
+All HTTP requests go through the **API Gateway** at the base URL configured in `.env.local`.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+WebSocket connections use **STOMP over SockJS** for:
+- Incoming chat messages
+- New chat creation events
+- Real-time notifications
+- Online presence / typing indicators
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+---
+
+## 🗂️ Key Modules
+
+### Global Store (`ZustandStore.js`)
+Centralized Zustand store managing:
+- **Chat state** — list, unread counts, selection, online status
+- **Notification state** — list, unread badge, socket merging
+- **App init** — parallel fetch of chats + notification counts on login
+
+### Custom Hooks
+| Hook | Purpose |
+|---|---|
+| `useChat` | Message pagination, send, socket subscription |
+| `useMessageNotification` | Toast notifications for incoming messages |
+| `useNotificationSocket` | Subscribe to notification events |
+| `useOnlineNotification` | Online/offline presence updates |
+| `useTypingNotification` | Show typing indicator in chat |
+| `useErrorSocket` | Handle socket error events |
+
+---
+
+## 🛡️ Security Headers
+
+Configured in `next.config.mjs`:
+
+| Header | Value |
+|---|---|
+| `X-Frame-Options` | `DENY` |
+| `X-Content-Type-Options` | `nosniff` |
+| `Referrer-Policy` | `origin-when-cross-origin` |
+
+---
+
+## 📄 License
+
+Private project — all rights reserved.
