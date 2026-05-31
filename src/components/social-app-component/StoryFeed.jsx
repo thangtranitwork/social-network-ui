@@ -215,7 +215,7 @@ export default function StoryFeed() {
   const hasOwnStories = ownFeedItemIndex !== -1
 
   return (
-    <div className="w-full max-w-2xl bg-[var(--card)] rounded-xl border border-[var(--border)] p-4 shadow-sm mb-4">
+    <div className="w-full max-w-2xl bg-[var(--card)] rounded-2xl border border-[var(--border)] p-4 shadow-sm mb-4">
       {/* Hidden file input for creating story */}
       <input
         type="file"

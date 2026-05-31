@@ -35,7 +35,7 @@ import {
 import { useRouter } from "next/navigation"
 import adminApi from "@/utils/adminInterception"
 
-const PIE_COLORS = ["#8B5CF6", "#00E5A0", "#3B82F6"] // Amethyst, Electric Jade, Cobalt Blue
+const PIE_COLORS = ["#8B5CF6", "#6366F1", "#3B82F6"] // Amethyst, Electric Indigo, Cobalt Blue
 
 export default function PostsPage() {
   const [postsData, setPostsData] = useState(null)
@@ -216,11 +216,11 @@ export default function PostsPage() {
     <div className="admin-card p-5 rounded-2xl relative overflow-hidden group hover:border-[var(--accent)]/30 transition-all duration-300">
       
       {/* Decorative Glow accent */}
-      <div className="absolute -right-12 -bottom-12 w-32 h-32 rounded-full blur-3xl opacity-10 bg-gradient-to-br from-[#00E5A0] to-[#8B5CF6] pointer-events-none" />
+      <div className="absolute -right-12 -bottom-12 w-32 h-32 rounded-full blur-3xl opacity-10 bg-gradient-to-br from-[#6366F1] to-[#8B5CF6] pointer-events-none" />
 
       <div className="flex items-start justify-between mb-4 relative z-10">
         <div className="flex items-center space-x-3">
-          <div className="w-10 h-10 bg-gradient-to-tr from-[#00E5A0] to-[#8B5CF6] rounded-full flex items-center justify-center text-white font-bold shadow-md shadow-black/5">
+          <div className="w-10 h-10 bg-gradient-to-tr from-[#6366F1] to-[#8B5CF6] rounded-full flex items-center justify-center text-white font-bold shadow-md shadow-black/5">
             {post.author?.givenName?.[0] || "?"}
           </div>
           <div>
@@ -392,7 +392,7 @@ export default function PostsPage() {
                 <Bar dataKey="value" fill="url(#postsWeeklyColor)" radius={[4, 4, 0, 0]}>
                   <defs>
                     <linearGradient id="postsWeeklyColor" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="0%" stopColor="#00E5A0" stopOpacity={0.9} />
+                      <stop offset="0%" stopColor="#6366F1" stopOpacity={0.9} />
                       <stop offset="100%" stopColor="#8B5CF6" stopOpacity={0.7} />
                     </linearGradient>
                   </defs>

@@ -326,7 +326,7 @@ const PostCard = memo(function PostCard({
     return (
         <>
             <Card
-                className={`my-2 text-[var(--card-foreground)] rounded-xl shadow-sm card-hover-effect
+                className={`my-2 text-[var(--card-foreground)] rounded-2xl shadow-sm card-hover-effect
                     ${size === "compact" ? "p-2 sm:p-3" : size === "large" ? "p-5" : "p-4"} 
                     w-full ${className} cursor-pointer hover:bg-[var(--card)]/90 transition-colors`}
                 onClick={handleCardClick}

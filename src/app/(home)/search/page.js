@@ -98,7 +98,7 @@ export default function ExplorerPage() {
               {results.USER.map((user) => (
                 <li
                   key={user.id}
-                  className="flex items-center justify-between gap-2 cursor-pointer"
+                  className="p-4 border border-[var(--border)] rounded-2xl bg-[var(--card)] hover:bg-[var(--muted)] transition-all cursor-pointer card-hover-effect"
                   onClick={() => goToProfile(user.username)}
                 >
                   <UserHeader
@@ -138,7 +138,7 @@ export default function ExplorerPage() {
               suggestedUsers.map((user) => (
                 <li
                   key={user.id}
-                  className="flex items-center justify-between gap-3 cursor-pointer"
+                  className="p-4 border border-[var(--border)] rounded-2xl bg-[var(--card)] hover:bg-[var(--muted)] transition-all cursor-pointer card-hover-effect"
                   onClick={() => goToProfile(user.username)}
                 >
                   <UserHeader

@@ -8,53 +8,51 @@ export default function DisplaySettings() {
   const t = useTranslations('settings');
 
   return (
-    <div className="flex min-h-screen w-full bg-[var(--background)] text-[var(--foreground)]">
-      <main className="flex-1 w-full p-8 space-y-6">
-        <h1 className="text-2xl font-bold">{t('displayTitle')}</h1>
+    <div className="space-y-8 w-full max-w-2xl animate-fadeIn">
+      <div>
+        <h1 className="text-xl sm:text-2xl font-bold tracking-tight">{t('displayTitle')}</h1>
+        <p className="text-sm text-[var(--muted-foreground)] mt-1">
+          Tùy chỉnh giao diện hiển thị và ngôn ngữ của ứng dụng.
+        </p>
+      </div>
 
-        <div className="bg-[var(--card)] p-6 rounded-xl shadow-sm border border-[var(--border)] space-y-6">
-          {/* Theme toggle */}
-          <div className="flex items-center justify-between">
-            <div>
-              <label className="text-sm font-semibold">{t('theme')}</label>
-            </div>
-            <ThemeToggle />
+      <div className="space-y-6">
+        {/* Theme toggle row */}
+        <div className="flex items-center justify-between p-4 sm:p-5 rounded-2xl bg-[var(--card-elevated)]/40 border border-[var(--border)]">
+          <div className="space-y-0.5">
+            <div className="font-semibold text-sm">{t('theme')}</div>
+            <div className="text-xs text-[var(--muted-foreground)]">Chuyển đổi giữa chế độ sáng và tối.</div>
           </div>
-
-          <div className="h-px bg-[var(--border)]" />
-
-          {/* Language switcher */}
-          <div className="flex items-center justify-between">
-            <div>
-              <label className="text-sm font-semibold">{t('language')}</label>
-              <p className="text-xs text-[var(--muted-foreground)] mt-0.5">{t('languageDesc')}</p>
-            </div>
-            <LanguageSwitcher variant="toggle" />
-          </div>
-
-          <div className="h-px bg-[var(--border)]" />
-
-          {/* Font size (coming soon) */}
-          <div>
-            <label className="block text-sm font-semibold mb-1">
-              {t('fontSize')}
-            </label>
-            <select
-              name="fontSize"
-              className="w-full bg-[var(--input)] text-[var(--foreground)] px-3 py-2 rounded-lg border border-[var(--border)]"
-              defaultValue="medium"
-              disabled
-            >
-              <option value="small">{t('fontSizeSmall')}</option>
-              <option value="medium">{t('fontSizeMedium')}</option>
-              <option value="large">{t('fontSizeLarge')}</option>
-            </select>
-            <p className="text-xs text-[var(--muted-foreground)] mt-1">
-              {t('fontSizeComingSoon')}
-            </p>
-          </div>
+          <ThemeToggle />
         </div>
-      </main>
+
+        {/* Language switcher row */}
+        <div className="flex items-center justify-between p-4 sm:p-5 rounded-2xl bg-[var(--card-elevated)]/40 border border-[var(--border)]">
+          <div className="space-y-0.5">
+            <div className="font-semibold text-sm">{t('language')}</div>
+            <div className="text-xs text-[var(--muted-foreground)]">{t('languageDesc')}</div>
+          </div>
+          <LanguageSwitcher variant="toggle" />
+        </div>
+
+        {/* Font size row */}
+        <div className="p-4 sm:p-5 rounded-2xl bg-[var(--card-elevated)]/40 border border-[var(--border)] space-y-3">
+          <div className="space-y-0.5">
+            <div className="font-semibold text-sm">{t('fontSize')}</div>
+            <div className="text-xs text-[var(--muted-foreground)]">{t('fontSizeComingSoon')}</div>
+          </div>
+          <select
+            name="fontSize"
+            className="w-full bg-[var(--background)] text-[var(--foreground)] px-4 py-2.5 rounded-xl border border-[var(--border)] focus:outline-none focus:border-[var(--accent)] text-sm transition-all cursor-not-allowed opacity-60"
+            defaultValue="medium"
+            disabled
+          >
+            <option value="small">{t('fontSizeSmall')}</option>
+            <option value="medium">{t('fontSizeMedium')}</option>
+            <option value="large">{t('fontSizeLarge')}</option>
+          </select>
+        </div>
+      </div>
     </div>
   );
 }

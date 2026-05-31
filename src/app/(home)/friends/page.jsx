@@ -338,7 +338,7 @@ export default function FriendPage() {
           ))}
         </div>
 
-        <div className="bg-[var(--card)] rounded-lg shadow">
+        <div className="bg-[var(--card)] rounded-2xl border border-[var(--border)] shadow-sm overflow-hidden">
           {loading ? (
               <div className="p-8 text-center text-[var(--muted-foreground)]">
                 <div className="animate-pulse flex flex-col items-center gap-2">
@@ -353,7 +353,7 @@ export default function FriendPage() {
           ) : (
               <ul className="divide-y divide-[var(--border)]">
                 {users.map((user) => (
-                    <li key={user.username} className="p-4 hover:bg-[var(--accent)] transition-colors">
+                    <li key={user.username} className="p-4 hover:bg-[var(--muted)] transition-colors">
                       <div className="flex items-center justify-between gap-4">
                         <Link href={`/profile/${user.username}`} className="flex-grow min-w-0">
                           <UserHeader

@@ -253,19 +253,18 @@ export default function EditProfileModal({ profileData, onSave }) {
               <Input name="birthday" label={t("birthdate")} value={formData.birthday} onChange={handleInputChange} placeholder="DD/MM/YYYY" />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-500 mb-2">{t("bio")}</label>
-              <div className={`text-xs text-[var(--muted-foreground)] mt-1 text-right ${formData.bio.length > 10000 && "text-red-500"}`}>
-                {formData.bio.length}/256
-              </div>
-              <textarea
+              <Input
                 name="bio"
+                label={t("bio")}
+                type="textarea"
                 value={formData.bio}
                 onChange={handleInputChange}
-                rows={3}
-                max={256}
-                className="w-full px-3 py-2 border-b-2 border-[var(--border)] bg-transparent outline-none resize-none text-[var(--foreground)]"
+                maxLength={256}
                 placeholder={t("bioPlaceholder")}
               />
+              <div className="text-xs text-[var(--muted-foreground)] mt-1.5 text-right px-1">
+                {formData.bio.length} / 256
+              </div>
               {errors.bio && <p className="text-red-500 text-xs mt-1">{errors.bio}</p>}
             </div>
           </div>

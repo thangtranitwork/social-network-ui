@@ -285,7 +285,7 @@ const UsersPage = () => {
                 className="w-14 h-14 rounded-full object-cover border-2 border-[var(--border)]"
               />
             ) : (
-              <div className="w-14 h-14 bg-gradient-to-tr from-[#00E5A0] to-[#8B5CF6] rounded-full flex items-center justify-center text-white font-bold text-lg shadow-sm">
+              <div className="w-14 h-14 bg-gradient-to-br from-[#6366F1] to-[#8B5CF6] rounded-full flex items-center justify-center text-white font-bold text-lg shadow-sm">
                 <span>
                   {user.givenName?.charAt(0)}{user.familyName?.charAt(0)}
                 </span>
@@ -418,131 +418,129 @@ const UsersPage = () => {
   )
 
   return (
-    <main className="max-w-6xl mx-auto mt-4 px-4">
-      <div className="space-y-6">
-        {/* Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 p-5 rounded-2xl admin-card shadow-sm">
-          <div className="flex items-center gap-3">
-            <button 
-              onClick={goBackToAdmin}
-              className="admin-btn-back flex items-center gap-2 px-3.5 py-2 text-xs md:text-sm font-semibold rounded-xl transition-colors"
-            >
-              <ArrowLeft className="w-4 h-4" />
-              Quay lại Thống kê
-            </button>
-            <div>
-              <h2 className="text-lg font-bold text-[var(--foreground)]">
-                Danh sách thành viên ({users.length})
-              </h2>
-            </div>
+    <div className="w-full space-y-6 animate-fade-up">
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 p-5 rounded-2xl admin-card shadow-sm">
+        <div className="flex items-center gap-3">
+          <button 
+            onClick={goBackToAdmin}
+            className="admin-btn-back flex items-center gap-2 px-3.5 py-2 text-xs md:text-sm font-semibold rounded-xl transition-colors"
+          >
+            <ArrowLeft className="w-4 h-4" />
+            Quay lại Thống kê
+          </button>
+          <div>
+            <h2 className="text-lg font-bold text-[var(--foreground)]">
+              Danh sách thành viên ({users.length})
+            </h2>
           </div>
         </div>
+      </div>
 
-        {/* Error State */}
-        {error && (
-          <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl p-4">
-            <p className="text-red-600 dark:text-red-400">{error}</p>
-          </div>
-        )}
+      {/* Error State */}
+      {error && (
+        <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl p-4">
+          <p className="text-red-600 dark:text-red-400">{error}</p>
+        </div>
+      )}
 
-        {/* Users List */}
-        <section>
-          {loading && users.length === 0 ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {[...Array(6)].map((_, i) => (
-                <div key={i} className="bg-card rounded-xl shadow-sm border border-border p-6">
-                  <div className="animate-pulse">
-                    <div className="flex items-center gap-4 mb-4">
-                      <div className="w-16 h-16 bg-muted rounded-full"></div>
-                      <div className="flex-1">
-                        <div className="h-4 bg-muted rounded w-3/4 mb-2"></div>
-                        <div className="h-3 bg-muted rounded w-1/2"></div>
-                      </div>
-                    </div>
-                    <div className="space-y-2">
-                      <div className="h-3 bg-muted rounded"></div>
-                      <div className="h-3 bg-muted rounded w-5/6"></div>
+      {/* Users List */}
+      <section>
+        {loading && users.length === 0 ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {[...Array(6)].map((_, i) => (
+              <div key={i} className="bg-[var(--card)] rounded-2xl shadow-sm border border-[var(--border)] p-6">
+                <div className="animate-pulse">
+                  <div className="flex items-center gap-4 mb-4">
+                    <div className="w-16 h-16 bg-[var(--muted)] rounded-full"></div>
+                    <div className="flex-1">
+                      <div className="h-4 bg-[var(--muted)] rounded w-3/4 mb-2"></div>
+                      <div className="h-3 bg-[var(--muted)] rounded w-1/2"></div>
                     </div>
                   </div>
+                  <div className="space-y-2">
+                    <div className="h-3 bg-[var(--muted)] rounded"></div>
+                    <div className="h-3 bg-[var(--muted)] rounded w-5/6"></div>
+                  </div>
                 </div>
+              </div>
+            ))}
+          </div>
+        ) : users.length > 0 ? (
+          <>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {users.map((user) => (
+                <UserCard key={user.id} user={user} />
               ))}
             </div>
-          ) : users.length > 0 ? (
-            <>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {users.map((user) => (
-                  <UserCard key={user.id} user={user} />
-                ))}
-              </div>
-              
-              {loadingMore && (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-6">
-                  {[...Array(3)].map((_, i) => (
-                    <div key={i} className="bg-card rounded-xl shadow-sm border border-border p-6">
-                      <div className="animate-pulse">
-                        <div className="flex items-center gap-4 mb-4">
-                          <div className="w-16 h-16 bg-muted rounded-full"></div>
-                          <div className="flex-1">
-                            <div className="h-4 bg-muted rounded w-3/4 mb-2"></div>
-                            <div className="h-3 bg-muted rounded w-1/2"></div>
-                          </div>
-                        </div>
-                        <div className="space-y-2">
-                          <div className="h-3 bg-muted rounded"></div>
-                          <div className="h-3 bg-muted rounded w-5/6"></div>
+            
+            {loadingMore && (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-6">
+                {[...Array(3)].map((_, i) => (
+                  <div key={i} className="bg-[var(--card)] rounded-2xl shadow-sm border border-[var(--border)] p-6">
+                    <div className="animate-pulse">
+                      <div className="flex items-center gap-4 mb-4">
+                        <div className="w-16 h-16 bg-[var(--muted)] rounded-full"></div>
+                        <div className="flex-1">
+                          <div className="h-4 bg-[var(--muted)] rounded w-3/4 mb-2"></div>
+                          <div className="h-3 bg-[var(--muted)] rounded w-1/2"></div>
                         </div>
                       </div>
+                      <div className="space-y-2">
+                        <div className="h-3 bg-[var(--muted)] rounded"></div>
+                        <div className="h-3 bg-[var(--muted)] rounded w-5/6"></div>
+                      </div>
                     </div>
-                  ))}
+                  </div>
+                ))}
+              </div>
+            )}
+            
+            {/* Load More Button or End Message */}
+            <div className="flex justify-center py-8">
+              {hasMore ? (
+                <button
+                  onClick={handleLoadMore}
+                  disabled={loadingMore}
+                  className="btn-primary"
+                >
+                  {loadingMore ? (
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      {t("loading")}
+                    </>
+                  ) : (
+                    <>
+                      {t("loadMore")}
+                      <span className="text-sm opacity-80">({users.length})</span>
+                    </>
+                  )}
+                </button>
+              ) : (
+                <div className="bg-[var(--card)] rounded-full px-6 py-3 shadow-sm border border-[var(--border)]">
+                  <p className="text-[var(--muted-foreground)] text-sm font-medium">
+                    {t("allLoaded")}
+                  </p>
                 </div>
               )}
-              
-              {/* Load More Button or End Message */}
-              <div className="flex justify-center py-8">
-                {hasMore ? (
-                  <button
-                    onClick={handleLoadMore}
-                    disabled={loadingMore}
-                    className="flex items-center gap-2 px-6 py-3 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white rounded-lg font-medium transition-colors disabled:cursor-not-allowed"
-                  >
-                    {loadingMore ? (
-                      <>
-                        <Loader2 className="w-4 h-4 animate-spin" />
-                        {t("loading")}
-                      </>
-                    ) : (
-                      <>
-                        {t("loadMore")}
-                        <span className="text-sm opacity-80">({users.length})</span>
-                      </>
-                    )}
-                  </button>
-                ) : (
-                  <div className="bg-card rounded-full px-6 py-3 shadow-sm border border-border">
-                    <p className="text-muted-foreground text-sm font-medium">
-                      {t("allLoaded")}
-                    </p>
-                  </div>
-                )}
-              </div>
-            </>
-          ) : (
-            <div className="flex flex-col items-center justify-center py-16">
-              <div className="bg-card rounded-xl shadow-sm border border-border p-8 text-center max-w-md">
-                <div className="w-16 h-16 bg-muted rounded-full flex items-center justify-center mx-auto mb-4">
-                  <User className="w-8 h-8 text-muted-foreground" />
-                </div>
-                <h3 className="text-lg font-semibold text-card-foreground mb-2">
-                  {t("noUsers")}
-                </h3>
-                <p className="text-muted-foreground">
-                  {t("noUsersDesc")}
-                </p>
-              </div>
             </div>
-          )}
-        </section>
-      </div>
+          </>
+        ) : (
+          <div className="flex flex-col items-center justify-center py-16">
+            <div className="bg-[var(--card)] rounded-2xl shadow-sm border border-[var(--border)] p-8 text-center max-w-md">
+              <div className="w-16 h-16 bg-[var(--muted)] rounded-full flex items-center justify-center mx-auto mb-4">
+                <User className="w-8 h-8 text-[var(--muted-foreground)]" />
+              </div>
+              <h3 className="text-lg font-semibold text-[var(--foreground)] mb-2">
+                {t("noUsers")}
+              </h3>
+              <p className="text-[var(--muted-foreground)]">
+                {t("noUsersDesc")}
+              </p>
+            </div>
+          </div>
+        )}
+      </section>
 
       {/* Suspend Modal */}
       <Modal 
@@ -552,27 +550,27 @@ const UsersPage = () => {
       >
         <div className="p-6">
           <h3 className="text-lg font-bold mb-4">{t("suspendModalTitle")}</h3>
-          <p className="text-sm text-muted-foreground mb-4">
+          <p className="text-sm text-[var(--muted-foreground)] mb-4">
             {t("suspendModalDesc")}
           </p>
           <input
             type="number"
             value={suspendModal.duration}
             onChange={(e) => setSuspendModal({ ...suspendModal, duration: e.target.value })}
-            className="w-full px-4 py-2 rounded-xl border border-border bg-background mb-6 outline-none focus:ring-2 focus:ring-primary/20 transition-all"
+            className="admin-input w-full px-4 py-2 rounded-xl border mb-6 outline-none transition-all"
             placeholder="300"
             autoFocus
           />
           <div className="flex gap-3">
             <button
               onClick={() => setSuspendModal({ ...suspendModal, isOpen: false })}
-              className="flex-1 px-4 py-2 rounded-xl border border-border hover:bg-accent transition-colors font-medium"
+              className="flex-1 px-4 py-2 rounded-xl border border-[var(--border)] hover:bg-[var(--muted)] transition-colors font-medium"
             >
               {tCommon("cancel")}
             </button>
             <button
               onClick={executeSuspendUser}
-              className="flex-1 px-4 py-2 rounded-xl bg-red-500 hover:bg-red-600 text-white transition-colors font-medium"
+              className="flex-1 px-4 py-2 rounded-xl bg-red-600 hover:bg-red-700 text-white transition-colors font-medium"
             >
               {t("confirmSuspend")}
             </button>
@@ -589,7 +587,7 @@ const UsersPage = () => {
         message={t("unsuspendModalDesc")}
         variant="warning"
       />
-    </main>
+    </div>
   );
 };
 

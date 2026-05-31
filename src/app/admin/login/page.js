@@ -258,33 +258,34 @@ export default function AdminLoginPage() {
   }
 
   return (
-      <div className="min-h-screen bg-background text-foreground flex flex-col">
-        <main className="flex-grow flex items-center justify-center p-6">
-          <div className="w-full max-w-6xl flex items-center gap-12">
+      <div className="min-h-screen bg-[var(--background)] text-[var(--foreground)] flex flex-col justify-center py-12 px-4 sm:px-6 lg:px-8">
+        <main className="flex-grow flex items-center justify-center">
+          <div className="w-full max-w-5xl flex flex-col md:flex-row items-center gap-10 md:gap-16">
+            
             {/* Left Content */}
-            <div className="flex-1 flex flex-col items-center text-center">
-              <div className="mb-8">
-                <div className="flex justify-center mb-4">
-                  <div className="p-4 rounded-full bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800">
-                    <Shield className="w-8 h-8 text-red-600 dark:text-red-400" />
+            <div className="flex-1 flex flex-col items-center md:items-start text-center md:text-left space-y-6">
+              <div className="space-y-4">
+                <div className="flex justify-center md:justify-start">
+                  <div className="p-4 rounded-2xl bg-red-500/10 border border-red-500/20 shadow-sm text-red-500">
+                    <Shield className="w-8 h-8" />
                   </div>
                 </div>
-                <h1 className="text-3xl font-bold text-foreground mb-2">
+                <h1 className="text-3xl font-extrabold tracking-tight text-[var(--foreground)] sm:text-4xl">
                   {t("title")}
                 </h1>
-                <p className="text-muted-foreground">
+                <p className="text-[var(--muted-foreground)] text-base max-w-md">
                   {t("subtitle")}
                 </p>
               </div>
 
-              <div className="bg-muted/50 rounded-lg p-4 border border-border max-w-md">
-                <div className="flex items-start gap-3">
-                  <Shield className="w-5 h-5 text-muted-foreground flex-shrink-0 mt-0.5" />
+              <div className="bg-[var(--card)] rounded-2xl p-5 border border-[var(--border)] admin-card shadow-sm">
+                <div className="flex items-start gap-4">
+                  <Shield className="w-5 h-5 text-[var(--accent)] flex-shrink-0 mt-0.5" />
                   <div>
-                    <p className="text-sm font-medium text-foreground">
+                    <p className="text-sm font-semibold text-[var(--foreground)]">
                       {t("securityTitle")}
                     </p>
-                    <p className="text-xs text-muted-foreground mt-1">
+                    <p className="text-xs text-[var(--muted-foreground)] mt-1 leading-relaxed">
                       {t("securityDesc")}
                     </p>
                   </div>
@@ -294,24 +295,24 @@ export default function AdminLoginPage() {
 
             {/* Right Side - Login Card */}
             <div className="w-full max-w-md">
-              <div className="bg-card rounded-xl p-8 shadow-xl border border-border">
+              <div className="bg-[var(--card)] rounded-2xl p-8 shadow-xl border border-[var(--border)] admin-card">
                 <div className="flex justify-between items-center mb-6">
-                  <h2 className="text-xl font-bold text-card-foreground">
+                  <h2 className="text-xl font-bold text-[var(--foreground)]">
                     {t("cardTitle")}
                   </h2>
                   <button
                       onClick={handleBackToLogin}
-                      className="text-sm text-muted-foreground hover:text-foreground transition flex items-center gap-1"
+                      className="text-xs font-semibold text-[var(--muted-foreground)] hover:text-[var(--accent)] transition-colors flex items-center gap-1"
                   >
-                    <ArrowLeftRight className="w-4 h-4" />
+                    <ArrowLeftRight className="w-3.5 h-3.5" />
                     {t("backToLogin")}
                   </button>
                 </div>
 
-                <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4 mb-6">
-                  <div className="flex items-center gap-2">
-                    <Shield className="w-5 h-5 text-red-600 dark:text-red-400" />
-                    <span className="text-sm font-medium text-red-800 dark:text-red-200">
+                <div className="bg-red-500/10 border border-red-500/20 rounded-xl p-4 mb-6">
+                  <div className="flex items-center gap-2.5">
+                    <Shield className="w-5 h-5 text-red-500" />
+                    <span className="text-xs font-semibold text-red-600 dark:text-red-400">
                     {t("restrictedAccess")}
                   </span>
                   </div>
@@ -319,10 +320,10 @@ export default function AdminLoginPage() {
 
                 {messages.general && (
                     <div
-                        className={`p-3 text-sm rounded-lg mb-6 ${
+                        className={`p-3 text-xs font-medium rounded-xl mb-6 border ${
                             messages.general.includes("✅")
-                                ? "bg-green-50 dark:bg-green-900/20 text-green-800 dark:text-green-200 border border-green-200 dark:border-green-800"
-                                : "bg-red-50 dark:bg-red-900/20 text-red-800 dark:text-red-200 border border-red-200 dark:border-red-800"
+                                ? "bg-green-500/10 text-green-600 dark:text-green-400 border-green-500/20"
+                                : "bg-red-500/10 text-red-600 dark:text-red-400 border-red-500/20"
                         }`}
                     >
                       {messages.general}
@@ -332,14 +333,14 @@ export default function AdminLoginPage() {
                 <div className="space-y-6">
                   {/* Email */}
                   <div className="space-y-2">
-                    <h4 className="text-sm font-medium text-muted-foreground">
+                    <label className="text-xs font-semibold text-[var(--muted-foreground)] uppercase tracking-wider">
                       {t("emailLabel")}
-                    </h4>
+                    </label>
                     <input
                         type="email"
                         value={formData.email}
                         onChange={(e) => handleInputChange('email', e.target.value)}
-                        className="w-full bg-transparent border-b border-input px-0 py-2 focus:outline-none focus:border-primary text-foreground placeholder:text-muted-foreground"
+                        className="admin-input w-full px-4 py-2.5 rounded-xl border outline-none transition-all"
                         placeholder={t("emailPlaceholder")}
                         required
                         disabled={status.loading}
@@ -348,14 +349,14 @@ export default function AdminLoginPage() {
 
                   {/* Password */}
                   <div className="space-y-2 relative">
-                    <h4 className="text-sm font-medium text-muted-foreground">
+                    <label className="text-xs font-semibold text-[var(--muted-foreground)] uppercase tracking-wider">
                       {t("passwordLabel")}
-                    </h4>
+                    </label>
                     <input
                         type={showPassword ? "text" : "password"}
                         value={formData.password}
                         onChange={(e) => handleInputChange('password', e.target.value)}
-                        className="w-full bg-transparent border-b border-input px-0 py-2 pr-10 focus:outline-none focus:border-primary text-foreground placeholder:text-muted-foreground"
+                        className="admin-input w-full px-4 py-2.5 pr-12 rounded-xl border outline-none transition-all"
                         placeholder={t("passwordPlaceholder")}
                         required
                         minLength={6}
@@ -368,7 +369,7 @@ export default function AdminLoginPage() {
                     />
                     <button
                         onClick={() => setShowPassword(!showPassword)}
-                        className="absolute right-0 top-8 p-1 text-muted-foreground hover:text-foreground transition-colors"
+                        className="absolute right-3.5 top-8.5 p-1 text-[var(--muted-foreground)] hover:text-[var(--foreground)] transition-colors"
                         tabIndex={-1}
                         disabled={status.loading}
                         aria-label={
@@ -376,9 +377,9 @@ export default function AdminLoginPage() {
                         }
                     >
                       {showPassword ? (
-                          <EyeOff className="w-5 h-5" />
+                          <EyeOff className="w-4.5 h-4.5" />
                       ) : (
-                          <Eye className="w-5 h-5" />
+                          <Eye className="w-4.5 h-4.5" />
                       )}
                     </button>
                   </div>
@@ -387,11 +388,11 @@ export default function AdminLoginPage() {
                   <button
                       onClick={handleAdminLogin}
                       disabled={status.loading}
-                      className="w-full bg-primary hover:bg-primary/90 disabled:bg-primary/50 text-primary-foreground font-medium py-3 px-4 rounded-lg transition-all duration-200 disabled:cursor-not-allowed shadow-md hover:shadow-lg"
+                      className="btn-primary w-full py-3 rounded-xl shadow-md hover:shadow-lg"
                   >
                     {status.loading ? (
                         <div className="flex items-center justify-center gap-2">
-                          <div className="w-4 h-4 border-2 border-primary-foreground/30 border-t-primary-foreground rounded-full animate-spin"></div>
+                          <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
                           {t("authenticating")}
                         </div>
                     ) : (
@@ -399,11 +400,6 @@ export default function AdminLoginPage() {
                     )}
                   </button>
                 </div>
-
-
-
-                {/* Debug info in development */}
-
               </div>
             </div>
           </div>

@@ -9,7 +9,6 @@ import { useTranslations } from "next-intl";
 export default function PersonalInfoPage() {
   const t = useTranslations('settings');
   const tCommon = useTranslations('common');
-  const tError = useTranslations('errors');
   const [user, setUser] = useState(null);           // Dữ liệu người dùng
   const [originalUser, setOriginalUser] = useState(null); // Bản sao gốc
   const [avatarFile, setAvatarFile] = useState(null);
@@ -142,7 +141,6 @@ export default function PersonalInfoPage() {
       }
     }
 
-
     setLoading(false);
     if (successCount > 0) {
       setOriginalUser({ ...user }); // đồng bộ bản gốc
@@ -151,101 +149,117 @@ export default function PersonalInfoPage() {
 
   if (loadingUser) {
     return (
-        <main className="flex-1 w-full p-4 sm:p-8 text-center">
-          <div className="animate-pulse text-[var(--muted-foreground)]">{tCommon('loading')}</div>
+        <main className="flex-1 w-full p-4 sm:p-8 text-center flex items-center justify-center min-h-[300px]">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[var(--accent)]"></div>
         </main>
     );
   }
 
   if (!user) {
     return (
-        <main className="flex-1 w-full p-4 sm:p-8 text-center text-red-500">
+        <main className="flex-1 w-full p-4 sm:p-8 text-center text-red-500 flex items-center justify-center min-h-[300px]">
           {errors.fetch || "Không tải được thông tin"}
         </main>
     );
   }
 
   return (
-      <div className="flex min-h-screen w-full bg-[var(--background)] text-[var(--foreground)]">
-        <main className="flex-1 w-full p-4 sm:p-8 space-y-6">
-          <h1 className="text-xl sm:text-2xl font-bold">{t('personalInfo')}</h1>
+      <div className="space-y-8 w-full max-w-2xl animate-fadeIn">
+        <div>
+          <h1 className="text-xl sm:text-2xl font-bold tracking-tight">{t('personalInfo')}</h1>
+          <p className="text-sm text-[var(--muted-foreground)] mt-1">
+            Cập nhật thông tin cá nhân của bạn để hiển thị trên hồ sơ.
+          </p>
+        </div>
 
-          {successMessages.length > 0 && (
-              <div className="bg-green-50 border border-green-200 p-3 rounded-md text-green-700 text-sm">
-                <ul>{successMessages.map((m, i) => <li key={i}>✅ {m}</li>)}</ul>
-              </div>
-          )}
+        {successMessages.length > 0 && (
+            <div className="bg-emerald-50 dark:bg-emerald-950/20 border border-emerald-200/60 dark:border-emerald-900/40 p-4 rounded-2xl text-emerald-800 dark:text-emerald-300 text-sm space-y-1">
+              {successMessages.map((m, i) => (
+                  <div key={i} className="flex items-center gap-2">
+                    <span className="text-emerald-500">✓</span> {m}
+                  </div>
+              ))}
+            </div>
+        )}
 
-          {Object.keys(errors).length > 0 && (
-              <div className="bg-red-50 border border-red-200 p-3 rounded-md text-red-700 text-sm">
-                <ul>{Object.keys(errors).map((k) => errors[k] && <li key={k}>❌ {errors[k]}</li>)}</ul>
-              </div>
-          )}
+        {Object.keys(errors).length > 0 && (
+            <div className="bg-red-50 dark:bg-red-950/20 border border-red-200/60 dark:border-red-900/40 p-4 rounded-2xl text-red-800 dark:text-red-300 text-sm space-y-1">
+              {Object.keys(errors).map((k) => errors[k] && (
+                  <div key={k} className="flex items-center gap-2">
+                    <span className="text-red-500">✗</span> {errors[k]}
+                  </div>
+              ))}
+            </div>
+        )}
 
-          <div className="bg-[var(--card)] p-4 sm:p-6 rounded-lg shadow-md space-y-6">
-            {/* Avatar section - Responsive layout */}
-            <div className="flex flex-col sm:flex-row items-center sm:items-start gap-4 sm:gap-6">
-              {/* Avatar - Fixed size on mobile */}
-              <div className="flex-shrink-0">
-                <div className="w-20 h-20 sm:w-16 sm:h-16 md:w-20 md:h-20">
-                  <Avatar
-                      src={user.profilePictureUrl}
-                      className="w-full h-full object-cover rounded-full"
-                  />
-                </div>
-              </div>
-
-              {/* User info */}
-              <div className="flex-1 text-center sm:text-left min-w-0">
-                <div className="font-semibold text-lg truncate">{user.username}</div>
-                <div className="text-[var(--muted-foreground)] truncate">
-                  {user.familyName} {user.givenName}
-                </div>
-              </div>
-
-              {/* File input button */}
-              <div className="flex-shrink-0 w-full sm:w-auto">
-                <label className="block">
-                  <input
-                      type="file"
-                      accept="image/*"
-                      onChange={handleAvatarChange}
-                      className="hidden"
-                  />
-                  <span className="inline-block w-full sm:w-auto bg-[var(--primary)] hover:opacity-90 text-[var(--primary-foreground)] px-4 py-2 rounded-md cursor-pointer text-center text-sm">
-                  {t('changeAvatar')}
-                </span>
-                </label>
+        <div className="space-y-6">
+          {/* Avatar section - Responsive layout */}
+          <div className="flex flex-col sm:flex-row items-center gap-6 p-6 rounded-2xl bg-[var(--card-elevated)]/40 border border-[var(--border)]">
+            {/* Avatar - Fixed size */}
+            <div className="flex-shrink-0">
+              <div className="w-20 h-20 rounded-full overflow-hidden ring-4 ring-[var(--accent-subtle)] border-2 border-[var(--card)] shadow-sm">
+                <Avatar
+                    src={user.profilePictureUrl}
+                    className="w-full h-full object-cover"
+                />
               </div>
             </div>
 
-            {/* Form fields */}
+            {/* User info */}
+            <div className="flex-1 text-center sm:text-left min-w-0">
+              <div className="font-semibold text-lg text-[var(--foreground)] truncate">@{user.username}</div>
+              <div className="text-[var(--muted-foreground)] text-sm truncate mt-0.5">
+                {user.familyName} {user.givenName}
+              </div>
+            </div>
+
+            {/* File input button */}
+            <div className="flex-shrink-0 w-full sm:w-auto">
+              <label className="block">
+                <input
+                    type="file"
+                    accept="image/*"
+                    onChange={handleAvatarChange}
+                    className="hidden"
+                />
+                <span className="btn-primary inline-flex w-full sm:w-auto px-4 py-2 cursor-pointer text-center text-xs font-semibold rounded-xl items-center justify-center border border-[var(--border)] shadow-sm hover:shadow-md transition-all duration-200">
+                  {t('changeAvatar')}
+                </span>
+              </label>
+            </div>
+          </div>
+
+          {/* Form fields */}
+          <div className="space-y-5">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <Input
                   label={t('familyName')}
                   name="familyName"
-                  value={user.familyName}
+                  value={user.familyName || ""}
                   onChange={handleInputChange}
+                  placeholder="Nhập họ"
               />
               <Input
                   label={t('givenName')}
                   name="givenName"
-                  value={user.givenName}
+                  value={user.givenName || ""}
                   onChange={handleInputChange}
+                  placeholder="Nhập tên"
               />
             </div>
 
             <Input
                 label={t('username')}
                 name="username"
-                value={user.username}
+                value={user.username || ""}
                 onChange={handleInputChange}
+                placeholder="Nhập tên người dùng"
             />
 
             <Input
                 label={t('birthdate')}
                 name="birthdate"
-                value={user.birthdate}
+                value={user.birthdate || ""}
                 onChange={handleInputChange}
                 type="date"
             />
@@ -254,26 +268,37 @@ export default function PersonalInfoPage() {
               <Input
                   label={t('bio')}
                   name="bio"
-                  value={user.bio}
+                  type="textarea"
+                  value={user.bio || ""}
                   onChange={handleInputChange}
+                  placeholder="Giới thiệu bản thân..."
                   maxLength={150}
+                  rows={3}
               />
-              <div className="text-xs text-[var(--muted-foreground)] mt-1 text-right">
+              <div className="text-xs text-[var(--muted-foreground)] mt-1.5 text-right px-1">
                 {user.bio?.length || 0} / 150
               </div>
             </div>
+          </div>
 
+          {/* Action Button */}
+          <div className="pt-4 flex justify-end">
             <button
                 onClick={handleSave}
                 disabled={loading}
-                className={`w-full sm:w-auto bg-[var(--primary)] text-[var(--primary-foreground)] px-6 py-2 rounded-md ${
-                    loading ? "opacity-50 cursor-not-allowed" : "hover:opacity-90"
-                }`}
+                className="btn-primary w-full sm:w-auto px-6 py-2.5 rounded-xl text-sm font-semibold shadow-sm hover:shadow transition-all duration-200 disabled:opacity-50 flex items-center justify-center gap-2"
             >
-              {loading ? tCommon('saving') : tCommon('save')}
+              {loading ? (
+                  <>
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                    <span>{tCommon('saving')}</span>
+                  </>
+              ) : (
+                  <span>{tCommon('save')}</span>
+              )}
             </button>
           </div>
-        </main>
+        </div>
       </div>
   );
 }

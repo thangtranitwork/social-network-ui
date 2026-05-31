@@ -175,109 +175,106 @@ export default function ViewPostPage() {
   }, [])
 
   return (
-      <main className="max-w-4xl mx-auto mt-4 px-4 animate-fade-up">
-        <div className="space-y-6 flex flex-col items-center">
-          {/* Container wrapper for centering */}
-          <div className="w-full max-w-2xl space-y-6">
-            {/* Header */}
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 p-5 rounded-2xl admin-card shadow-sm">
-              <div className="flex items-center gap-3">
-                <button
-                    onClick={handleBackToStats}
-                    className="admin-btn-back flex items-center gap-2 px-3.5 py-2 text-xs md:text-sm font-semibold rounded-xl transition-colors"
-                >
-                  <ArrowLeft className="w-4 h-4" />
-                  Quay lại Thống kê
-                </button>
-                <div>
-                  <h2 className="text-lg font-bold text-[var(--foreground)]">
-                    Danh sách bài đăng ({totalPosts})
-                  </h2>
-                </div>
-              </div>
+      <div className="w-full max-w-2xl mx-auto space-y-6 animate-fade-up">
+        {/* Header */}
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 p-5 rounded-2xl admin-card shadow-sm">
+          <div className="flex items-center gap-3">
+            <button
+                onClick={handleBackToStats}
+                className="admin-btn-back flex items-center gap-2 px-3.5 py-2 text-xs md:text-sm font-semibold rounded-xl transition-colors"
+            >
+              <ArrowLeft className="w-4 h-4" />
+              Quay lại Thống kê
+            </button>
+            <div>
+              <h2 className="text-lg font-bold text-[var(--foreground)]">
+                Danh sách bài đăng ({totalPosts})
+              </h2>
             </div>
-
-            {/* Error State */}
-            {error && (
-                <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl p-4">
-                  <p className="text-red-600 dark:text-red-400">{error}</p>
-                </div>
-            )}
-
-            {/* Posts List */}
-            <section className="space-y-4">
-              {loading && posts.length === 0 ? (
-                  <PostsLoadingSkeleton count={5} />
-              ) : posts.length > 0 ? (
-                  <div className="flex flex-col items-center">
-                    {posts.reduce((acc, post) => {
-                      if (!acc.some(p => p.id === post.id)) acc.push(post);
-                      return acc;
-                    }, []).map(post => (
-                        <PostCard
-                            key={post.id}
-                            post={post}
-                            liked={post.liked}
-                            likeCount={post.likeCount}
-                            onLikeToggle={() => toggleLike(post.id)}
-                            onPostDeleted={handlePostDeleted}
-                            isAdmin={true}
-                            isOwnProfile={currentUser?.username === post.user?.username}
-                            isFriend={post.user?.isFriend}
-                        />
-                    ))}
-
-                    {loadingMore && <PostsLoadingSkeleton count={3} />}
-
-                    {/* Load More Button or End Message */}
-                    <div className="flex justify-center py-8">
-                      {hasMore ? (
-                          <button
-                              onClick={handleLoadMore}
-                              disabled={loadingMore}
-                              className="flex items-center gap-2 px-6 py-3 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white rounded-lg font-medium transition-colors disabled:cursor-not-allowed"
-                          >
-                            {loadingMore ? (
-                                <>
-                                  <Loader2 className="w-4 h-4 animate-spin" />
-                                  Loading...
-                                </>
-                            ) : (
-                                <>
-                                  Load More Posts
-                                  <span className="text-sm opacity-80">({posts.length} / {totalPosts})</span>
-                                </>
-                            )}
-                          </button>
-                      ) : (
-                          <div className="bg-white dark:bg-gray-800 rounded-full px-6 py-3 shadow-sm border border-gray-200 dark:border-gray-700">
-                            <p className="text-gray-500 dark:text-gray-400 text-sm font-medium">
-                              🎉 Bạn đã xem hết bài viết!
-                            </p>
-                          </div>
-                      )}
-                    </div>
-                  </div>
-              ) : (
-                  <div className="flex flex-col items-center justify-center py-16">
-                    <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-8 text-center max-w-md">
-                      <div className="w-16 h-16 bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center mx-auto mb-4">
-                        <svg className="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                        </svg>
-                      </div>
-                      <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-2">
-                        No posts available
-                      </h3>
-                      <p className="text-gray-500 dark:text-gray-400">
-                        There are no posts to display at the moment.
-                      </p>
-                    </div>
-                  </div>
-              )}
-            </section>
           </div>
         </div>
-      </main>
+
+        {/* Error State */}
+        {error && (
+            <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl p-4">
+              <p className="text-red-600 dark:text-red-400">{error}</p>
+            </div>
+        )}
+
+        {/* Posts List */}
+        <section className="space-y-4">
+          {loading && posts.length === 0 ? (
+              <PostsLoadingSkeleton count={5} />
+          ) : posts.length > 0 ? (
+              <div className="flex flex-col items-center w-full">
+                <div className="w-full space-y-6">
+                  {posts.reduce((acc, post) => {
+                    if (!acc.some(p => p.id === post.id)) acc.push(post);
+                    return acc;
+                  }, []).map(post => (
+                      <PostCard
+                          key={post.id}
+                          post={post}
+                          liked={post.liked}
+                          likeCount={post.likeCount}
+                          onLikeToggle={() => toggleLike(post.id)}
+                          onPostDeleted={handlePostDeleted}
+                          isAdmin={true}
+                          isOwnProfile={currentUser?.username === post.user?.username}
+                          isFriend={post.user?.isFriend}
+                      />
+                  ))}
+                </div>
+
+                {loadingMore && <PostsLoadingSkeleton count={3} />}
+
+                {/* Load More Button or End Message */}
+                <div className="flex justify-center py-8">
+                  {hasMore ? (
+                      <button
+                          onClick={handleLoadMore}
+                          disabled={loadingMore}
+                          className="btn-primary"
+                      >
+                        {loadingMore ? (
+                            <>
+                              <Loader2 className="w-4 h-4 animate-spin" />
+                              Loading...
+                            </>
+                        ) : (
+                            <>
+                              Load More Posts
+                              <span className="text-sm opacity-80">({posts.length} / {totalPosts})</span>
+                            </>
+                        )}
+                      </button>
+                  ) : (
+                      <div className="bg-[var(--card)] rounded-full px-6 py-3 shadow-sm border border-[var(--border)]">
+                        <p className="text-[var(--muted-foreground)] text-sm font-medium">
+                          🎉 Bạn đã xem hết bài viết!
+                        </p>
+                      </div>
+                  )}
+                </div>
+              </div>
+          ) : (
+              <div className="flex flex-col items-center justify-center py-16">
+                <div className="bg-[var(--card)] rounded-2xl border border-[var(--border)] shadow-sm p-8 text-center max-w-md">
+                  <div className="w-16 h-16 bg-[var(--muted)] rounded-full flex items-center justify-center mx-auto mb-4">
+                    <svg className="w-8 h-8 text-[var(--muted-foreground)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                    </svg>
+                  </div>
+                  <h3 className="text-lg font-semibold text-[var(--foreground)] mb-2">
+                    No posts available
+                  </h3>
+                  <p className="text-[var(--muted-foreground)]">
+                    There are no posts to display at the moment.
+                  </p>
+                </div>
+              </div>
+          )}
+        </section>
+      </div>
   )
 }

@@ -264,7 +264,7 @@ export default function SidebarNavigation() {
           md:flex md:px-2 md:py-4
         `}
       >
-        <nav className="md:h-full bg-[var(--card)] p-4 md:rounded-xl flex flex-row md:flex-col items-center justify-around md:justify-center md:space-y-6 w-full md:w-full">
+        <nav className="md:h-auto bg-transparent md:bg-glass p-3 md:rounded-full md:shadow-lg border-0 md:border md:border-[var(--border)] flex flex-row md:flex-col items-center justify-around md:justify-start md:space-y-4 w-full md:w-[60px] mx-auto transition-all duration-300">
           
           {/* Desktop: Thứ tự cũ | Mobile: Home Button ở giữa */}
           

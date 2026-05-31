@@ -124,8 +124,8 @@ function MainLayoutContent({ children }) {
   };
 
   // ✅ Tính toán header height và padding top
-  const headerHeight = showHeader ? "h-12" : "h-0";
-  const contentPaddingTop = showHeader ? "pt-12" : "pt-0";
+  const headerHeight = showHeader ? "h-16" : "h-0";
+  const contentPaddingTop = showHeader ? "pt-16" : "pt-0";
   const sidebarHeight = showHeader ? "h-[calc(100vh-64px)]" : "h-screen";
 
 // ✅ Fixed layout - phần chính cần chỉnh sửa
@@ -149,7 +149,7 @@ const layoutContent = (
       
       {/* ✅ Header - chỉ hiển thị khi showHeader = true */}
       {showHeader && (
-        <header className={`fixed top-0 left-0 right-0 z-50 bg-white dark:bg-gray-900 ${headerHeight} border-b transition-colors duration-500`}>
+        <header className={`fixed top-0 left-0 right-0 z-50 bg-glass ${headerHeight} transition-colors duration-500`}>
           <Header />
         </header>
       )}
@@ -158,7 +158,7 @@ const layoutContent = (
         {/* Left Sidebar - ẩn trên mobile, fixed trên desktop */}
        <aside
   className={`hidden md:block md:w-[80px] ${sidebarHeight} overflow-y-auto ${
-    pathname === "/chats" ? "pt-12" : ""
+    pathname === "/chats" ? "pt-16" : ""
   }`}
 >
   <Sidebar />
@@ -180,7 +180,7 @@ const layoutContent = (
       </div>
 
       {/* ✅ Bottom Navigation - Fixed position trên mobile */}
-      <div className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-[var(--card)] border-t border-[var(--border)] h-[56px] pb-[env(safe-area-inset-bottom)]">
+      <div className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-glass h-[56px] pb-[env(safe-area-inset-bottom)]">
         <Sidebar />
       </div>
     </div>

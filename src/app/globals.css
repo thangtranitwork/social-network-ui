@@ -1,81 +1,81 @@
+@import url('https://fonts.googleapis.com/css2?family=Geist:wght@100..900&family=Geist+Mono:wght@100..900&display=swap');
 @import "tailwindcss";
 @custom-variant dark (&:where(.dark, .dark *));
-@import url('https://fonts.googleapis.com/css2?family=Geist:wght@100..900&family=Geist+Mono:wght@100..900&display=swap');
 
 /* Root variables for light theme - "Liquid Minimal" */
 :root {
   /* === Base === */
   --background: #FAFAFA;
-  --foreground: #0A0A0A;
+  --foreground: #09090B;
 
   /* === Surface === */
   --card: #FFFFFF;
-  --card-foreground: #111111;
+  --card-foreground: #09090B;
   --card-elevated: #F4F4F5;
 
   /* === Semantic === */
-  --muted: #F0F0F0;
-  --muted-foreground: #737373;
-  --border: rgba(0,0,0,0.08);
+  --muted: #F4F4F5;
+  --muted-foreground: #71717A;
+  --border: rgba(0, 0, 0, 0.05);
   --input: #F4F4F5;
 
   /* === Brand Accent - "Electric Indigo" === */
   --accent: #6366F1;           /* vibrant indigo */
   --accent-rgb: 99, 102, 241;
   --accent-foreground: #FFFFFF;
-  --accent-subtle: rgba(var(--accent-rgb), 0.10);
-  --accent-glow: rgba(var(--accent-rgb), 0.22);
+  --accent-subtle: rgba(var(--accent-rgb), 0.08);
+  --accent-glow: rgba(var(--accent-rgb), 0.20);
 
   /* === Primary Action === */
-  --primary: #0A0A0A;
+  --primary: #09090B;
   --primary-foreground: #FAFAFA;
 
   /* === Status === */
-  --destructive: #FF3B3B;
-  --success: #00D68F;
-  --warning: #FFB800;
+  --destructive: #EF4444;
+  --success: #10B981;
+  --warning: #F59E0B;
   --info: #3B82F6;
 
   /* === Effects === */
-  --radius: 0.875rem;
-  --radius-sm: 0.5rem;
+  --radius: 1rem;
+  --radius-sm: 0.75rem;
   --radius-lg: 1.5rem;
   --radius-full: 9999px;
 
   /* === Shadow === */
-  --shadow-sm: 0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
-  --shadow-md: 0 4px 16px rgba(0,0,0,0.08), 0 2px 4px rgba(0,0,0,0.04);
-  --shadow-lg: 0 12px 40px rgba(0,0,0,0.12), 0 4px 12px rgba(0,0,0,0.06);
+  --shadow-sm: 0 1px 2px rgba(0,0,0,0.03);
+  --shadow-md: 0 4px 12px rgba(0,0,0,0.05), 0 1px 3px rgba(0,0,0,0.02);
+  --shadow-lg: 0 12px 30px rgba(0,0,0,0.08), 0 2px 8px rgba(0,0,0,0.04);
   --shadow-glow: 0 0 0 2px var(--accent-glow);
 }
 
 /* Dark mode overrides */
 .dark {
-  --background: #0C0C0E;
+  --background: #09090B;
   --foreground: #FAFAFA;
 
-  --card: #141416;
-  --card-foreground: #F0F0F0;
-  --card-elevated: #1C1C1F;
+  --card: #18181B;
+  --card-foreground: #F4F4F5;
+  --card-elevated: #27272A;
 
-  --muted: #1A1A1D;
-  --muted-foreground: #8A8A8E;
-  --border: rgba(255,255,255,0.07);
-  --input: #1A1A1D;
+  --muted: #27272A;
+  --muted-foreground: #A1A1AA;
+  --border: rgba(255, 255, 255, 0.06);
+  --input: #202023;
 
   /* Accent stays vibrant in dark mode */
   --accent: #818CF8;            /* slightly softer indigo for dark contrast */
   --accent-rgb: 129, 140, 248;
-  --accent-foreground: #0F172A;
-  --accent-subtle: rgba(var(--accent-rgb), 0.10);
-  --accent-glow: rgba(var(--accent-rgb), 0.18);
+  --accent-foreground: #09090B;
+  --accent-subtle: rgba(var(--accent-rgb), 0.08);
+  --accent-glow: rgba(var(--accent-rgb), 0.16);
 
   --primary: #FAFAFA;
-  --primary-foreground: #0A0A0A;
+  --primary-foreground: #09090B;
 
-  --shadow-sm: 0 1px 3px rgba(0,0,0,0.3);
-  --shadow-md: 0 4px 16px rgba(0,0,0,0.4);
-  --shadow-lg: 0 12px 40px rgba(0,0,0,0.5);
+  --shadow-sm: 0 1px 2px rgba(0,0,0,0.2);
+  --shadow-md: 0 4px 12px rgba(0,0,0,0.3);
+  --shadow-lg: 0 12px 30px rgba(0,0,0,0.4);
 }
 
 body {
@@ -83,6 +83,20 @@ body {
   color: var(--foreground);
   font-family: 'Geist', Arial, Helvetica, sans-serif;
   transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+/* Liquid Glassmorphic Surfaces */
+.bg-glass {
+  background: rgba(255, 255, 255, 0.72) !important;
+  backdrop-filter: blur(20px) saturate(140%) !important;
+  -webkit-backdrop-filter: blur(20px) saturate(140%) !important;
+  border: 1px solid rgba(0, 0, 0, 0.06) !important;
+}
+.dark .bg-glass {
+  background: rgba(24, 24, 27, 0.72) !important;
+  backdrop-filter: blur(20px) saturate(140%) !important;
+  -webkit-backdrop-filter: blur(20px) saturate(140%) !important;
+  border: 1px solid rgba(255, 255, 255, 0.06) !important;
 }
 
 #nprogress .bar {
@@ -164,14 +178,15 @@ input:-webkit-autofill:active {
 }
 
 .nav-item {
-  width: 44px; height: 44px;
+  width: 46px; height: 46px;
   border-radius: var(--radius-full);
   display: flex; align-items: center; justify-content: center;
   position: relative;
-  transition: all 0.2s ease;
+  transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1), background-color 0.2s ease, color 0.2s ease;
   color: var(--muted-foreground);
 }
 .nav-item:hover {
+  transform: scale(1.08);
   background: var(--muted);
   color: var(--foreground);
 }
@@ -181,10 +196,11 @@ input:-webkit-autofill:active {
 }
 .nav-indicator {
   position: absolute;
-  right: -4px;
-  width: 3px; height: 20px;
+  left: -8px;
+  width: 4px; height: 16px;
   background: var(--accent);
-  border-radius: 2px;
+  border-radius: var(--radius-full);
+  box-shadow: 0 0 8px var(--accent-glow);
 }
 
 .badge {
@@ -362,8 +378,8 @@ input:-webkit-autofill:active {
 }
 .admin-input:focus {
   outline: none;
-  border-color: rgba(0, 229, 160, 0.5);
-  box-shadow: 0 0 0 3px rgba(0, 229, 160, 0.12);
+  border-color: rgba(99, 102, 241, 0.5);
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.12);
 }
 .dark .admin-input {
   background: rgba(28, 28, 31, 0.80);
@@ -371,8 +387,8 @@ input:-webkit-autofill:active {
   color: #FAFAFA;
 }
 .dark .admin-input:focus {
-  border-color: rgba(0, 229, 160, 0.5);
-  box-shadow: 0 0 0 3px rgba(0, 229, 160, 0.10);
+  border-color: rgba(99, 102, 241, 0.5);
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.10);
 }
 
 /* Inset info panel inside cards */

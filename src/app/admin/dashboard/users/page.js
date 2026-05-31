@@ -256,7 +256,7 @@ export default function UsersPage() {
               title="Tổng người dùng"
               value={usersData.totalUsers?.toLocaleString()}
               icon={Users}
-              glowColor="from-[#00E5A0] to-[#0099ff]"
+              glowColor="from-[#6366F1] to-[#3B82F6]"
               trend={`+${usersData.newUsersThisMonth} tháng này`}
               onClick={() => router.push('/admin/dashboard/viewusers')}
             />
@@ -312,7 +312,7 @@ export default function UsersPage() {
                     <Bar dataKey="value" fill="url(#weeklyColor)" radius={[4, 4, 0, 0]}>
                       <defs>
                         <linearGradient id="weeklyColor" x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="0%" stopColor="#00E5A0" stopOpacity={0.9} />
+                          <stop offset="0%" stopColor="#6366F1" stopOpacity={0.9} />
                           <stop offset="100%" stopColor="#00A3FF" stopOpacity={0.7} />
                         </linearGradient>
                       </defs>
@@ -368,7 +368,7 @@ export default function UsersPage() {
           <div className="p-6 rounded-2xl admin-card shadow-sm">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-6">
               <h3 className="text-base font-bold flex items-center text-[var(--foreground)]">
-                <Clock className="w-5 h-5 mr-2 text-[#00E5A0]" />
+                <Clock className="w-5 h-5 mr-2 text-[var(--accent)]" />
                 Số lượng trực tuyến hôm nay (Phút)
               </h3>
               <div className="relative flex items-center">
@@ -388,8 +388,8 @@ export default function UsersPage() {
                 <AreaChart data={transformByMinute(usersData.onlineStatistics)}>
                   <defs>
                     <linearGradient id="onlineColor" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="0%" stopColor="#00E5A0" stopOpacity={0.4} />
-                      <stop offset="100%" stopColor="#00E5A0" stopOpacity={0.0} />
+                      <stop offset="0%" stopColor="#6366F1" stopOpacity={0.4} />
+                      <stop offset="100%" stopColor="#6366F1" stopOpacity={0.0} />
                     </linearGradient>
                   </defs>
                   <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" opacity={0.4} vertical={false} />
@@ -403,7 +403,7 @@ export default function UsersPage() {
                     axisLine={false}
                   />
                   <Tooltip content={<CustomTooltip />} />
-                  <Area type="monotone" dataKey="value" stroke="#00E5A0" strokeWidth={2} fill="url(#onlineColor)" />
+                  <Area type="monotone" dataKey="value" stroke="#6366F1" strokeWidth={2} fill="url(#onlineColor)" />
                 </AreaChart>
               </ResponsiveContainer>
             </div>

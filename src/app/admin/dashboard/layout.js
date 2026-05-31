@@ -94,7 +94,7 @@ export default function AdminLayout({ children }) {
           {/* Brand Header */}
           <div className="flex items-center justify-between pb-6 border-b border-[var(--border)]">
             <Link href="/admin/dashboard/users" className="flex items-center space-x-3">
-              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#00E5A0] to-[#8B5CF6] flex items-center justify-center shadow-lg shadow-[#00E5A0]/20">
+              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#6366F1] to-[#8B5CF6] flex items-center justify-center shadow-lg shadow-[#6366F1]/20">
                 <LayoutDashboard className="w-5 h-5 text-white" />
               </div>
               <span className="logo-brand text-2xl font-bold tracking-tight">
@@ -122,12 +122,12 @@ export default function AdminLayout({ children }) {
                   className={`
                     flex items-center space-x-4 px-4 py-3.5 rounded-xl transition-all duration-200 group
                     ${item.active 
-                      ? "bg-[var(--accent-subtle)] text-emerald-700 dark:text-[var(--accent)] font-semibold shadow-sm" 
+                      ? "bg-[var(--accent-subtle)] text-[var(--accent)] font-semibold shadow-sm" 
                       : "hover:bg-[var(--muted)] text-[var(--muted-foreground)] hover:text-[var(--foreground)]"
                     }
                   `}
                 >
-                  <Icon className={`w-5 h-5 transition-transform duration-200 group-hover:scale-110 ${item.active ? "text-emerald-600 dark:text-[var(--accent)]" : "text-[var(--muted-foreground)] group-hover:text-[var(--foreground)]"}`} />
+                  <Icon className={`w-5 h-5 transition-transform duration-200 group-hover:scale-110 ${item.active ? "text-[var(--accent)]" : "text-[var(--muted-foreground)] group-hover:text-[var(--foreground)]"}`} />
                   <div>
                     <p className="text-sm font-medium leading-none">{item.label}</p>
                     <p className="text-[10px] opacity-75 mt-1 font-normal hidden lg:block">{item.description}</p>

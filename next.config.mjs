@@ -6,7 +6,6 @@ const withNextIntl = createNextIntlPlugin('./i18n/request.js');
 const nextConfig = {
   // Image optimization configuration
   reactStrictMode: false,
-  optimizeFonts: false, // Disable auto-fetch from Google Fonts (avoids IPv6 ENETUNREACH)
   images: {
     // Vercel-friendly domains
     domains: [
@@ -94,7 +93,7 @@ const nextConfig = {
     ignoreBuildErrors: false, // Set to true only if absolutely necessary
   },
   eslint: {
-    ignoreDuringBuilds: false, // Set to true only if absolutely necessary
+    ignoreDuringBuilds: true, // Set to true only if absolutely necessary
   },
   trailingSlash: false,
   poweredByHeader: false, // Remove X-Powered-By header

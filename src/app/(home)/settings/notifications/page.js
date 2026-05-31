@@ -75,90 +75,104 @@ export default function NotificationsSettingsPage() {
 
   if (loading) {
     return (
-      <main className="flex-1 w-full p-4 sm:p-8 text-center">
-        <div className="animate-pulse text-[var(--muted-foreground)]">{tCommon('loading')}</div>
-      </main>
+        <main className="flex-1 w-full p-4 sm:p-8 text-center flex items-center justify-center min-h-[300px]">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[var(--accent)]"></div>
+        </main>
     );
   }
 
   return (
-    <div className="flex min-h-screen w-full bg-[var(--background)] text-[var(--foreground)]">
-      <main className="flex-1 w-full p-4 sm:p-8 space-y-6">
-        <h1 className="text-xl sm:text-2xl font-bold">{t('notifications')}</h1>
+    <div className="space-y-8 w-full max-w-2xl animate-fadeIn">
+      <div>
+        <h1 className="text-xl sm:text-2xl font-bold tracking-tight">{t('notifications')}</h1>
+        <p className="text-sm text-[var(--muted-foreground)] mt-1">
+          Quản lý cách bạn nhận các thông báo từ hệ thống và bạn bè.
+        </p>
+      </div>
 
-        {message && (
-          <div className="bg-green-50 border border-green-200 p-3 rounded-md text-green-700 text-sm">
-            ✅ {message}
+      {message && (
+        <div className="bg-emerald-50 dark:bg-emerald-950/20 border border-emerald-200/60 dark:border-emerald-900/40 p-4 rounded-xl text-emerald-800 dark:text-emerald-300 text-sm flex items-center gap-2">
+          <span className="text-emerald-500">✓</span> {message}
+        </div>
+      )}
+
+      {error && (
+        <div className="bg-red-50 dark:bg-red-950/20 border border-red-200/60 dark:border-red-900/40 p-4 rounded-xl text-red-800 dark:text-red-300 text-sm flex items-center gap-2">
+          <span className="text-red-500">✗</span> {error}
+        </div>
+      )}
+
+      <div className="space-y-6">
+        {/* Email notifications row */}
+        <div className="flex items-center justify-between p-4 sm:p-5 rounded-2xl bg-[var(--card-elevated)]/40 border border-[var(--border)]">
+          <div className="space-y-0.5">
+            <div className="font-semibold text-sm">Email Notifications</div>
+            <div className="text-xs text-[var(--muted-foreground)]">Receive notifications via email.</div>
           </div>
-        )}
+          <label className="relative inline-flex items-center cursor-pointer select-none">
+            <input 
+              type="checkbox" 
+              checked={preferences.emailNotifications} 
+              onChange={() => handleToggle('emailNotifications')} 
+              className="sr-only peer" 
+            />
+            <div className="w-11 h-6 bg-gray-200 dark:bg-zinc-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[var(--accent)]"></div>
+          </label>
+        </div>
 
-        {error && (
-          <div className="bg-red-50 border border-red-200 p-3 rounded-md text-red-700 text-sm">
-            ❌ {error}
+        {/* Push notifications row */}
+        <div className="flex items-center justify-between p-4 sm:p-5 rounded-2xl bg-[var(--card-elevated)]/40 border border-[var(--border)]">
+          <div className="space-y-0.5">
+            <div className="font-semibold text-sm">Push Notifications</div>
+            <div className="text-xs text-[var(--muted-foreground)]">Receive push notifications on this device.</div>
           </div>
-        )}
+          <label className="relative inline-flex items-center cursor-pointer select-none">
+            <input 
+              type="checkbox" 
+              checked={preferences.pushNotifications} 
+              onChange={() => handleToggle('pushNotifications')} 
+              className="sr-only peer" 
+            />
+            <div className="w-11 h-6 bg-gray-200 dark:bg-zinc-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[var(--accent)]"></div>
+          </label>
+        </div>
 
-        <div className="bg-[var(--card)] p-4 sm:p-6 rounded-lg shadow-md space-y-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <div className="font-semibold">Email Notifications</div>
-              <div className="text-sm text-[var(--muted-foreground)]">Receive notifications via email.</div>
-            </div>
-            <label className="relative inline-flex items-center cursor-pointer">
-              <input 
-                type="checkbox" 
-                checked={preferences.emailNotifications} 
-                onChange={() => handleToggle('emailNotifications')} 
-                className="sr-only peer" 
-              />
-              <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
-            </label>
+        {/* Notification Digest */}
+        <div className="p-4 sm:p-5 rounded-2xl bg-[var(--card-elevated)]/40 border border-[var(--border)] space-y-3">
+          <div className="space-y-0.5">
+            <div className="font-semibold text-sm">Notification Digest</div>
+            <div className="text-xs text-[var(--muted-foreground)]">Receive a summary of notifications.</div>
           </div>
+          <select
+            name="digestFrequency"
+            value={preferences.digestFrequency}
+            onChange={handleChange}
+            className="w-full bg-[var(--background)] text-[var(--foreground)] px-4 py-2.5 rounded-xl border border-[var(--border)] focus:outline-none focus:border-[var(--accent)] focus:ring-2 focus:ring-[var(--accent)]/15 text-sm transition-all cursor-pointer"
+          >
+            <option value="NONE">None</option>
+            <option value="DAILY">Daily</option>
+            <option value="WEEKLY">Weekly</option>
+          </select>
+        </div>
 
-          <div className="flex items-center justify-between">
-            <div>
-              <div className="font-semibold">Push Notifications</div>
-              <div className="text-sm text-[var(--muted-foreground)]">Receive push notifications on this device.</div>
-            </div>
-            <label className="relative inline-flex items-center cursor-pointer">
-              <input 
-                type="checkbox" 
-                checked={preferences.pushNotifications} 
-                onChange={() => handleToggle('pushNotifications')} 
-                className="sr-only peer" 
-              />
-              <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
-            </label>
-          </div>
-
-          <div className="flex flex-col space-y-2">
-            <div>
-              <div className="font-semibold">Notification Digest</div>
-              <div className="text-sm text-[var(--muted-foreground)]">Receive a summary of notifications.</div>
-            </div>
-            <select
-              name="digestFrequency"
-              value={preferences.digestFrequency}
-              onChange={handleChange}
-              className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md bg-[var(--background)] border border-[var(--border)]"
-            >
-              <option value="NONE">None</option>
-              <option value="DAILY">Daily</option>
-              <option value="WEEKLY">Weekly</option>
-            </select>
-          </div>
-
+        {/* Save button */}
+        <div className="pt-4 flex justify-end">
           <button
             onClick={handleSave}
             disabled={saving}
-            className={`w-full sm:w-auto bg-[var(--primary)] text-[var(--primary-foreground)] px-6 py-2 rounded-md ${
-              saving ? "opacity-50 cursor-not-allowed" : "hover:opacity-90"
-            }`}
+            className="btn-primary w-full sm:w-auto px-6 py-2.5 rounded-xl text-sm font-semibold shadow-sm hover:shadow transition-all duration-200 disabled:opacity-50 flex items-center justify-center gap-2"
           >
-            {saving ? tCommon('saving') : tCommon('save')}
+            {saving ? (
+              <>
+                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                <span>{tCommon('saving')}</span>
+              </>
+            ) : (
+              <span>{tCommon('save')}</span>
+            )}
           </button>
         </div>
-      </main>
+      </div>
     </div>
   );
 }

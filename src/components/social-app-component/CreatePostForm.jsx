@@ -161,7 +161,7 @@ export default function NewPostModal({ isOpen, onClose }) {
                     onClick={handleClickUploadArea}
                     onDrop={handleDrop}
                     onDragOver={(e) => e.preventDefault()}
-                    className="flex flex-col items-center justify-center border-2 border-dashed border-[var(--border)] rounded-lg p-10 text-gray-500 hover:border-[var(--primary)] cursor-pointer transition-colors space-y-2"
+                    className="flex flex-col items-center justify-center border-2 border-dashed border-[var(--border)] rounded-2xl p-10 text-gray-500 hover:border-[var(--primary)] cursor-pointer transition-colors space-y-2"
                 >
                   <p className="text-sm">{t("dropzone")}</p>
                   <p className="text-xs text-gray-400">{t("dropzoneLimit", { count: MAX_FILES })}</p>
@@ -188,7 +188,7 @@ export default function NewPostModal({ isOpen, onClose }) {
                   <select
                     value={privacy}
                     onChange={(e) => setPrivacy(e.target.value)}
-                    className="w-full px-3 py-2 border rounded-md bg-[var(--input)] text-[var(--foreground)]"
+                    className="w-full px-3 py-2 border rounded-xl bg-[var(--input)] text-[var(--foreground)]"
                   >
                     <option value="PUBLIC">{tPost("privacy.public")}</option>
                     <option value="FRIEND">{tPost("privacy.friend")}</option>
@@ -204,7 +204,7 @@ export default function NewPostModal({ isOpen, onClose }) {
                     onChange={handleContentChange}
                     rows={4}
                     placeholder={t("placeholder")}
-                    className="w-full px-3 py-2 border rounded-md bg-[var(--input)] text-[var(--foreground)] resize-none overflow-hidden min-h-[96px]"
+                    className="w-full px-3 py-2 border rounded-xl bg-[var(--input)] text-[var(--foreground)] resize-none overflow-hidden min-h-[96px]"
                     style={{ height: '96px' }}
                   />
                 </div>
@@ -230,7 +230,7 @@ export default function NewPostModal({ isOpen, onClose }) {
                   <select
                     value={privacy}
                     onChange={(e) => setPrivacy(e.target.value)}
-                    className="w-full px-3 py-2 border rounded-md bg-[var(--input)] text-[var(--foreground)]"
+                    className="w-full px-3 py-2 border rounded-xl bg-[var(--input)] text-[var(--foreground)]"
                   >
                     <option value="PUBLIC">{tPost("privacy.public")}</option>
                     <option value="FRIEND">{tPost("privacy.friend")}</option>
@@ -246,7 +246,7 @@ export default function NewPostModal({ isOpen, onClose }) {
                   onChange={handleContentChange}
                   rows={4}
                   placeholder={t("placeholder")}
-                  className="w-full px-3 py-2 border rounded-md bg-[var(--input)] text-[var(--foreground)] resize-none overflow-hidden min-h-[96px]"
+                  className="w-full px-3 py-2 border rounded-xl bg-[var(--input)] text-[var(--foreground)] resize-none overflow-hidden min-h-[96px]"
                   style={{ height: '96px' }}
                 />
                 <div className={`text-xs text-[var(--muted-foreground)] mt-1 text-right ${content.length > 10000 && "text-red-500"}`}>

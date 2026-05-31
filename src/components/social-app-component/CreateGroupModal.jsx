@@ -139,16 +139,14 @@ export default function CreateGroupModal({ onClose, onChatCreated }) {
       {/* Content */}
       <div className="flex-1 overflow-y-auto p-4 space-y-4">
         {/* Name input */}
-        <div className="space-y-1">
-          <label className="text-sm font-medium text-muted-foreground">{t("name")}</label>
-          <Input
-            value={groupName}
-            onChange={(e) => setGroupName(e.target.value)}
-            placeholder={t("namePlaceholder")}
-            className="w-full"
-            maxLength={100}
-          />
-        </div>
+        <Input
+          label={t("name")}
+          value={groupName}
+          onChange={(e) => setGroupName(e.target.value)}
+          placeholder={t("namePlaceholder")}
+          className="w-full"
+          maxLength={100}
+        />
 
         {/* Selected users badges */}
         {selectedUsers.length > 0 && (
@@ -178,18 +176,14 @@ export default function CreateGroupModal({ onClose, onChatCreated }) {
         )}
 
         {/* Search Input */}
-        <div className="space-y-1">
-          <label className="text-sm font-medium text-muted-foreground">{t("addMembers")}</label>
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-            <Input
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder={t("searchPlaceholder")}
-              className="w-full pl-9"
-            />
-          </div>
-        </div>
+        <Input
+          label={t("addMembers")}
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          placeholder={t("searchPlaceholder")}
+          icon={Search}
+          className="w-full"
+        />
 
         {/* Members List */}
         <div className="space-y-2">

@@ -20,35 +20,34 @@ export default function Header({ }) {
 
   return (
     <>
-      <header
-        className="w-full px-6 flex items-center justify-between bg-[var(--background)]/80 backdrop-blur-md border-b border-[var(--border)] sticky top-0 z-50"
-        style={{ height: "64px" }}
-      >
+    <div
+      className="w-full h-full px-6 flex items-center justify-between bg-transparent"
+    >
 
-        {/* Left/Center - Logo */}
-        <div className="flex items-center">
-          <Link href="/home" className="logo-brand">
-            poc<span className="logo-accent">poc</span>
-          </Link>
-        </div>
+      {/* Left/Center - Logo */}
+      <div className="flex items-center">
+        <Link href="/home" className="logo-brand">
+          poc<span className="logo-accent">poc</span>
+        </Link>
+      </div>
 
-        <div className="flex justify-end items-center gap-4">
-          {/* Language switcher */}
-          <LanguageSwitcher variant="toggle" />
+      <div className="flex justify-end items-center gap-4">
+        {/* Language switcher */}
+        <LanguageSwitcher variant="toggle" />
 
-          {/* Create post button */}
-          <button
-            type="button"
-            aria-label="Add"
-            onClick={() => setShowPostModal(true)}
-            className="btn-primary"
-            disabled={isLoggingOut}
-          >
-            <Plus size={18} />
-            <span className="hidden sm:inline">{t('create')}</span>
-          </button>
-        </div>
-      </header>
+        {/* Create post button */}
+        <button
+          type="button"
+          aria-label="Add"
+          onClick={() => setShowPostModal(true)}
+          className="btn-primary"
+          disabled={isLoggingOut}
+        >
+          <Plus size={18} />
+          <span className="hidden sm:inline">{t('create')}</span>
+        </button>
+      </div>
+    </div>
 
 
       {/* 📌 Modal tạo bài viết */}

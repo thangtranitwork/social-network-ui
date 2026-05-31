@@ -88,12 +88,12 @@ export default function SettingsLayout({ children }) {
   };
 
   return (
-      <div className="flex h-screen w-full bg-[var(--background)] text-[var(--foreground)]">
+      <div className="flex flex-col md:flex-row w-full bg-[var(--card)] rounded-2xl border border-[var(--border)] shadow-sm overflow-hidden min-h-[600px]">
         {/* Sidebar */}
         <aside className={`
-        ${isMobile ? (showSidebar ? 'w-full' : 'hidden') : 'w-[280px]'} 
-        border-r border-[var(--border)] p-6 overflow-y-auto
-        ${isMobile ? 'fixed inset-0 z-10 bg-[var(--background)]' : ''}
+        ${isMobile ? (showSidebar ? 'w-full' : 'hidden') : 'w-[260px]'} 
+        border-r border-[var(--border)] p-6
+        ${isMobile ? 'fixed inset-0 z-10 bg-[var(--card)]' : 'bg-[var(--card-elevated)]/30'}
       `}>
           <h2 className="text-sm text-[var(--muted-foreground)] font-semibold mb-6">
             {t('title')}
@@ -108,8 +108,8 @@ export default function SettingsLayout({ children }) {
                       <Link
                           key={subIdx}
                           href={`/settings/${item.id}`}
-                          className={`w-full flex items-center gap-3 text-left px-4 py-3 rounded-md hover:bg-[var(--muted)] transition-colors ${
-                              pathname.endsWith(item.id) ? "bg-[var(--muted)]" : ""
+                          className={`w-full flex items-center gap-3 text-left px-4 py-3 rounded-xl hover:bg-[var(--muted)] hover:text-[var(--foreground)] transition-all ${
+                              pathname.endsWith(item.id) ? "bg-[var(--accent-subtle)] text-[var(--accent)] font-semibold" : "text-[var(--muted-foreground)]"
                           } ${isMobile ? 'py-4' : 'py-2'}`}
                           onClick={() => {
                             if (isMobile) {
@@ -117,7 +117,7 @@ export default function SettingsLayout({ children }) {
                             }
                           }}
                       >
-                        <item.icon className="w-5 h-5 text-[var(--foreground)]" />
+                        <item.icon className={`w-5 h-5 ${pathname.endsWith(item.id) ? "text-[var(--accent)]" : "text-[var(--muted-foreground)]"}`} />
                         <span className={`font-medium ${isMobile ? 'text-base' : 'text-sm'}`}>
                     {item.label}
                   </span>
@@ -130,7 +130,7 @@ export default function SettingsLayout({ children }) {
 
         {/* Main content */}
         <main className={`
-        flex-1 overflow-y-auto space-y-6
+        flex-1 space-y-6
         ${isMobile ? (showSidebar ? 'hidden' : 'w-full p-4') : 'p-8'}
       `}>
           {/* Mobile header with back button */}
