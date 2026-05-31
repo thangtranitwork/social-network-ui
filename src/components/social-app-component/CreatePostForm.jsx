@@ -215,7 +215,7 @@ export default function NewPostModal({ isOpen, onClose }) {
                     disabled={isLoading}
                     className="btn-primary disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    {isLoading ? t("uploading") : tPost("comment")}
+                    {isLoading ? t("uploading") : tPost("create")}
                   </button>
                 </div>
               </div>
@@ -260,7 +260,7 @@ export default function NewPostModal({ isOpen, onClose }) {
                   disabled={isLoading || (!content.trim() && media.length === 0) || content.length > 10000}
                   className="btn-primary disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  {isLoading ? t("uploading") : tPost("comment")}
+                  {isLoading ? t("uploading") : tPost("create")}
                 </button>
               </div>
             </div>
