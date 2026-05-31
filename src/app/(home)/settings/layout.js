@@ -41,7 +41,7 @@ export default function SettingsLayout({ children }) {
       ]
     },
     {
-      title: t('version', { version: '1.0.0' }),
+      title: t('version', { version: '2.0.0' }),
       items: []
     }
   ];
