@@ -1,3 +1,7 @@
+import createNextIntlPlugin from 'next-intl/plugin';
+
+const withNextIntl = createNextIntlPlugin('./i18n/request.js');
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   // Image optimization configuration
@@ -97,5 +101,5 @@ const nextConfig = {
   compress: true,
 };
 
-// Use ES module export
-export default nextConfig;
+// Use ES module export — wrapped with next-intl plugin
+export default withNextIntl(nextConfig);

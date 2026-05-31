@@ -4,8 +4,12 @@ import { useState, useEffect } from "react";
 import Input from "@/components/ui-components/Input";
 import Avatar from "@/components/ui-components/Avatar";
 import api from "@/utils/axios";
+import { useTranslations } from "next-intl";
 
 export default function PersonalInfoPage() {
+  const t = useTranslations('settings');
+  const tCommon = useTranslations('common');
+  const tError = useTranslations('errors');
   const [user, setUser] = useState(null);           // Dữ liệu người dùng
   const [originalUser, setOriginalUser] = useState(null); // Bản sao gốc
   const [avatarFile, setAvatarFile] = useState(null);
@@ -68,7 +72,7 @@ export default function PersonalInfoPage() {
 
     const updates = [
       {
-        label: "Name",
+        label: t('givenName'),
         check: user.givenName !== originalUser.givenName || user.familyName !== originalUser.familyName,
         request: () =>
             api.patch(
@@ -81,21 +85,21 @@ export default function PersonalInfoPage() {
         errorKey: "name",
       },
       {
-        label: "Username",
+        label: t('username'),
         check: user.username !== originalUser.username,
         request: () =>
             api.patch(`/v1/users/update-username?username=${encodeURIComponent(user.username)}`, {}, { headers: { Authorization: `Bearer ${token}` } }),
         errorKey: "username",
       },
       {
-        label: "Birthday",
+        label: t('birthdate'),
         check: user.birthdate !== originalUser.birthdate,
         request: () =>
             api.patch(`/v1/users/update-birthday?birthdate=${encodeURIComponent(user.birthdate)}`, {}, { headers: { Authorization: `Bearer ${token}` } }),
         errorKey: "birthday",
       },
       {
-        label: "Bio",
+        label: t('bio'),
         check: user.bio !== originalUser.bio,
         request: () =>
             fetch(`${process.env.NEXT_PUBLIC_API_URL}/v1/users/update-bio?bio=${encodeURIComponent(user.bio)}`, {
@@ -127,16 +131,17 @@ export default function PersonalInfoPage() {
       if (item.check) {
         try {
           await item.request();
-          setSuccessMessages((prev) => [...prev, `${item.label} updated successfully`]);
+          setSuccessMessages((prev) => [...prev, t('editModal.success', { label: item.label })]);
           successCount++;
         } catch (err) {
           setErrors((prev) => ({
             ...prev,
-            [item.errorKey]: err?.response?.data?.message || `Failed to update ${item.label.toLowerCase()}`,
+            [item.errorKey]: err?.response?.data?.message || t('editModal.error', { label: item.label }),
           }));
         }
       }
     }
+
 
     setLoading(false);
     if (successCount > 0) {
@@ -147,7 +152,7 @@ export default function PersonalInfoPage() {
   if (loadingUser) {
     return (
         <main className="flex-1 w-full p-4 sm:p-8 text-center">
-          <div className="animate-pulse text-[var(--muted-foreground)]">Đang tải thông tin cá nhân...</div>
+          <div className="animate-pulse text-[var(--muted-foreground)]">{tCommon('loading')}</div>
         </main>
     );
   }
@@ -163,7 +168,7 @@ export default function PersonalInfoPage() {
   return (
       <div className="flex min-h-screen w-full bg-[var(--background)] text-[var(--foreground)]">
         <main className="flex-1 w-full p-4 sm:p-8 space-y-6">
-          <h1 className="text-xl sm:text-2xl font-bold">Thông tin cá nhân</h1>
+          <h1 className="text-xl sm:text-2xl font-bold">{t('personalInfo')}</h1>
 
           {successMessages.length > 0 && (
               <div className="bg-green-50 border border-green-200 p-3 rounded-md text-green-700 text-sm">
@@ -208,7 +213,7 @@ export default function PersonalInfoPage() {
                       className="hidden"
                   />
                   <span className="inline-block w-full sm:w-auto bg-[var(--primary)] hover:opacity-90 text-[var(--primary-foreground)] px-4 py-2 rounded-md cursor-pointer text-center text-sm">
-                  Thay đổi ảnh
+                  {t('changeAvatar')}
                 </span>
                 </label>
               </div>
@@ -217,13 +222,13 @@ export default function PersonalInfoPage() {
             {/* Form fields */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <Input
-                  label="Họ"
+                  label={t('familyName')}
                   name="familyName"
                   value={user.familyName}
                   onChange={handleInputChange}
               />
               <Input
-                  label="Tên"
+                  label={t('givenName')}
                   name="givenName"
                   value={user.givenName}
                   onChange={handleInputChange}
@@ -231,14 +236,14 @@ export default function PersonalInfoPage() {
             </div>
 
             <Input
-                label="Tên người dùng"
+                label={t('username')}
                 name="username"
                 value={user.username}
                 onChange={handleInputChange}
             />
 
             <Input
-                label="Ngày sinh"
+                label={t('birthdate')}
                 name="birthdate"
                 value={user.birthdate}
                 onChange={handleInputChange}
@@ -247,7 +252,7 @@ export default function PersonalInfoPage() {
 
             <div>
               <Input
-                  label="Tiểu sử"
+                  label={t('bio')}
                   name="bio"
                   value={user.bio}
                   onChange={handleInputChange}
@@ -265,7 +270,7 @@ export default function PersonalInfoPage() {
                     loading ? "opacity-50 cursor-not-allowed" : "hover:opacity-90"
                 }`}
             >
-              {loading ? "Đang lưu..." : "Lưu thay đổi"}
+              {loading ? tCommon('saving') : tCommon('save')}
             </button>
           </div>
         </main>

@@ -2,8 +2,10 @@
 
 import Image from "next/image";
 import { X, Plus } from "lucide-react";
+import { useTranslations } from "next-intl";
 
 export default function ImagePreview({ images = [], onDelete, onAdd, onImageClick }) {
+  const t = useTranslations('post.createModal');
   if (!Array.isArray(images)) return null;
 // Kiểm tra nếu images là mảng
   const totalItems = images.length + 1;
@@ -77,7 +79,7 @@ export default function ImagePreview({ images = [], onDelete, onAdd, onImageClic
                 minWidth: '28px',
                 minHeight: '28px'
               }}
-              title="Xóa ảnh/video"
+              title={t('deleteMedia')}
               type="button"
             >
               <X className="w-4 h-4" style={{ position: 'relative', zIndex: 1 }} />
@@ -100,11 +102,11 @@ export default function ImagePreview({ images = [], onDelete, onAdd, onImageClic
       <button
         onClick={onAdd}
         className="aspect-square rounded-lg flex flex-col items-center justify-center border-2 border-dashed border-gray-300 hover:border-blue-400 hover:bg-blue-50 transition-all duration-200 group"
-        title="Thêm ảnh hoặc video"
+        title={t('addMedia')}
         type="button"
       >
         <Plus className="w-6 h-6 text-gray-400 group-hover:text-blue-500 mb-1" />
-        <span className="text-xs text-gray-400 group-hover:text-blue-500">Thêm</span>
+        <span className="text-xs text-gray-400 group-hover:text-blue-500">{t('add')}</span>
       </button>
     </div>
   );

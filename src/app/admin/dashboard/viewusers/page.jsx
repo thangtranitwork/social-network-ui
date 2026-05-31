@@ -7,14 +7,33 @@ import UserHeader from '@/components/social-app-component/UserHeader';
 import { useRouter } from 'next/navigation';
 import adminApi from "@/utils/adminInterception";
 import toast from "react-hot-toast";
+import Modal from "@/components/ui-components/Modal";
+import ConfirmModal from "@/components/ui-components/ConfirmModal";
+import { useTranslations } from 'next-intl';
 
 const UsersPage = () => {
+  const t = useTranslations('admin.users');
+  const tCommon = useTranslations('common');
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
   const [hasMore, setHasMore] = useState(true);
   const [currentSkip, setCurrentSkip] = useState(0);
   const [error, setError] = useState("");
+
+  // Suspension modal state
+  const [suspendModal, setSuspendModal] = useState({
+    isOpen: false,
+    userId: null,
+    duration: "300"
+  });
+
+  // Unsuspend confirm modal state
+  const [unsuspendConfirm, setUnsuspendConfirm] = useState({
+    isOpen: false,
+    userId: null
+  });
+
   const router = useRouter();
   
   // Refs for optimization
@@ -30,13 +49,20 @@ const UsersPage = () => {
     router.push('/admin/dashboard/users');
   };
 
-  const handleSuspendUser = async (e, userId) => {
+  const handleSuspendUser = (e, userId) => {
     e.stopPropagation();
-    const durationInput = prompt("Nhập số giây khóa tài khoản (ví dụ: 300 cho 5 phút, 86400 cho 1 ngày):", "300");
-    if (!durationInput) return;
+    setSuspendModal({
+      isOpen: true,
+      userId,
+      duration: "300"
+    });
+  };
+
+  const executeSuspendUser = async () => {
+    const { userId, duration: durationInput } = suspendModal;
     const duration = parseInt(durationInput);
     if (isNaN(duration) || duration <= 0) {
-      toast.error("Thời gian khóa không hợp lệ!");
+      toast.error(t("invalidDuration"));
       return;
     }
 
@@ -45,7 +71,7 @@ const UsersPage = () => {
         duration_seconds: duration
       });
       if (res.data.code === 200) {
-        toast.success("Đã khóa tài khoản thành công!");
+        toast.success(t("suspendSuccess"));
         setUsers(prevUsers => prevUsers.map(u => {
           if (u.id === userId) {
             return {
@@ -56,23 +82,30 @@ const UsersPage = () => {
           }
           return u;
         }));
+        setSuspendModal({ ...suspendModal, isOpen: false });
       } else {
-        toast.error("Không thể khóa tài khoản: " + res.data.message);
+        toast.error(`${t("suspendError")}: ${res.data.message}`);
       }
     } catch (err) {
-      toast.error("Lỗi khi khóa tài khoản!");
+      toast.error(t("suspendError"));
       console.error(err);
     }
   };
 
-  const handleUnsuspendUser = async (e, userId) => {
+  const handleUnsuspendUser = (e, userId) => {
     e.stopPropagation();
-    if (!confirm("Bạn có chắc chắn muốn mở khóa tài khoản này?")) return;
+    setUnsuspendConfirm({
+      isOpen: true,
+      userId
+    });
+  };
 
+  const executeUnsuspendUser = async () => {
+    const { userId } = unsuspendConfirm;
     try {
       const res = await adminApi.post(`/v1/admin/users/${userId}/unsuspend`);
       if (res.data.code === 200) {
-        toast.success("Đã mở khóa tài khoản thành công!");
+        toast.success(t("unsuspendSuccess"));
         setUsers(prevUsers => prevUsers.map(u => {
           if (u.id === userId) {
             return {
@@ -83,11 +116,12 @@ const UsersPage = () => {
           }
           return u;
         }));
+        setUnsuspendConfirm({ ...unsuspendConfirm, isOpen: false });
       } else {
-        toast.error("Không thể mở khóa tài khoản: " + res.data.message);
+        toast.error(`${t("unsuspendError")}: ${res.data.message}`);
       }
     } catch (err) {
-      toast.error("Lỗi khi mở khóa tài khoản!");
+      toast.error(t("unsuspendError"));
       console.error(err);
     }
   };
@@ -97,7 +131,7 @@ const UsersPage = () => {
     if (!dateString) return "N/A";
     try {
       const date = new Date(dateString);
-      return date.toLocaleDateString('vi-VN', {
+      return date.toLocaleDateString(tCommon('locale') === 'vi' ? 'vi-VN' : 'en-US', {
         year: 'numeric',
         month: 'long',
         day: 'numeric'
@@ -126,8 +160,8 @@ const UsersPage = () => {
 
   // Format last online time - fixed for ZonedDateTime
   const formatLastOnline = (lastOnline, isOnline) => {
-    if (isOnline) return "Trực tuyến";
-    if (!lastOnline) return "Rất lâu trước đây";
+    if (isOnline) return t("online");
+    if (!lastOnline) return t("longAgo");
     try {
       // Handle ZonedDateTime format from backend
       let date;
@@ -144,10 +178,10 @@ const UsersPage = () => {
       const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
       const diffDays = Math.floor(diffHours / 24);
       
-      if (diffHours < 1) return "Just now";
-      if (diffHours < 24) return `${diffHours}h ago`;
-      if (diffDays < 7) return `${diffDays}d ago`;
-      return date.toLocaleDateString('vi-VN');
+      if (diffHours < 1) return t("justNow");
+      if (diffHours < 24) return t("hoursAgo", { hours: diffHours });
+      if (diffDays < 7) return t("daysAgo", { days: diffDays });
+      return date.toLocaleDateString(tCommon('locale') === 'vi' ? 'vi-VN' : 'en-US');
     } catch {
       return "N/A";
     }
@@ -206,7 +240,7 @@ const UsersPage = () => {
       }
     } catch (err) {
       if (!abortControllerRef.current.signal.aborted) {
-        setError(`Không thể tải danh sách users: ${err.message}`);
+        setError(`${t("loadError")}: ${err.message}`);
         console.error("Lỗi khi tải users:", err);
       }
     } finally {
@@ -237,240 +271,170 @@ const UsersPage = () => {
   // User Card Component
   const UserCard = ({ user }) => (
     <div 
-      className="bg-[var(--card)] rounded-xl shadow-sm border border-border p-6 hover:shadow-md transition-shadow cursor-pointer flex flex-col justify-between"
+      className="admin-card rounded-2xl p-5 hover:shadow-md hover:border-[var(--accent)]/30 transition-all duration-300 transform hover:-translate-y-0.5 cursor-pointer flex flex-col justify-between"
       onClick={() => goToProfile(user.username)}
     >
       <div>
-        {/* Header Section */}
-        <div className="flex items-start gap-4 mb-4">
+        {/* Profile Header */}
+        <div className="flex items-start gap-3.5 mb-4">
           <div className="relative">
             {user.profilePictureUrl ? (
               <img 
                 src={user.profilePictureUrl} 
                 alt={`${user.givenName} ${user.familyName}`}
-                className="w-16 h-16 rounded-full object-cover border-2 border-border"
+                className="w-14 h-14 rounded-full object-cover border-2 border-[var(--border)]"
               />
             ) : (
-              <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center">
-                <span className="text-white font-bold text-xl">
+              <div className="w-14 h-14 bg-gradient-to-tr from-[#00E5A0] to-[#8B5CF6] rounded-full flex items-center justify-center text-white font-bold text-lg shadow-sm">
+                <span>
                   {user.givenName?.charAt(0)}{user.familyName?.charAt(0)}
                 </span>
               </div>
             )}
-            {/* Online Status */}
-            <div className={`absolute -bottom-1 -right-1 w-5 h-5 rounded-full border-2 border-card ${
+            {/* Status indicator ring */}
+            <div className={`absolute -bottom-0.5 -right-0.5 w-4 h-4 rounded-full border-2 border-white dark:border-[#141416] ${
               user.isOnline ? 'bg-green-500' : 'bg-gray-400'
-            }`}></div>
+            }`} />
           </div>
           
           <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-2 mb-1">
-              <h3 className="text-lg font-bold text-card-foreground truncate">
+            <div className="flex items-center gap-1.5 mb-0.5">
+              <h3 className="font-bold text-sm text-[var(--foreground)] truncate">
                 {user.givenName} {user.familyName}
               </h3>
               {user.verified && (
-                <ShieldCheck className="w-5 h-5 text-blue-500" />
+                <ShieldCheck className="w-4 h-4 text-blue-500 flex-shrink-0" />
               )}
             </div>
-            <p className="text-sm text-muted-foreground truncate">
+            <p className="text-xs text-[var(--muted-foreground)] truncate">
               @{user.username}
             </p>
-            <div className="flex items-center gap-1 mt-1">
-              <Clock className="w-4 h-4 text-muted-foreground" />
-              <span className="text-sm text-muted-foreground">
+            <div className="flex items-center gap-1 mt-1 text-[10px] text-[var(--muted-foreground)] font-medium">
+              <Clock className="w-3.5 h-3.5" />
+              <span>
                 {formatLastOnline(user.lastOnline, user.isOnline)}
               </span>
             </div>
-            {user.suspended && (
-              <div className="mt-2 inline-flex items-center gap-1 px-2.5 py-0.5 rounded text-xs font-semibold bg-red-100 text-red-850 dark:bg-red-950/40 dark:text-red-400 border border-red-200 dark:border-red-900">
-                <UserX className="w-3.5 h-3.5" />
-                Khóa đến: {new Date(user.suspendedUntil).toLocaleString('vi-VN')}
-              </div>
-            )}
           </div>
         </div>
 
-        {/* Bio Section */}
-        <div className="mb-4">
-          <p className="text-foreground text-sm leading-relaxed line-clamp-2 h-12">
-            {user.bio ? user.bio : "Không có tiểu sử"}
-          </p>
-        </div>
-
-        {/* User Info Grid */}
-        <div className=" gap-8 my-2">
-          <div className="flex gap-2 justify-between" >
-            <div className="flex items-center gap-2">
-              <Mail className="w-4 h-4 text-muted-foreground" />
-              <span className="text-sm text-muted-foreground truncate">
-                {user.email || "N/A"}
-              </span>
-            </div>
-            <div className="flex items-center gap-2">
-              <Calendar className="w-4 h-4 text-muted-foreground" />
-              <span className="text-sm text-muted-foreground">
-                {calculateAge(user.birthdate)} tuổi
-              </span>
-            </div>
+        {user.suspended && (
+          <div className="mb-4 flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[10px] font-bold bg-red-50 dark:bg-red-950/20 text-red-600 dark:text-red-400 border border-red-100 dark:border-red-900/30">
+            <UserX className="w-3.5 h-3.5" />
+            <span>
+              {t("suspendUntil", { date: new Date(user.suspendedUntil).toLocaleString('vi-VN') })}
+            </span>
           </div>
-          <div className="flex items-center gap-2 py-2">
-            <UserCheck className="w-4 h-4 text-muted-foreground" />
-            <span className="text-sm text-muted-foreground">
+        )}
+
+        {/* Bio */}
+        <p className="text-xs text-[var(--foreground)] leading-relaxed mb-4 line-clamp-2 h-8">
+          {user.bio ? user.bio : "Chưa có tiểu sử"}
+        </p>
+
+        {/* Info detail labels */}
+        <div className="space-y-2 mb-4 admin-inset p-3 rounded-xl">
+          <div className="flex items-center justify-between text-[11px] text-[var(--muted-foreground)]">
+            <span className="flex items-center gap-1.5 truncate pr-2">
+              <Mail className="w-3.5 h-3.5 text-[var(--muted-foreground)]" />
+              {user.email || "Chưa thiết lập"}
+            </span>
+            <span className="font-semibold text-[var(--foreground)] flex-shrink-0">
+              {calculateAge(user.birthdate)} tuổi
+            </span>
+          </div>
+          <div className="flex items-center justify-between text-[10px] text-[var(--muted-foreground)] pt-2 border-t border-[var(--border)] border-dashed">
+            <span className="flex items-center gap-1.5">
+              <UserCheck className="w-3.5 h-3.5" />
               Tham gia: {formatDate(user.registrationDate)}
             </span>
           </div>
-          <div className="flex items-center gap-2 mb-2">
-            <Calendar className="w-4 h-4 text-muted-foreground" />
-            <span className="text-sm text-muted-foreground">
-              Sinh: {formatDate(user.birthdate)}
-            </span>
+        </div>
+
+        {/* Grid metrics */}
+        <div className="grid grid-cols-3 gap-2.5 pt-3.5 border-t border-[var(--border)] text-center">
+          <div className="bg-white/60 dark:bg-zinc-900/30 p-2 rounded-xl border border-[var(--border)]">
+            <p className="font-black text-sm text-[var(--foreground)]">{user.friendCount || 0}</p>
+            <p className="text-[10px] text-[var(--muted-foreground)] font-semibold uppercase mt-0.5">Bạn bè</p>
+          </div>
+          <div className="bg-white/60 dark:bg-zinc-900/30 p-2 rounded-xl border border-[var(--border)]">
+            <p className="font-black text-sm text-[var(--foreground)]">{user.postCount || 0}</p>
+            <p className="text-[10px] text-[var(--muted-foreground)] font-semibold uppercase mt-0.5">Bài viết</p>
+          </div>
+          <div className="bg-white/60 dark:bg-zinc-900/30 p-2 rounded-xl border border-[var(--border)]">
+            <p className="font-black text-sm text-[var(--foreground)]">{user.messageCount || 0}</p>
+            <p className="text-[10px] text-[var(--muted-foreground)] font-semibold uppercase mt-0.5">Chat</p>
           </div>
         </div>
 
-        {/* Statistics Section */}
-        <div className="grid grid-cols-3 gap-4 pt-4 border-t border-border">
-          <div className="text-center">
-            <div className="flex items-center justify-center gap-1 mb-1">
-              <Users className="w-4 h-4 text-blue-500" />
-              <span className="font-bold text-card-foreground">
-                {user.friendCount || 0}
-              </span>
-            </div>
-            <p className="text-xs text-muted-foreground">Bạn bè</p>
+        {/* Small metadata stats */}
+        <div className="flex items-center justify-around gap-2 mt-3 text-[10px] text-[var(--muted-foreground)] font-medium">
+          <div className="flex items-center gap-1">
+            <ThumbsUp className="w-3 h-3 text-[var(--accent)]" />
+            <span>{user.commentCount || 0} cmt</span>
           </div>
-          <div className="text-center">
-            <div className="flex items-center justify-center gap-1 mb-1">
-              <FileText className="w-4 h-4 text-green-500" />
-              <span className="font-bold text-card-foreground">
-                {user.postCount || 0}
-              </span>
-            </div>
-            <p className="text-xs text-muted-foreground">Bài viết</p>
+          <div className="flex items-center gap-1">
+            <Phone className="w-3 h-3 text-green-500" />
+            <span>{user.callCount || 0} gọi</span>
           </div>
-          <div className="text-center">
-            <div className="flex items-center justify-center gap-1 mb-1">
-              <MessageCircle className="w-4 h-4 text-purple-500" />
-              <span className="font-bold text-card-foreground">
-                {user.messageCount || 0}
-              </span>
-            </div>
-            <p className="text-xs text-muted-foreground">Tin nhắn</p>
+          <div className="flex items-center gap-1">
+            <Upload className="w-3 h-3 text-blue-500" />
+            <span>{user.uploadedFileCount || 0} file</span>
           </div>
         </div>
 
-        {/* Additional Stats */}
-        <div className="grid grid-cols-5 gap-2 mt-3 pt-3 border-t border-border">
-          <div className="text-center">
-            <div className="flex items-center justify-center gap-1">
-              <MessageSquareText className="w-3 h-3 text-blue-400" />
-              <span className="text-xs font-medium text-muted-foreground">
-                {user.commentCount || 0}
-              </span>
-            </div>
-            <p className="text-xs text-muted-foreground">Bình luận</p>
-          </div>
-          <div className="text-center">
-            <div className="flex items-center justify-center gap-1">
-              <Phone className="w-3 h-3 text-green-400" />
-              <span className="text-xs font-medium text-muted-foreground">
-                {user.callCount || 0}
-              </span>
-            </div>
-            <p className="text-xs text-muted-foreground">Cuộc gọi</p>
-          </div>
-          <div className="text-center">
-            <div className="flex items-center justify-center gap-1">
-              <Send className="w-3 h-3 text-blue-400" />
-              <span className="text-xs font-medium text-muted-foreground">
-                {user.requestSentCount || 0}
-              </span>
-            </div>
-            <p className="text-xs text-muted-foreground">Đã gửi</p>
-          </div>
-          <div className="text-center">
-            <div className="flex items-center justify-center gap-1">
-              <Inbox className="w-3 h-3 text-orange-400" />
-              <span className="text-xs font-medium text-muted-foreground">
-                {user.requestReceivedCount || 0}
-              </span>
-            </div>
-            <p className="text-xs text-muted-foreground">Đã nhận</p>
-          </div>
-          <div className="text-center">
-            <div className="flex items-center justify-center gap-1">
-              <Upload className="w-3 h-3 text-indigo-400" />
-              <span className="text-xs font-medium text-muted-foreground">
-                {user.uploadedFileCount || 0}
-              </span>
-            </div>
-            <p className="text-xs text-muted-foreground">Tệp</p>
-          </div>
-        </div>
-
-        {/* Block count if exists */}
-        {user.blockCount > 0 && (
-          <div className="mt-3 pt-3 border-t border-border">
-            <div className="flex items-center justify-center gap-1">
-              <UserX className="w-4 h-4 text-red-500" />
-              <span className="text-sm text-red-600 dark:text-red-400">
-                {user.blockCount} người bị chặn
-              </span>
-            </div>
-          </div>
-        )}
       </div>
 
-      {/* Action Buttons */}
-      <div className="mt-4 pt-3 border-t border-border flex justify-end gap-2">
+      {/* Action buttons */}
+      <div className="mt-4 pt-3.5 border-t border-[var(--border)] flex justify-end gap-2">
         {user.suspended ? (
           <>
             <button
               onClick={(e) => handleUnsuspendUser(e, user.id)}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors bg-green-50 hover:bg-green-100 dark:bg-green-950/20 dark:hover:bg-green-950/40 text-green-600 dark:text-green-400"
+              className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold bg-green-50 dark:bg-green-950/20 text-green-600 dark:text-green-400 hover:bg-green-100 transition-colors"
             >
-              <UserCheck className="w-4 h-4" />
+              <UserCheck className="w-3.5 h-3.5" />
               Mở khóa
             </button>
             <button
               onClick={(e) => handleSuspendUser(e, user.id)}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors bg-orange-50 hover:bg-orange-100 dark:bg-orange-950/20 dark:hover:bg-orange-950/40 text-orange-600 dark:text-orange-400"
+              className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold bg-orange-50 dark:bg-orange-950/20 text-orange-600 dark:text-orange-400 hover:bg-orange-100 transition-colors"
             >
-              <Clock className="w-4 h-4" />
-              Thay đổi thời gian khóa
+              <Clock className="w-3.5 h-3.5" />
+              Đổi hạn
             </button>
           </>
         ) : (
           <button
             onClick={(e) => handleSuspendUser(e, user.id)}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors bg-red-50 hover:bg-red-100 dark:bg-red-950/20 dark:hover:bg-red-950/40 text-red-600 dark:text-red-400"
+            className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold bg-red-50 dark:bg-red-950/20 text-red-600 dark:text-red-400 hover:bg-red-100 transition-colors"
           >
-            <UserX className="w-4 h-4" />
+            <UserX className="w-3.5 h-3.5" />
             Khóa tài khoản
           </button>
         )}
       </div>
     </div>
-  );
+  )
 
   return (
     <main className="max-w-6xl mx-auto mt-4 px-4">
       <div className="space-y-6">
         {/* Header */}
-        <div className="flex items-center justify-between bg-card rounded-xl shadow-sm border border-border p-6">
-          <div className="flex items-center gap-4">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 p-5 rounded-2xl admin-card shadow-sm">
+          <div className="flex items-center gap-3">
             <button 
               onClick={goBackToAdmin}
-              className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors"
+              className="admin-btn-back flex items-center gap-2 px-3.5 py-2 text-xs md:text-sm font-semibold rounded-xl transition-colors"
             >
               <ArrowLeft className="w-4 h-4" />
-              Quay lại Admin
+              Quay lại Thống kê
             </button>
-            <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center">
-              <Users className="w-5 h-5 text-white" />
+            <div>
+              <h2 className="text-lg font-bold text-[var(--foreground)]">
+                Danh sách thành viên ({users.length})
+              </h2>
             </div>
-            <h2 className="text-2xl font-bold text-card-foreground">
-              Tất cả người dùng ({users.length})
-            </h2>
           </div>
         </div>
 
@@ -544,11 +508,11 @@ const UsersPage = () => {
                     {loadingMore ? (
                       <>
                         <Loader2 className="w-4 h-4 animate-spin" />
-                        Đang tải...
+                        {t("loading")}
                       </>
                     ) : (
                       <>
-                        Tải thêm người dùng
+                        {t("loadMore")}
                         <span className="text-sm opacity-80">({users.length})</span>
                       </>
                     )}
@@ -556,7 +520,7 @@ const UsersPage = () => {
                 ) : (
                   <div className="bg-card rounded-full px-6 py-3 shadow-sm border border-border">
                     <p className="text-muted-foreground text-sm font-medium">
-                      🎉 Đã hiển thị hết người dùng!
+                      {t("allLoaded")}
                     </p>
                   </div>
                 )}
@@ -569,16 +533,62 @@ const UsersPage = () => {
                   <User className="w-8 h-8 text-muted-foreground" />
                 </div>
                 <h3 className="text-lg font-semibold text-card-foreground mb-2">
-                  Không có người dùng nào
+                  {t("noUsers")}
                 </h3>
                 <p className="text-muted-foreground">
-                  Hiện tại chưa có người dùng nào để hiển thị.
+                  {t("noUsersDesc")}
                 </p>
               </div>
             </div>
           )}
         </section>
       </div>
+
+      {/* Suspend Modal */}
+      <Modal 
+        isOpen={suspendModal.isOpen} 
+        onClose={() => setSuspendModal({ ...suspendModal, isOpen: false })}
+        size="small"
+      >
+        <div className="p-6">
+          <h3 className="text-lg font-bold mb-4">{t("suspendModalTitle")}</h3>
+          <p className="text-sm text-muted-foreground mb-4">
+            {t("suspendModalDesc")}
+          </p>
+          <input
+            type="number"
+            value={suspendModal.duration}
+            onChange={(e) => setSuspendModal({ ...suspendModal, duration: e.target.value })}
+            className="w-full px-4 py-2 rounded-xl border border-border bg-background mb-6 outline-none focus:ring-2 focus:ring-primary/20 transition-all"
+            placeholder="300"
+            autoFocus
+          />
+          <div className="flex gap-3">
+            <button
+              onClick={() => setSuspendModal({ ...suspendModal, isOpen: false })}
+              className="flex-1 px-4 py-2 rounded-xl border border-border hover:bg-accent transition-colors font-medium"
+            >
+              {tCommon("cancel")}
+            </button>
+            <button
+              onClick={executeSuspendUser}
+              className="flex-1 px-4 py-2 rounded-xl bg-red-500 hover:bg-red-600 text-white transition-colors font-medium"
+            >
+              {t("confirmSuspend")}
+            </button>
+          </div>
+        </div>
+      </Modal>
+
+      {/* Unsuspend Confirm Modal */}
+      <ConfirmModal
+        isOpen={unsuspendConfirm.isOpen}
+        onClose={() => setUnsuspendConfirm({ ...unsuspendConfirm, isOpen: false })}
+        onConfirm={executeUnsuspendUser}
+        title={t("unsuspendModalTitle")}
+        message={t("unsuspendModalDesc")}
+        variant="warning"
+      />
     </main>
   );
 };

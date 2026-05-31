@@ -2,6 +2,7 @@
 
 import { X } from "lucide-react"
 import React, { useEffect } from "react"
+import { useTranslations } from "next-intl"
 
 export default function Modal({
   isOpen,
@@ -9,6 +10,7 @@ export default function Modal({
   children,
   size = "large" // "small", "medium", "large"
 }) {
+  const t = useTranslations('common');
   // ESC để đóng modal
   useEffect(() => {
     const handleEsc = (e) => {
@@ -57,7 +59,7 @@ export default function Modal({
       <button
         onClick={onClose}
         className="absolute top-5 right-5 text-muted-foreground hover:text-foreground z-20"
-        aria-label="Close"
+        aria-label={t('close')}
       >
         <X className="w-6 h-6" />
       </button>

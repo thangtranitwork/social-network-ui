@@ -99,7 +99,10 @@
     "edit": "Edit",
     "back": "Back",
     "close": "Close",
-    "retry": "Retry"
+    "retry": "Retry",
+    "refresh": "Refresh",
+    "you": "You",
+    "confirm": "Confirm"
   },
   "time": {
     "now": "now",

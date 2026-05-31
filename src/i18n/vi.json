@@ -99,7 +99,10 @@
     "edit": "Chỉnh sửa",
     "back": "Quay lại",
     "close": "Đóng",
-    "retry": "Thử lại"
+    "retry": "Thử lại",
+    "refresh": "Làm mới",
+    "you": "Bạn",
+    "confirm": "Xác nhận"
   },
   "time": {
     "now": "bây giờ",

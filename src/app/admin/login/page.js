@@ -10,11 +10,14 @@ import adminApi, {
   isAdminTokenValid
 } from "@/utils/adminInterception";
 import { jwtDecode } from "jwt-decode";
+import { useTranslations } from "next-intl";
 
 // Constants
 
 
 export default function AdminLoginPage() {
+  const t = useTranslations('admin.login');
+  const tCommon = useTranslations('common');
   const router = useRouter();
   const [isClient, setIsClient] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
@@ -89,12 +92,12 @@ export default function AdminLoginPage() {
       return (
           error.response.data?.message ||
           error.response.data?.error ||
-          `Lỗi server (${error.response.status})`
+          `${tCommon("error")} (${error.response.status})`
       );
     } else if (error?.request) {
-      return "Không thể kết nối đến server. Vui lòng thử lại.";
+      return tCommon("networkError");
     } else {
-      return error.message || "Lỗi không xác định";
+      return error.message || tCommon("unknown");
     }
   };
 
@@ -124,7 +127,7 @@ export default function AdminLoginPage() {
     if (!formData.email || !formData.password) {
       setMessages(prev => ({
         ...prev,
-        general: "❌ Vui lòng điền đầy đủ thông tin"
+        general: `❌ ${t("fillAll")}`
       }));
       setStatus(prev => ({ ...prev, loading: false }));
       return;
@@ -179,7 +182,7 @@ export default function AdminLoginPage() {
           if (verifyAuth) {
             setMessages(prev => ({
               ...prev,
-              general: "✅ Đăng nhập admin thành công!"
+              general: `✅ ${t("success")}`
             }));
 
             // Clear form
@@ -203,7 +206,7 @@ export default function AdminLoginPage() {
       } else {
         setMessages(prev => ({
           ...prev,
-          general: `❌ ${res.data.message || "Đăng nhập admin thất bại"}`
+          general: `❌ ${res.data.message || t("failed")}`
         }));
       }
 
@@ -215,7 +218,7 @@ export default function AdminLoginPage() {
 
       setMessages(prev => ({
         ...prev,
-        general: `❌ Đăng nhập admin thất bại: ${parseApiError(error)}`
+        general: `❌ ${t("failed")}: ${parseApiError(error)}`
       }));
     } finally {
       setStatus(prev => ({ ...prev, loading: false }));
@@ -241,12 +244,12 @@ export default function AdminLoginPage() {
             <div className="flex items-center gap-2">
               <div className="w-4 h-4 border-2 border-primary/30 border-t-primary rounded-full animate-spin"></div>
               <span className="text-muted-foreground">
-                {status.checking ? "Checking authentication..." : "Loading..."}
+                {status.checking ? t("checkingAuth") : tCommon("loading")}
               </span>
             </div>
             {status.checking && (
                 <p className="text-sm text-muted-foreground">
-                  Verifying admin session...
+                  {t("verifyingSession")}
                 </p>
             )}
           </div>
@@ -267,10 +270,10 @@ export default function AdminLoginPage() {
                   </div>
                 </div>
                 <h1 className="text-3xl font-bold text-foreground mb-2">
-                  Admin Portal
+                  {t("title")}
                 </h1>
                 <p className="text-muted-foreground">
-                  Truy cập hệ thống quản trị
+                  {t("subtitle")}
                 </p>
               </div>
 
@@ -279,11 +282,10 @@ export default function AdminLoginPage() {
                   <Shield className="w-5 h-5 text-muted-foreground flex-shrink-0 mt-0.5" />
                   <div>
                     <p className="text-sm font-medium text-foreground">
-                      Enhanced Security
+                      {t("securityTitle")}
                     </p>
                     <p className="text-xs text-muted-foreground mt-1">
-                      Các phiên đăng nhập admin được mã hóa và tự động hết hạn để
-                      tăng cường bảo mật.
+                      {t("securityDesc")}
                     </p>
                   </div>
                 </div>
@@ -295,14 +297,14 @@ export default function AdminLoginPage() {
               <div className="bg-card rounded-xl p-8 shadow-xl border border-border">
                 <div className="flex justify-between items-center mb-6">
                   <h2 className="text-xl font-bold text-card-foreground">
-                    Admin Login
+                    {t("cardTitle")}
                   </h2>
                   <button
                       onClick={handleBackToLogin}
                       className="text-sm text-muted-foreground hover:text-foreground transition flex items-center gap-1"
                   >
                     <ArrowLeftRight className="w-4 h-4" />
-                    Back to Login
+                    {t("backToLogin")}
                   </button>
                 </div>
 
@@ -310,7 +312,7 @@ export default function AdminLoginPage() {
                   <div className="flex items-center gap-2">
                     <Shield className="w-5 h-5 text-red-600 dark:text-red-400" />
                     <span className="text-sm font-medium text-red-800 dark:text-red-200">
-                    Restricted Access - Administrators Only
+                    {t("restrictedAccess")}
                   </span>
                   </div>
                 </div>
@@ -331,14 +333,14 @@ export default function AdminLoginPage() {
                   {/* Email */}
                   <div className="space-y-2">
                     <h4 className="text-sm font-medium text-muted-foreground">
-                      Admin Email
+                      {t("emailLabel")}
                     </h4>
                     <input
                         type="email"
                         value={formData.email}
                         onChange={(e) => handleInputChange('email', e.target.value)}
                         className="w-full bg-transparent border-b border-input px-0 py-2 focus:outline-none focus:border-primary text-foreground placeholder:text-muted-foreground"
-                        placeholder="admin@example.com"
+                        placeholder={t("emailPlaceholder")}
                         required
                         disabled={status.loading}
                     />
@@ -347,14 +349,14 @@ export default function AdminLoginPage() {
                   {/* Password */}
                   <div className="space-y-2 relative">
                     <h4 className="text-sm font-medium text-muted-foreground">
-                      Admin Password
+                      {t("passwordLabel")}
                     </h4>
                     <input
                         type={showPassword ? "text" : "password"}
                         value={formData.password}
                         onChange={(e) => handleInputChange('password', e.target.value)}
                         className="w-full bg-transparent border-b border-input px-0 py-2 pr-10 focus:outline-none focus:border-primary text-foreground placeholder:text-muted-foreground"
-                        placeholder="Enter admin password"
+                        placeholder={t("passwordPlaceholder")}
                         required
                         minLength={6}
                         disabled={status.loading}
@@ -390,10 +392,10 @@ export default function AdminLoginPage() {
                     {status.loading ? (
                         <div className="flex items-center justify-center gap-2">
                           <div className="w-4 h-4 border-2 border-primary-foreground/30 border-t-primary-foreground rounded-full animate-spin"></div>
-                          Authenticating...
+                          {t("authenticating")}
                         </div>
                     ) : (
-                        "Access Admin Panel"
+                        t("submit")
                     )}
                   </button>
                 </div>

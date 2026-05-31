@@ -1,6 +1,7 @@
 "use client";
 
 import Avatar from "../ui-components/Avatar";
+import { useTranslations } from "next-intl";
 
 export default function UserHeader({
   user = {},
@@ -8,6 +9,7 @@ export default function UserHeader({
   showOptions = true,
   className = "",
 }) {
+  const t = useTranslations("post");
   const {
     familyName = "",
     givenName = "",
@@ -41,9 +43,9 @@ export default function UserHeader({
         {/* Mutual friends */}
         {mutualFriendsCount > 0 ? (
           <p className="text-xs text-[var(--muted-foreground)] truncate">
-            {mutualFriendsCount} bạn chung
+            {t("mutualFriends", { count: mutualFriendsCount })}
           </p>
-        ):<p className="text-xs text-[var(--muted-foreground)] truncate">chưa có bạn chung</p>}
+        ):<p className="text-xs text-[var(--muted-foreground)] truncate">{t("mutualFriends", { count: 0 })}</p>}
       </div>
 
       {/* Options Button */}

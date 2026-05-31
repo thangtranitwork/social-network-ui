@@ -1,6 +1,5 @@
 "use client"
 
-import api from "@/utils/axios"
 import { useState, useEffect } from "react"
 import {
   BarChart,
@@ -29,237 +28,118 @@ import {
   Clock,
   Globe,
   Lock,
+  Eye,
+  Award,
+  Filter
 } from "lucide-react"
 import { useRouter } from "next/navigation"
-import adminApi from "@/utils/adminInterception";
+import adminApi from "@/utils/adminInterception"
 
-const COLORS = ["#0088FE", "#00C49F", "#FFBB28", "#FF8042", "#8884D8", "#82CA9D"]
-
-const StatCard = ({ title, value, icon: Icon, color, trend, onClick }) => (
-  <div
-    className={`bg-gradient-to-r ${color} p-6 rounded-xl shadow-lg text-white transform hover:scale-105 transition-transform duration-200 ${onClick ? 'cursor-pointer' : ''}`}
-    onClick={onClick}
-  >
-    <div className="flex items-center justify-between">
-      <div>
-        <p className="text-white/80 text-sm font-medium">{title}</p>
-        <p className="text-3xl font-bold mt-1">{value}</p>
-        {trend && (
-          <div className="flex items-center mt-2 text-white/90">
-            <TrendingUp className="w-4 h-4 mr-1" />
-            <span className="text-sm">{trend}</span>
-          </div>
-        )}
-      </div>
-      <Icon className="w-12 h-12 text-white/80" />
-    </div>
-  </div>
-)
-
-const LoadingSpinner = () => (
-  <div className="min-h-[60vh] flex items-center justify-center">
-    <div className="text-center">
-      <div
-        className="animate-spin rounded-full h-12 w-12 border-b-2 mx-auto mb-4"
-        style={{ borderColor: "var(--primary)" }}
-      ></div>
-      <p style={{ color: "var(--primary)" }} className="font-medium">
-        Đang tải dữ liệu...
-      </p>
-    </div>
-  </div>
-)
-
-const ErrorDisplay = ({ error }) => (
-  <div className="min-h-[60vh] flex items-center justify-center">
-    <div className="text-center p-8 rounded-xl shadow-lg" style={{ backgroundColor: "var(--card)" }}>
-      <div className="text-red-500 text-6xl mb-4">⚠️</div>
-      <p className="text-red-600 font-medium">{error}</p>
-    </div>
-  </div>
-)
-
-const HottestPost = ({ post }) => (
-  <div
-    className="p-4 rounded-lg hover:shadow-md transition-shadow"
-    style={{ backgroundColor: "var(--accent)", border: "1px solid var(--border)" }}
-  >
-    <div className="flex items-start justify-between mb-3">
-      <div className="flex items-center space-x-3">
-        <div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full flex items-center justify-center text-white font-bold">
-          {post.author.givenName[0]}
-        </div>
-        <div>
-          <p className="font-semibold" style={{ color: "var(--accent-foreground)" }}>
-            {post.author.givenName} {post.author.familyName}
-          </p>
-          <p className="text-sm" style={{ color: "var(--muted-foreground)" }}>
-            @{post.author.username}
-          </p>
-        </div>
-        <div
-          className={`w-3 h-3 rounded-full ${post.author.isOnline ? "bg-green-400" : "bg-gray-300"}`}
-        ></div>
-      </div>
-      <div className="flex items-center space-x-2">
-        {post.privacy === "PUBLIC" ? (
-          <Globe className="w-4 h-4 text-green-500" />
-        ) : (
-          <Lock className="w-4 h-4 text-yellow-500" />
-        )}
-        <span className="text-xs" style={{ color: "var(--muted-foreground)" }}>
-          {new Date(post.createdAt).toLocaleDateString()}
-        </span>
-      </div>
-    </div>
-
-    {post.content && (
-      <p
-        className="mb-3 p-3 rounded-lg"
-        style={{ color: "var(--card-foreground)", backgroundColor: "var(--card)" }}
-      >
-        {post.content}
-      </p>
-    )}
-    
-    {post.files && post.files.length > 0 && (
-      <div className="mb-3 p-2 rounded-lg" style={{ backgroundColor: "var(--muted)" }}>
-        <div className="flex items-center text-blue-600">
-          <Paperclip className="w-4 h-4 mr-1" />
-          <span className="text-sm">{post.files.length} file(s) attached</span>
-        </div>
-      </div>
-    )}
-    
-    <div
-      className="flex items-center justify-between pt-3"
-      style={{ borderTop: "1px solid var(--border)" }}
-    >
-      <div className="flex items-center space-x-4">
-        <div className="flex items-center text-pink-500">
-          <Heart className="w-4 h-4 mr-1" />
-          <span className="text-sm font-medium">{post.likeCount}</span>
-        </div>
-        <div className="flex items-center text-blue-500">
-          <MessageCircle className="w-4 h-4 mr-1" />
-          <span className="text-sm font-medium">{post.commentCount}</span>
-        </div>
-        <div className="flex items-center text-green-500">
-          <Share2 className="w-4 h-4 mr-1" />
-          <span className="text-sm font-medium">{post.shareCount}</span>
-        </div>
-      </div>
-    </div>
-  </div>
-)
+const PIE_COLORS = ["#8B5CF6", "#00E5A0", "#3B82F6"] // Amethyst, Electric Jade, Cobalt Blue
 
 export default function PostsPage() {
   const [postsData, setPostsData] = useState(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState("")
   const router = useRouter()
-  const [week, setWeek]= useState("");
-  const [month, setMonth]= useState("");
-  const [year, setYear]= useState("");
-  const [date, setDate]= useState("");
+  const [week, setWeek] = useState("")
+  const [month, setMonth] = useState("")
+  const [year, setYear] = useState("")
+  const [date, setDate] = useState("")
+
   const fetchPostsStatistics = async () => {
     setLoading(true)
     setError("")
     try {
       const res = await adminApi.get("/v2/statistics/posts")
       setPostsData(res.data.body)
-      console.log(res.data.body)
     } catch (err) {
       setError(`Không thể tải thống kê posts: ${err.message}`)
     } finally {
       setLoading(false)
     }
   }
-  useEffect(() => {
-    if (week !== "") {
-      const fetchData = async () => {
-        try {
-          const res = await adminApi.get(`/v2/statistics/posts/week?week=${week}`);
-          if (res.data.code === 200) {
-            setPostsData((pre) => ({
-              ...pre,
-              thisWeekStatistics: res.data.body,
-            }));
-          }
-        } catch (error) {
-          console.error("Lỗi khi lấy thống kê tuần:", error);
-        }
-      };
-
-      fetchData();
-    }
-  }, [week]);
-  useEffect(() => {
-    if (month !== "") {
-      const fetchData = async () => {
-        try {
-          const res = await adminApi.get(`/v2/statistics/posts/month?month=${month}`);
-          if (res.data.code === 200) {
-            setPostsData((pre) => ({
-              ...pre,
-              thisMonthStatistics: res.data.body,
-            }));
-          }
-        } catch (error) {
-          console.error("Lỗi khi lấy thống kê tuần:", error);
-        }
-      };
-
-      fetchData();
-    }
-  }, [month]);
-  useEffect(() => {
-    if (date !== "") {
-      const fetchData = async () => {
-        try {
-          const res = await adminApi.get(`/v2/statistics/posts/online?date=${date}`);
-          if (res.data.code === 200) {
-            setPostsData((pre) => ({
-              ...pre,
-              onlineStatistics: res.data.body,
-            }));
-          }
-        } catch (error) {
-          console.error("Lỗi khi lấy thống kê tuần:", error);
-        }
-      };
-
-      fetchData();
-    }
-  }, [date]);
-  useEffect(() => {
-    if (year !== "") {
-      const fetchData = async () => {
-        try {
-          const res = await adminApi.get(`/v2/statistics/posts/year?year=${year}`);
-          if (res.data.code === 200) {
-            setPostsData((pre) => ({
-              ...pre,
-              thisYearStatistics: res.data.body,
-            }));
-          }
-        } catch (error) {
-          console.error("Lỗi khi lấy thống kê tuần:", error);
-        }
-      };
-
-      fetchData();
-    }
-  }, [year]);
-  const handleTotalPostsClick = () => {
-    router.push('/admin/dashboard/viewposts')
-  }
 
   useEffect(() => {
     fetchPostsStatistics()
   }, [])
 
-  // Transform data functions
+  useEffect(() => {
+    if (week !== "") {
+      const fetchData = async () => {
+        try {
+          const res = await adminApi.get(`/v2/statistics/posts/week?week=${week}`)
+          if (res.data.code === 200) {
+            setPostsData((pre) => ({
+              ...pre,
+              thisWeekStatistics: res.data.body,
+            }))
+          }
+        } catch (error) {
+          console.error("Lỗi khi lấy thống kê bài viết tuần:", error)
+        }
+      }
+      fetchData()
+    }
+  }, [week])
+
+  useEffect(() => {
+    if (month !== "") {
+      const fetchData = async () => {
+        try {
+          const res = await adminApi.get(`/v2/statistics/posts/month?month=${month}`)
+          if (res.data.code === 200) {
+            setPostsData((pre) => ({
+              ...pre,
+              thisMonthStatistics: res.data.body,
+            }))
+          }
+        } catch (error) {
+          console.error("Lỗi khi lấy thống kê bài viết tháng:", error)
+        }
+      }
+      fetchData()
+    }
+  }, [month])
+
+  useEffect(() => {
+    if (date !== "") {
+      const fetchData = async () => {
+        try {
+          const res = await adminApi.get(`/v2/statistics/posts/online?date=${date}`)
+          if (res.data.code === 200) {
+            setPostsData((pre) => ({
+              ...pre,
+              onlineStatistics: res.data.body,
+            }))
+          }
+        } catch (error) {
+          console.error("Lỗi khi lấy thống kê trực tuyến ngày:", error)
+        }
+      }
+      fetchData()
+    }
+  }, [date])
+
+  useEffect(() => {
+    if (year !== "") {
+      const fetchData = async () => {
+        try {
+          const res = await adminApi.get(`/v2/statistics/posts/year?year=${year}`)
+          if (res.data.code === 200) {
+            setPostsData((pre) => ({
+              ...pre,
+              thisYearStatistics: res.data.body,
+            }))
+          }
+        } catch (error) {
+          console.error("Lỗi khi lấy thống kê năm bài viết:", error)
+        }
+      }
+      fetchData()
+    }
+  }, [year])
+
   const transformData = {
     weekly: (data) => {
       if (!data) return []
@@ -286,200 +166,392 @@ export default function PostsPage() {
     }
   }
 
-  if (loading) return <LoadingSpinner />
-  if (error) return <ErrorDisplay error={error} />
+  // Glass Stat Card Component
+  const StatCard = ({ title, value, icon: Icon, glowColor, trend, onClick }) => (
+    <div
+      className={`admin-card relative overflow-hidden p-6 rounded-2xl hover:shadow-lg transition-all duration-300 group transform hover:-translate-y-1 ${
+        onClick ? 'cursor-pointer' : ''
+      }`}
+      onClick={onClick}
+    >
+      {/* Glow highlight background */}
+      <div className={`absolute -right-4 -top-4 w-24 h-24 rounded-full blur-2xl opacity-15 dark:opacity-25 group-hover:scale-125 transition-transform duration-500 bg-gradient-to-br ${glowColor}`} />
+      
+      <div className="flex items-center justify-between relative z-10">
+        <div className="space-y-2">
+          <p className="text-[var(--muted-foreground)] text-xs md:text-sm font-medium tracking-wider uppercase">{title}</p>
+          <p className="text-3xl font-extrabold tracking-tight text-[var(--foreground)]">{value}</p>
+          {trend && (
+            <div className="flex items-center text-xs text-[var(--accent)] font-semibold mt-1 bg-[var(--accent-subtle)] px-2.5 py-0.5 rounded-full w-max">
+              <TrendingUp className="w-3.5 h-3.5 mr-1" />
+              <span>{trend}</span>
+            </div>
+          )}
+        </div>
+        <div className={`p-3.5 rounded-2xl bg-gradient-to-br ${glowColor} text-white shadow-md shadow-black/5`}>
+          <Icon className="w-6 h-6" />
+        </div>
+      </div>
+    </div>
+  )
+
+  // Custom sleek glassmorphic Tooltip
+  const CustomTooltip = ({ active, payload, label }) => {
+    if (active && payload && payload.length) {
+      return (
+        <div className="admin-card p-3 rounded-xl shadow-lg text-[var(--foreground)] text-xs">
+          <p className="font-semibold text-[var(--muted-foreground)] mb-1 uppercase tracking-wider">{label}</p>
+          <p className="text-sm font-bold text-[var(--accent)] flex items-center">
+            <span className="w-1.5 h-1.5 rounded-full bg-[var(--accent)] mr-2 animate-pulse"></span>
+            <span>{payload[0].value.toLocaleString()} bài viết</span>
+          </p>
+        </div>
+      )
+    }
+    return null
+  }
+
+  // Engagement post display card
+  const HottestPost = ({ post }) => (
+    <div className="admin-card p-5 rounded-2xl relative overflow-hidden group hover:border-[var(--accent)]/30 transition-all duration-300">
+      
+      {/* Decorative Glow accent */}
+      <div className="absolute -right-12 -bottom-12 w-32 h-32 rounded-full blur-3xl opacity-10 bg-gradient-to-br from-[#00E5A0] to-[#8B5CF6] pointer-events-none" />
+
+      <div className="flex items-start justify-between mb-4 relative z-10">
+        <div className="flex items-center space-x-3">
+          <div className="w-10 h-10 bg-gradient-to-tr from-[#00E5A0] to-[#8B5CF6] rounded-full flex items-center justify-center text-white font-bold shadow-md shadow-black/5">
+            {post.author?.givenName?.[0] || "?"}
+          </div>
+          <div>
+            <p className="font-bold text-sm text-[var(--foreground)]">
+              {post.author?.givenName} {post.author?.familyName}
+            </p>
+            <p className="text-xs text-[var(--muted-foreground)]">
+              @{post.author?.username}
+            </p>
+          </div>
+          <div className={`w-2 h-2 rounded-full ${post.author?.isOnline ? "bg-green-500" : "bg-gray-400"}`} />
+        </div>
+        <div className="flex items-center space-x-2">
+          {post.privacy === "PUBLIC" ? (
+            <Globe className="w-4 h-4 text-green-500" />
+          ) : (
+            <Lock className="w-4 h-4 text-yellow-500" />
+          )}
+          <span className="text-xs text-[var(--muted-foreground)] font-medium">
+            {new Date(post.createdAt).toLocaleDateString("vi-VN")}
+          </span>
+        </div>
+      </div>
+
+      {post.content && (
+        <p className="mb-4 p-3.5 rounded-xl text-sm leading-relaxed text-[var(--foreground)] admin-inset whitespace-pre-wrap">
+          {post.content}
+        </p>
+      )}
+      
+      {post.files && post.files.length > 0 && (
+        <div className="mb-4 p-3 rounded-xl bg-[var(--accent-subtle)] border border-[var(--accent)]/10">
+          <div className="flex items-center text-[var(--accent)] font-semibold text-xs">
+            <Paperclip className="w-4 h-4 mr-1.5" />
+            <span>Đã đính kèm {post.files.length} tệp tin media</span>
+          </div>
+        </div>
+      )}
+      
+      <div className="flex items-center justify-between pt-3 border-t border-[var(--border)]">
+        <div className="flex items-center space-x-5">
+          <div className="flex items-center text-pink-500 font-medium text-xs">
+            <Heart className="w-4.5 h-4.5 mr-1.5 fill-pink-500/10" />
+            <span>{post.likeCount?.toLocaleString()}</span>
+          </div>
+          <div className="flex items-center text-blue-500 font-medium text-xs">
+            <MessageCircle className="w-4.5 h-4.5 mr-1.5 fill-blue-500/10" />
+            <span>{post.commentCount?.toLocaleString()}</span>
+          </div>
+          <div className="flex items-center text-green-500 font-medium text-xs">
+            <Share2 className="w-4.5 h-4.5 mr-1.5" />
+            <span>{post.shareCount?.toLocaleString()}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+
+  if (loading) {
+    return (
+      <div className="min-h-[60vh] flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-10 w-10 border-2 border-[var(--border)] border-t-[var(--accent)] mx-auto mb-4"></div>
+          <p className="text-[var(--muted-foreground)] font-medium text-sm">
+            Đang tải dữ liệu thống kê...
+          </p>
+        </div>
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-[60vh] flex items-center justify-center">
+        <div className="text-center p-8 rounded-2xl admin-card border-red-100 dark:border-red-950/20 max-w-md">
+          <div className="text-red-500 text-4xl mb-3">⚠️</div>
+          <p className="text-red-500 font-semibold">{error}</p>
+          <button 
+            onClick={fetchPostsStatistics}
+            className="mt-4 px-4 py-2 bg-[var(--primary)] text-[var(--primary-foreground)] rounded-xl text-xs font-semibold hover:opacity-90 transition-opacity"
+          >
+            Thử lại
+          </button>
+        </div>
+      </div>
+    )
+  }
+
+  const pieData = [
+    { name: "Riêng tư", value: postsData.privatePostCount || 0 },
+    { name: "Công khai", value: postsData.publicPostCount || 0 },
+    { name: "Bạn bè", value: postsData.friendPostCount || 0 },
+  ]
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-8 animate-fade-up">
+      
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <StatCard
-          title="Bài viết"
-          value={postsData.totalPosts}
+          title="Tổng bài viết"
+          value={postsData.totalPosts?.toLocaleString()}
           icon={FileText}
-          color="from-indigo-500 to-indigo-600"
-          trend={`+${postsData.newPostsThisMonth} this month`}
-          onClick={handleTotalPostsClick}
+          glowColor="from-[#8B5CF6] to-[#6366F1]"
+          trend={`+${postsData.newPostsThisMonth} tháng này`}
+          onClick={() => router.push('/admin/dashboard/viewposts')}
         />
-        <StatCard title="Tổng lượt like" value={postsData.totalLikes} icon={Heart} color="from-pink-500 to-pink-600" />
-        <StatCard title="Bình luận" value={postsData.totalComments} icon={MessageCircle} color="from-blue-500 to-blue-600" />
-        <StatCard title="Lượt chia sẻ" value={postsData.totalShares} icon={Share2} color="from-green-500 to-green-600" />
-        <StatCard title="Files đính kèm" value={postsData.totalFiles} icon={Paperclip} color="from-yellow-500 to-yellow-600" />
-        <StatCard title="Bài viết đã xóa" value={postsData.deletedPostCount} icon={FileText} color="from-yellow-300 to-red-600" />
-
+        <StatCard 
+          title="Tổng lượt Thích" 
+          value={postsData.totalLikes?.toLocaleString()} 
+          icon={Heart} 
+          glowColor="from-pink-500 to-rose-600" 
+        />
+        <StatCard 
+          title="Tổng bình luận" 
+          value={postsData.totalComments?.toLocaleString()} 
+          icon={MessageCircle} 
+          glowColor="from-blue-500 to-cyan-600" 
+        />
+        <StatCard 
+          title="Tổng lượt chia sẻ" 
+          value={postsData.totalShares?.toLocaleString()} 
+          icon={Share2} 
+          glowColor="from-[#10B981] to-[#059669]" 
+        />
+        <StatCard 
+          title="Tệp tin phương tiện" 
+          value={postsData.totalFiles?.toLocaleString()} 
+          icon={Paperclip} 
+          glowColor="from-amber-500 to-orange-600" 
+        />
+        <StatCard 
+          title="Bài viết đã xóa" 
+          value={postsData.deletedPostCount?.toLocaleString()} 
+          icon={FileText} 
+          glowColor="from-red-500 to-rose-700" 
+        />
       </div>
 
-      {/* Weekly & Yearly Charts */}
+      {/* Charts Section */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        
         {/* Weekly Chart */}
-        <div className="p-6 rounded-xl shadow-lg" style={{ backgroundColor: "var(--card)" }}>
-          <div className="flex justify-between">
-          <h3 className="text-xl font-semibold mb-4 flex items-center" style={{ color: "var(--card-foreground)" }}>
-            <Calendar className="w-5 h-5 mr-2 text-green-500" />
-             Bài viết trong tuần
-          </h3>
-            <input type="week" id="week" name="week" onChange={(e)=>{setWeek(e.target.value)}} />
-
-          </div>
-          <ResponsiveContainer width="100%" height={300}>
-            <BarChart data={transformData.weekly(postsData.thisWeekStatistics)}>
-              <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
-              <XAxis dataKey="day" stroke="var(--muted-foreground)" />
-              <YAxis stroke="var(--muted-foreground)" />
-              <Tooltip
-                contentStyle={{
-                  backgroundColor: "var(--card)",
-                  border: "1px solid var(--border)",
-                  color: "var(--card-foreground)",
-                }}
+        <div className="p-6 rounded-2xl admin-card shadow-sm">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-6">
+            <h3 className="text-base font-bold flex items-center text-[var(--foreground)]">
+              <Calendar className="w-5 h-5 mr-2 text-[var(--accent)]" />
+              Bài viết mới trong tuần
+            </h3>
+            <div className="relative flex items-center">
+              <Filter className="w-3.5 h-3.5 absolute right-3 text-[var(--muted-foreground)] pointer-events-none" />
+              <input 
+                type="week" 
+                id="week" 
+                name="week" 
+                onChange={(e) => setWeek(e.target.value)} 
+                className="admin-input pl-3 pr-9 py-1.5 text-xs rounded-xl font-medium transition-all"
               />
-              <Bar dataKey="value" fill="#10B981" radius={[4, 4, 0, 0]} />
-            </BarChart>
-          </ResponsiveContainer>
+            </div>
+          </div>
+          
+          <div className="w-full h-[300px]">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={transformData.weekly(postsData.thisWeekStatistics)}>
+                <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" opacity={0.4} vertical={false} />
+                <XAxis dataKey="day" stroke="var(--muted-foreground)" fontSize={11} tickLine={false} axisLine={false} />
+                <YAxis stroke="var(--muted-foreground)" fontSize={11} tickLine={false} axisLine={false} />
+                <Tooltip content={<CustomTooltip />} cursor={{ fill: 'var(--muted)', opacity: 0.15 }} />
+                <Bar dataKey="value" fill="url(#postsWeeklyColor)" radius={[4, 4, 0, 0]}>
+                  <defs>
+                    <linearGradient id="postsWeeklyColor" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor="#00E5A0" stopOpacity={0.9} />
+                      <stop offset="100%" stopColor="#8B5CF6" stopOpacity={0.7} />
+                    </linearGradient>
+                  </defs>
+                </Bar>
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
         </div>
 
         {/* Yearly Chart */}
-        <div className="p-6 rounded-xl shadow-lg" style={{ backgroundColor: "var(--card)" }}>
-          <div className="flex justify-between">
-          <h3 className="text-xl font-semibold mb-4 flex items-center" style={{ color: "var(--card-foreground)" }}>
-            <Clock className="w-5 h-5 mr-2 text-purple-500" />
-            Bài viết trong năm
-          </h3>
+        <div className="p-6 rounded-2xl admin-card shadow-sm">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-6">
+            <h3 className="text-base font-bold flex items-center text-[var(--foreground)]">
+              <Clock className="w-5 h-5 mr-2 text-[#8B5CF6]" />
+              Bài viết trong năm
+            </h3>
             <input
-                onChange={(e)=>{setYear(e.target.value)}}
-                type="number"
-                id="year"
-                name="year"
-                min="2025"
-                max="2025"
-                step="1"
-                defaultValue={2025}
-                placeholder="Nhập năm"
+              onChange={(e) => setYear(e.target.value)}
+              type="number"
+              id="year"
+              name="year"
+              min="2025"
+              max="2027"
+              step="1"
+              defaultValue={2025}
+              placeholder="Nhập năm"
+              className="admin-input px-3 py-1.5 text-xs rounded-xl font-medium transition-all w-28"
             />
           </div>
-          <ResponsiveContainer width="100%" height={300}>
-            <LineChart data={transformData.yearly(postsData.thisYearStatistics)}>
-              <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
-              <XAxis dataKey="month" stroke="var(--muted-foreground)" />
-              <YAxis stroke="var(--muted-foreground)" />
-              <Tooltip
-                contentStyle={{
-                  backgroundColor: "var(--card)",
-                  border: "1px solid var(--border)",
-                  color: "var(--card-foreground)",
-                }}
-              />
-              <Line
-                type="monotone"
-                dataKey="value"
-                stroke="#8B5CF6"
-                strokeWidth={3}
-                dot={{ fill: "#8B5CF6", strokeWidth: 2, r: 6 }}
-              />
-            </LineChart>
-          </ResponsiveContainer>
+          
+          <div className="w-full h-[300px]">
+            <ResponsiveContainer width="100%" height="100%">
+              <LineChart data={transformData.yearly(postsData.thisYearStatistics)}>
+                <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" opacity={0.4} vertical={false} />
+                <XAxis dataKey="month" stroke="var(--muted-foreground)" fontSize={11} tickLine={false} axisLine={false} />
+                <YAxis stroke="var(--muted-foreground)" fontSize={11} tickLine={false} axisLine={false} />
+                <Tooltip content={<CustomTooltip />} />
+                <Line
+                  type="monotone"
+                  dataKey="value"
+                  stroke="#8B5CF6"
+                  strokeWidth={3}
+                  dot={{ fill: "#8B5CF6", strokeWidth: 2, r: 4 }}
+                  activeDot={{ r: 6, strokeWidth: 0 }}
+                />
+              </LineChart>
+            </ResponsiveContainer>
+          </div>
         </div>
       </div>
 
-      {/* Monthly Chart - Full Width */}
-      <div className="p-6 rounded-xl shadow-lg" style={{ backgroundColor: "var(--card)" }}>
-<div className="flex justify-between">
-        <h3 className="text-xl font-semibold mb-4 flex items-center" style={{ color: "var(--card-foreground)" }}>
-          <TrendingUp className="w-5 h-5 mr-2 text-blue-500" />
-          Bài viết trong tháng
-        </h3>
-        <input  onChange={(e)=>{setMonth(e.target.value)}} type="month" id="month" name="month"/>
-
-</div>
-        <ResponsiveContainer width="100%" height={400}>
-          <AreaChart data={transformData.monthly(postsData.thisMonthStatistics)}>
-            <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
-            <XAxis
-              dataKey="date"
-              angle={-45}
-              textAnchor="end"
-              height={80}
-              interval={0}
-              stroke="var(--muted-foreground)"
+      {/* Monthly Area Chart */}
+      <div className="p-6 rounded-2xl admin-card shadow-sm">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-6">
+          <h3 className="text-base font-bold flex items-center text-[var(--foreground)]">
+            <TrendingUp className="w-5 h-5 mr-2 text-blue-500" />
+            Số lượng bài đăng trong tháng
+          </h3>
+          <div className="relative flex items-center">
+            <Calendar className="w-3.5 h-3.5 absolute right-3 text-[var(--muted-foreground)] pointer-events-none" />
+            <input 
+              onChange={(e) => setMonth(e.target.value)} 
+              type="month" 
+              id="month" 
+              name="month"
+              className="admin-input pl-3 pr-9 py-1.5 text-xs rounded-xl font-medium transition-all"
             />
-            <YAxis stroke="var(--muted-foreground)" />
-            <Tooltip
-              contentStyle={{
-                backgroundColor: "var(--card)",
-                border: "1px solid var(--border)",
-                color: "var(--card-foreground)",
-              }}
-            />
-            <Area type="monotone" dataKey="value" stroke="#3B82F6" fill="#3B82F6" fillOpacity={0.3} />
-          </AreaChart>
-        </ResponsiveContainer>
+          </div>
+        </div>
+        
+        <div className="w-full h-[360px]">
+          <ResponsiveContainer width="100%" height="100%">
+            <AreaChart data={transformData.monthly(postsData.thisMonthStatistics)}>
+              <defs>
+                <linearGradient id="postsMonthlyColor" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stopColor="#3B82F6" stopOpacity={0.4} />
+                  <stop offset="100%" stopColor="#3B82F6" stopOpacity={0.0} />
+                </linearGradient>
+              </defs>
+              <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" opacity={0.4} vertical={false} />
+              <XAxis
+                dataKey="date"
+                angle={-45}
+                textAnchor="end"
+                height={70}
+                interval={0}
+                stroke="var(--muted-foreground)"
+                fontSize={10}
+                tickLine={false}
+                axisLine={false}
+              />
+              <YAxis stroke="var(--muted-foreground)" fontSize={11} tickLine={false} axisLine={false} />
+              <Tooltip content={<CustomTooltip />} />
+              <Area type="monotone" dataKey="value" stroke="#3B82F6" strokeWidth={2.5} fill="url(#postsMonthlyColor)" />
+            </AreaChart>
+          </ResponsiveContainer>
+        </div>
       </div>
 
       {/* Engagement Overview */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        
         {/* Engagement Pie Chart */}
-        <div className="p-6 rounded-xl shadow-lg" style={{ backgroundColor: "var(--card)" }}>
-          <h3 className="text-xl font-semibold mb-4" style={{ color: "var(--card-foreground)" }}>
-            Phân loại bài viết
+        <div className="admin-card p-6 rounded-2xl shadow-sm flex flex-col justify-between">
+          <h3 className="text-base font-bold text-[var(--foreground)] mb-4">
+            Quyền riêng tư bài viết
           </h3>
-          <ResponsiveContainer width="100%" height={250}>
-            <PieChart>
-              <Pie
-                data={[
-                  { name: "Riêng tư", value: postsData.privatePostCount },
-                  { name: "Công khai", value: postsData.publicPostCount },
-                  { name: "Bạn bè", value: postsData.friendPostCount },
-                ]}
-                cx="50%"
-                cy="50%"
-                outerRadius={80}
-                fill="#8884d8"
-                dataKey="value"
-                label
-              >
-                {[
-                  { name: "Likes", value: postsData.totalLikes },
-                  { name: "Comments", value: postsData.totalComments },
-                  { name: "Shares", value: postsData.totalShares },
-                ].map((entry, index) => (
-                  <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                ))}
-              </Pie>
-              <Tooltip
-                contentStyle={{
-                  backgroundColor: "var(--card)",
-                  border: "1px solid var(--border)",
-                  color: "var(--card-foreground)",
-                }}
-              />
-            </PieChart>
-          </ResponsiveContainer>
-        </div>
-
-        {/* Additional Metrics */}
-        <div className="lg:col-span-2 p-6 rounded-xl shadow-lg" style={{ backgroundColor: "var(--card)" }}>
-          <h3 className="text-xl font-semibold mb-4" style={{ color: "var(--card-foreground)" }}>
-            Biểu đồ phụ
-          </h3>
-          <div className="grid grid-cols-2 gap-4">
-            {[
-              { label: "Bài viết mới trong ngày", value: postsData.newPostsToday },
-              { label: "Bài viết mới trong tuần", value: postsData.newPostsThisWeek },
-              { label: "Bài viết mới trong tháng", value: postsData.newPostsThisMonth },
-              { label: "Bài viết mới trong năm", value: postsData.newPostsThisYear },
-            ].map((metric, index) => (
-              <div key={index} className="p-4 rounded-lg" style={{ backgroundColor: "var(--accent)" }}>
-                <p className="text-sm" style={{ color: "var(--muted-foreground)" }}>
-                  {metric.label}
-                </p>
-                <p className="text-2xl font-bold" style={{ color: "var(--accent-foreground)" }}>
-                  {metric.value}
-                </p>
-              </div>
-            ))}
+          
+          <div className="w-full h-[250px] flex items-center justify-center">
+            <ResponsiveContainer width="100%" height="100%">
+              <PieChart>
+                <Pie
+                  data={pieData}
+                  cx="50%"
+                  cy="50%"
+                  innerRadius={60}
+                  outerRadius={80}
+                  paddingAngle={5}
+                  dataKey="value"
+                  label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                  labelLine={false}
+                >
+                  {pieData.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={PIE_COLORS[index % PIE_COLORS.length]} />
+                  ))}
+                </Pie>
+                <Tooltip
+                  contentStyle={{
+                    backgroundColor: "var(--card)",
+                    border: "1px solid var(--border)",
+                    color: "var(--card-foreground)",
+                    fontSize: "11px",
+                    borderRadius: "10px"
+                  }}
+                />
+              </PieChart>
+            </ResponsiveContainer>
           </div>
         </div>
+
+        {/* Top Engagement Highlight Post */}
+        <div className="admin-card lg:col-span-2 p-6 rounded-2xl shadow-sm flex flex-col justify-between">
+          <div className="flex items-center space-x-2 mb-4">
+            <Award className="w-5 h-5 text-yellow-500" />
+            <h3 className="text-base font-bold text-[var(--foreground)]">
+              Bài đăng nổi bật hệ thống
+            </h3>
+          </div>
+
+          {postsData.hottestPost ? (
+            <HottestPost post={postsData.hottestPost} />
+          ) : (
+            <div className="flex-1 flex items-center justify-center p-8 bg-zinc-50 dark:bg-zinc-900/30 rounded-xl border border-[var(--border)] border-dashed">
+              <p className="text-sm text-[var(--muted-foreground)]">Chưa có bài viết nổi bật hôm nay</p>
+            </div>
+          )}
+        </div>
       </div>
+      
     </div>
   )
 }

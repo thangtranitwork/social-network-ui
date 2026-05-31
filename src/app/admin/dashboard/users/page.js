@@ -1,6 +1,5 @@
 "use client"
 
-import api from "@/utils/axios"
 import { useState, useEffect } from "react"
 import {
   BarChart,
@@ -16,18 +15,27 @@ import {
   Area,
 } from "recharts"
 import { useRouter } from "next/navigation"
-import { Users, TrendingUp, Calendar, Clock, Eye, UserCheck, UserX } from "lucide-react"
-import adminApi from "@/utils/adminInterception";
+import { 
+  Users, 
+  TrendingUp, 
+  Calendar, 
+  Clock, 
+  Eye, 
+  UserCheck, 
+  UserX,
+  Filter
+} from "lucide-react"
+import adminApi from "@/utils/adminInterception"
 
 export default function UsersPage() {
   const [usersData, setUsersData] = useState(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState("")
   const router = useRouter()
-  const [week, setWeek]= useState("");
-  const [month, setMonth]= useState("");
-  const [year, setYear]= useState("");
-  const [date, setDate]= useState("");
+  const [week, setWeek] = useState("")
+  const [month, setMonth] = useState("")
+  const [year, setYear] = useState("")
+  const [date, setDate] = useState("")
 
   const fetchUsersStatistics = async () => {
     setLoading(true)
@@ -45,100 +53,96 @@ export default function UsersPage() {
   useEffect(() => {
     fetchUsersStatistics()
   }, [])
+
   useEffect(() => {
     if (week !== "") {
       const fetchData = async () => {
         try {
-          const res = await adminApi.get(`/v2/statistics/users/week?week=${week}`);
+          const res = await adminApi.get(`/v2/statistics/users/week?week=${week}`)
           if (res.data.code === 200) {
             setUsersData((pre) => ({
               ...pre,
               thisWeekStatistics: res.data.body,
-            }));
+            }))
           }
         } catch (error) {
-          console.error("Lỗi khi lấy thống kê tuần:", error);
+          console.error("Lỗi khi lấy thống kê tuần:", error)
         }
-      };
-
-      fetchData();
+      }
+      fetchData()
     }
-  }, [week]);
+  }, [week])
+
   useEffect(() => {
     if (month !== "") {
       const fetchData = async () => {
         try {
-          const res = await adminApi.get(`/v2/statistics/users/month?month=${month}`);
+          const res = await adminApi.get(`/v2/statistics/users/month?month=${month}`)
           if (res.data.code === 200) {
             setUsersData((pre) => ({
               ...pre,
               thisMonthStatistics: res.data.body,
-            }));
+            }))
           }
         } catch (error) {
-          console.error("Lỗi khi lấy thống kê tuần:", error);
+          console.error("Lỗi khi lấy thống kê tháng:", error)
         }
-      };
-
-      fetchData();
+      }
+      fetchData()
     }
-  }, [month]);
+  }, [month])
+
   useEffect(() => {
     if (date !== "") {
       const fetchData = async () => {
         try {
-          const res = await adminApi.get(`/v2/statistics/users/online?date=${date}`);
+          const res = await adminApi.get(`/v2/statistics/users/online?date=${date}`)
           if (res.data.code === 200) {
             setUsersData((pre) => ({
               ...pre,
               onlineStatistics: res.data.body,
-            }));
+            }))
           }
         } catch (error) {
-          console.error("Lỗi khi lấy thống kê tuần:", error);
+          console.error("Lỗi khi lấy thống kê trực tuyến:", error)
         }
-      };
-
-      fetchData();
+      }
+      fetchData()
     }
-  }, [date]);
+  }, [date])
+
   useEffect(() => {
     if (year !== "") {
       const fetchData = async () => {
         try {
-          const res = await adminApi.get(`/v2/statistics/users/year?year=${year}`);
+          const res = await adminApi.get(`/v2/statistics/users/year?year=${year}`)
           if (res.data.code === 200) {
             setUsersData((pre) => ({
               ...pre,
               thisYearStatistics: res.data.body,
-            }));
+            }))
           }
         } catch (error) {
-          console.error("Lỗi khi lấy thống kê tuần:", error);
+          console.error("Lỗi khi lấy thống kê năm:", error)
         }
-      };
-
-      fetchData();
+      }
+      fetchData()
     }
-  }, [year]);
-
+  }, [year])
 
   const transformByMinute = (rawLogs) => {
-    if (!Array.isArray(rawLogs)) return [];
-
-    const map = new Map();
-
+    if (!Array.isArray(rawLogs)) return []
+    const map = new Map()
     rawLogs.forEach((log) => {
-      const date = log.timestamp;
-      map.set(date, log.onlineCount);
-    });
-
+      const date = log.timestamp
+      map.set(date, log.onlineCount)
+    })
     return Array.from(map.entries())
-        .map(([date, value]) => ({
-          time: date.slice(0, 16).replace("T", " "),
-          value: value === null ? 0 : value,
-        }));
-  };
+      .map(([date, value]) => ({
+        time: date.slice(0, 16).replace("T", " "),
+        value: value === null ? 0 : value,
+      }))
+  }
 
   const transformMonthlyData = (data) => {
     if (!data) return []
@@ -148,7 +152,6 @@ export default function UsersPage() {
     }))
   }
 
-  // Transform data for charts - handle null values properly
   const transformWeeklyData = (data) => {
     if (!data) return []
     return Object.entries(data).map(([day, value]) => ({
@@ -167,39 +170,58 @@ export default function UsersPage() {
       }))
   }
 
-  const StatCard = ({ title, value, icon: Icon, color, trend, onClick }) => (
+  // Styled Glassmorphic Stat Card
+  const StatCard = ({ title, value, icon: Icon, glowColor, trend, onClick }) => (
     <div
-      className={`bg-gradient-to-r ${color} p-6 rounded-xl shadow-lg text-white transform hover:scale-105 transition-transform duration-200 ${
+      className={`admin-card relative overflow-hidden p-6 rounded-2xl hover:shadow-lg transition-all duration-300 group transform hover:-translate-y-1 ${
         onClick ? 'cursor-pointer' : ''
       }`}
       onClick={onClick}
     >
-      <div className="flex items-center justify-between">
-        <div>
-          <p className="text-white/80 text-sm font-medium">{title}</p>
-          <p className="text-3xl font-bold mt-1">{value}</p>
+      {/* Glow highlight */}
+      <div className={`absolute -right-4 -top-4 w-24 h-24 rounded-full blur-2xl opacity-15 dark:opacity-25 group-hover:scale-125 transition-transform duration-500 bg-gradient-to-br ${glowColor}`} />
+      
+      <div className="flex items-center justify-between relative z-10">
+        <div className="space-y-2">
+          <p className="text-[var(--muted-foreground)] text-xs md:text-sm font-medium tracking-wider uppercase">{title}</p>
+          <p className="text-3xl font-extrabold tracking-tight text-[var(--foreground)]">{value}</p>
           {trend && (
-            <div className="flex items-center mt-2 text-white/90">
-              <TrendingUp className="w-4 h-4 mr-1" />
-              <span className="text-sm">{trend}</span>
+            <div className="flex items-center text-xs text-[var(--accent)] font-semibold mt-1 bg-[var(--accent-subtle)] px-2.5 py-0.5 rounded-full w-max">
+              <TrendingUp className="w-3.5 h-3.5 mr-1" />
+              <span>{trend}</span>
             </div>
           )}
         </div>
-        <Icon className="w-12 h-12 text-white/80" />
+        <div className={`p-3.5 rounded-2xl bg-gradient-to-br ${glowColor} text-white shadow-md shadow-black/5`}>
+          <Icon className="w-6 h-6" />
+        </div>
       </div>
     </div>
   )
+
+  // Sleek Glassmorphic Custom Tooltip
+  const CustomTooltip = ({ active, payload, label }) => {
+    if (active && payload && payload.length) {
+      return (
+        <div className="admin-card p-3 rounded-xl shadow-lg text-[var(--foreground)] text-xs">
+          <p className="font-semibold text-[var(--muted-foreground)] mb-1 uppercase tracking-wider">{label}</p>
+          <p className="text-sm font-bold text-[var(--accent)] flex items-center">
+            <span className="w-1.5 h-1.5 rounded-full bg-[var(--accent)] mr-2 animate-pulse"></span>
+            <span>{payload[0].value.toLocaleString()} người</span>
+          </p>
+        </div>
+      )
+    }
+    return null
+  }
 
   if (loading) {
     return (
       <div className="min-h-[60vh] flex items-center justify-center">
         <div className="text-center">
-          <div
-            className="animate-spin rounded-full h-12 w-12 border-b-2 mx-auto mb-4"
-            style={{ borderColor: "var(--primary)" }}
-          ></div>
-          <p style={{ color: "var(--primary)" }} className="font-medium">
-            Đang tải dữ liệu...
+          <div className="animate-spin rounded-full h-10 w-10 border-2 border-[var(--border)] border-t-[var(--accent)] mx-auto mb-4"></div>
+          <p className="text-[var(--muted-foreground)] font-medium text-sm">
+            Đang tải dữ liệu thống kê...
           </p>
         </div>
       </div>
@@ -209,9 +231,15 @@ export default function UsersPage() {
   if (error) {
     return (
       <div className="min-h-[60vh] flex items-center justify-center">
-        <div className="text-center p-8 rounded-xl shadow-lg" style={{ backgroundColor: "var(--card)" }}>
-          <div className="text-red-500 text-6xl mb-4">⚠️</div>
-          <p className="text-red-600 font-medium">{error}</p>
+        <div className="text-center p-8 rounded-2xl admin-card border-red-100 dark:border-red-950/20 max-w-md">
+          <div className="text-red-500 text-4xl mb-3">⚠️</div>
+          <p className="text-red-500 font-semibold">{error}</p>
+          <button 
+            onClick={fetchUsersStatistics}
+            className="mt-4 px-4 py-2 bg-[var(--primary)] text-[var(--primary-foreground)] rounded-xl text-xs font-semibold hover:opacity-90 transition-opacity"
+          >
+            Thử lại
+          </button>
         </div>
       </div>
     )
@@ -220,185 +248,215 @@ export default function UsersPage() {
   return (
     <>
       {usersData && (
-        <div className="space-y-8">
+        <div className="space-y-8 animate-fade-up">
+          
           {/* Stats Cards */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             <StatCard
-              title="Người dùng"
-              value={usersData.totalUsers}
+              title="Tổng người dùng"
+              value={usersData.totalUsers?.toLocaleString()}
               icon={Users}
-              color="from-blue-500 to-blue-600"
-              trend={`+${usersData.newUsersThisMonth} this month`}
-              onClick={() => {
-                router.push('/admin/dashboard/viewusers')
-              }}
+              glowColor="from-[#00E5A0] to-[#0099ff]"
+              trend={`+${usersData.newUsersThisMonth} tháng này`}
+              onClick={() => router.push('/admin/dashboard/viewusers')}
             />
             <StatCard
               title="Đang trực tuyến"
-              value={usersData.onlineUsersNow}
+              value={usersData.onlineUsersNow?.toLocaleString()}
               icon={Eye}
-              color="from-green-500 to-green-600"
+              glowColor="from-[#10B981] to-[#059669]"
             />
             <StatCard
-              title="Người dùng mới hôm nay"
-              value={usersData.newUsersToday}
+              title="Đăng ký hôm nay"
+              value={usersData.newUsersToday?.toLocaleString()}
               icon={UserCheck}
-              color="from-purple-500 to-purple-600"
+              glowColor="from-[#8B5CF6] to-[#6366F1]"
             />
             <StatCard
               title="Chưa xác thực"
-              value={usersData.notVerifiedUsers}
+              value={usersData.notVerifiedUsers?.toLocaleString()}
               icon={UserX}
-              color="from-orange-500 to-orange-600"
+              glowColor="from-[#F59E0B] to-[#EF4444]"
             />
           </div>
 
           {/* Charts Section */}
-          {/* Weekly & Yearly Charts - 50% Width Each */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            
             {/* Weekly Chart */}
-            <div className="p-6 rounded-xl shadow-lg" style={{backgroundColor: "var(--card)"}}>
-              <div className="flex justify-between">
-              <h3 className="text-xl font-semibold mb-4 flex items-center" style={{color: "var(--card-foreground)"}}>
-                <Calendar className="w-5 h-5 mr-2 text-blue-500"/>
-                Người dùng trong tuần
-              </h3>
-                <div>
-
-              <input type="week" id="week" name="week" onChange={(e)=>{setWeek(e.target.value)}} />
+            <div className="p-6 rounded-2xl admin-card shadow-sm">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-6">
+                <h3 className="text-base font-bold flex items-center text-[var(--foreground)]">
+                  <Calendar className="w-5 h-5 mr-2 text-[var(--accent)]" />
+                  Người dùng mới trong tuần
+                </h3>
+                <div className="relative flex items-center">
+                  <Filter className="w-3.5 h-3.5 absolute right-3 text-[var(--muted-foreground)] pointer-events-none" />
+                  <input 
+                    type="week" 
+                    id="week" 
+                    name="week" 
+                    onChange={(e) => setWeek(e.target.value)} 
+                    className="admin-input pl-3 pr-9 py-1.5 text-xs rounded-xl font-medium transition-all"
+                  />
                 </div>
               </div>
-              <ResponsiveContainer width="100%" height={300}>
-                <BarChart data={transformWeeklyData(usersData.thisWeekStatistics)}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="var(--border)"/>
-                  <XAxis dataKey="day" stroke="var(--muted-foreground)"/>
-                  <YAxis stroke="var(--muted-foreground)"/>
-                  <Tooltip
-                      contentStyle={{
-                        backgroundColor: "var(--card)",
-                        border: "1px solid var(--border)",
-                        color: "var(--card-foreground)",
-                      }}
-                  />
-                  <Bar dataKey="value" fill="#3B82F6" radius={[4, 4, 0, 0]}/>
-                </BarChart>
-              </ResponsiveContainer>
+              
+              <div className="w-full h-[300px]">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={transformWeeklyData(usersData.thisWeekStatistics)}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" opacity={0.4} vertical={false} />
+                    <XAxis dataKey="day" stroke="var(--muted-foreground)" fontSize={11} tickLine={false} axisLine={false} />
+                    <YAxis stroke="var(--muted-foreground)" fontSize={11} tickLine={false} axisLine={false} />
+                    <Tooltip content={<CustomTooltip />} cursor={{ fill: 'var(--muted)', opacity: 0.15 }} />
+                    <Bar dataKey="value" fill="url(#weeklyColor)" radius={[4, 4, 0, 0]}>
+                      <defs>
+                        <linearGradient id="weeklyColor" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="0%" stopColor="#00E5A0" stopOpacity={0.9} />
+                          <stop offset="100%" stopColor="#00A3FF" stopOpacity={0.7} />
+                        </linearGradient>
+                      </defs>
+                    </Bar>
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
             </div>
 
-            <div className="p-6 rounded-xl shadow-lg" style={{backgroundColor: "var(--card)" }}>
-              <div className="flex justify-between">
-                <h3 className="text-xl font-semibold mb-4 flex items-center" style={{color: "var(--card-foreground)"}}>
-                  <Clock className="w-5 h-5 mr-2 text-purple-500"/>
-                  Người dùng trong năm
+            {/* Yearly Chart */}
+            <div className="p-6 rounded-2xl admin-card shadow-sm">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-6">
+                <h3 className="text-base font-bold flex items-center text-[var(--foreground)]">
+                  <Clock className="w-5 h-5 mr-2 text-[#8B5CF6]" />
+                  Đăng ký trong năm
                 </h3>
                 <input
-                    onChange={(e)=>{setYear(e.target.value)}}
-                    type="number"
-                    id="year"
-                    name="year"
-                    min="2025"
-                    max="2025"
-                    step="1"
-                    defaultValue={2025}
-                    placeholder="Nhập năm"
+                  onChange={(e) => setYear(e.target.value)}
+                  type="number"
+                  id="year"
+                  name="year"
+                  min="2025"
+                  max="2027"
+                  step="1"
+                  defaultValue={2025}
+                  placeholder="Nhập năm"
+                  className="admin-input px-3 py-1.5 text-xs rounded-xl font-medium transition-all w-28"
                 />
               </div>
-              <ResponsiveContainer width="100%" height={300}>
-                <LineChart data={transformYearlyData(usersData.thisYearStatistics)}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
-                  <XAxis dataKey="month" stroke="var(--muted-foreground)" />
-                  <YAxis stroke="var(--muted-foreground)" />
-                  <Tooltip
-                    contentStyle={{
-                      backgroundColor: "var(--card)",
-                      border: "1px solid var(--border)",
-                      color: "var(--card-foreground)",
-                    }}
-                  />
-                  <Line
-                    type="monotone"
-                    dataKey="value"
-                    stroke="#8B5CF6"
-                    strokeWidth={3}
-                    dot={{ fill: "#8B5CF6", strokeWidth: 2, r: 6 }}
-                  />
-                </LineChart>
-              </ResponsiveContainer>
+              
+              <div className="w-full h-[300px]">
+                <ResponsiveContainer width="100%" height="100%">
+                  <LineChart data={transformYearlyData(usersData.thisYearStatistics)}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" opacity={0.4} vertical={false} />
+                    <XAxis dataKey="month" stroke="var(--muted-foreground)" fontSize={11} tickLine={false} axisLine={false} />
+                    <YAxis stroke="var(--muted-foreground)" fontSize={11} tickLine={false} axisLine={false} />
+                    <Tooltip content={<CustomTooltip />} />
+                    <Line
+                      type="monotone"
+                      dataKey="value"
+                      stroke="#8B5CF6"
+                      strokeWidth={3}
+                      dot={{ fill: "#8B5CF6", strokeWidth: 2, r: 4 }}
+                      activeDot={{ r: 6, strokeWidth: 0 }}
+                    />
+                  </LineChart>
+                </ResponsiveContainer>
+              </div>
             </div>
           </div>
-          <div className="p-6 rounded-xl shadow-lg" style={{ backgroundColor: "var(--card)" }}>
-            <div className="flex justify-between">
-            <h3 className="text-xl font-semibold mb-4 flex items-center" style={{ color: "var(--card-foreground)" }}>
-              <Clock className="w-5 h-5 mr-2 text-purple-500" />
-              Trực tuyến hôm nay
-            </h3>
-              <input type="date" id="date" name="date" onChange={(e)=>{setDate(e.target.value)}} />
 
+          {/* Daily Online Chart */}
+          <div className="p-6 rounded-2xl admin-card shadow-sm">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-6">
+              <h3 className="text-base font-bold flex items-center text-[var(--foreground)]">
+                <Clock className="w-5 h-5 mr-2 text-[#00E5A0]" />
+                Số lượng trực tuyến hôm nay (Phút)
+              </h3>
+              <div className="relative flex items-center">
+                <Calendar className="w-3.5 h-3.5 absolute right-3 text-[var(--muted-foreground)] pointer-events-none" />
+                <input 
+                  type="date" 
+                  id="date" 
+                  name="date" 
+                  onChange={(e) => setDate(e.target.value)} 
+                  className="admin-input pl-3 pr-9 py-1.5 text-xs rounded-xl font-medium transition-all"
+                />
+              </div>
             </div>
-            <ResponsiveContainer width="100%" height={300}>
-              <AreaChart data={transformByMinute(usersData.onlineStatistics)}>
-                <YAxis stroke="var(--muted-foreground)" />
-                <XAxis
+            
+            <div className="w-full h-[300px]">
+              <ResponsiveContainer width="100%" height="100%">
+                <AreaChart data={transformByMinute(usersData.onlineStatistics)}>
+                  <defs>
+                    <linearGradient id="onlineColor" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor="#00E5A0" stopOpacity={0.4} />
+                      <stop offset="100%" stopColor="#00E5A0" stopOpacity={0.0} />
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" opacity={0.4} vertical={false} />
+                  <YAxis stroke="var(--muted-foreground)" fontSize={11} tickLine={false} axisLine={false} />
+                  <XAxis
                     dataKey="time"
                     stroke="var(--muted-foreground)"
                     tick={{ fontSize: 10 }}
-                    tickFormatter={(value) => {
-                      return value.slice(11, 16);
-                    }}
-                />
-
-                <Tooltip
-                    contentStyle={{
-                      backgroundColor: "var(--card)",
-                      border: "1px solid var(--border)",
-                      color: "var(--card-foreground)",
-                    }}
-                />
-                <Area type="monotone" dataKey="value" stroke="#F5CBCB" fill="#FFEAEA" fillOpacity={0.5} />
-
-              </AreaChart>
-            </ResponsiveContainer>
-          </div>
-
-
-
-
-          {/* Monthly Chart - Full Width */}
-          <div className="w-full">
-            <div className="p-6 rounded-xl shadow-lg" style={{ backgroundColor: "var(--card)" }}>
-              <div className="flex justify-between">
-              <h3 className="text-xl font-semibold mb-4 flex items-center" style={{ color: "var(--card-foreground)" }}>
-                <TrendingUp className="w-5 h-5 mr-2 text-green-500" />
-                Người dùng trong tháng
-              </h3>
-                  <input  onChange={(e)=>{setMonth(e.target.value)}} type="month" id="month" name="month"/>
-
-
-              </div>
-              <ResponsiveContainer width="100%" height={400}>
-                <AreaChart data={transformMonthlyData(usersData.thisMonthStatistics)}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
-                  <XAxis
-                    dataKey="date"
-                    angle={-45}
-                    textAnchor="end"
-                    height={80}
-                    interval={0}
-                    stroke="var(--muted-foreground)"
+                    tickFormatter={(value) => value.slice(11, 16)}
+                    tickLine={false}
+                    axisLine={false}
                   />
-                  <YAxis stroke="var(--muted-foreground)" />
-                  <Tooltip
-                    contentStyle={{
-                      backgroundColor: "var(--card)",
-                      border: "1px solid var(--border)",
-                      color: "var(--card-foreground)",
-                    }}
-                  />
-                  <Area type="monotone" dataKey="value" stroke="#10B981" fill="#10B981" fillOpacity={0.3} />
+                  <Tooltip content={<CustomTooltip />} />
+                  <Area type="monotone" dataKey="value" stroke="#00E5A0" strokeWidth={2} fill="url(#onlineColor)" />
                 </AreaChart>
               </ResponsiveContainer>
             </div>
           </div>
+
+          {/* Monthly Registered Chart */}
+          <div className="p-6 rounded-2xl admin-card shadow-sm">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-6">
+              <h3 className="text-base font-bold flex items-center text-[var(--foreground)]">
+                <TrendingUp className="w-5 h-5 mr-2 text-[#10B981]" />
+                Đăng ký thành viên trong tháng
+              </h3>
+              <div className="relative flex items-center">
+                <Calendar className="w-3.5 h-3.5 absolute right-3 text-[var(--muted-foreground)] pointer-events-none" />
+                <input 
+                  onChange={(e) => setMonth(e.target.value)} 
+                  type="month" 
+                  id="month" 
+                  name="month"
+                  className="admin-input pl-3 pr-9 py-1.5 text-xs rounded-xl font-medium transition-all"
+                />
+              </div>
+            </div>
+            
+            <div className="w-full h-[360px]">
+              <ResponsiveContainer width="100%" height="100%">
+                <AreaChart data={transformMonthlyData(usersData.thisMonthStatistics)}>
+                  <defs>
+                    <linearGradient id="monthlyColor" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor="#10B981" stopOpacity={0.4} />
+                      <stop offset="100%" stopColor="#10B981" stopOpacity={0.0} />
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" opacity={0.4} vertical={false} />
+                  <XAxis
+                    dataKey="date"
+                    angle={-45}
+                    textAnchor="end"
+                    height={70}
+                    interval={0}
+                    stroke="var(--muted-foreground)"
+                    fontSize={10}
+                    tickLine={false}
+                    axisLine={false}
+                  />
+                  <YAxis stroke="var(--muted-foreground)" fontSize={11} tickLine={false} axisLine={false} />
+                  <Tooltip content={<CustomTooltip />} />
+                  <Area type="monotone" dataKey="value" stroke="#10B981" strokeWidth={2.5} fill="url(#monthlyColor)" />
+                </AreaChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
+
         </div>
       )}
     </>

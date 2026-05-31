@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { Edit, MessageCircle, UserPlus, UserMinus, UserCheck, UserX, Shield, MoreVertical, FileText, FileImage } from "lucide-react";
 import Avatar from "../ui-components/Avatar";
 import Modal from "../ui-components/Modal";
@@ -8,9 +8,13 @@ import EditProfileModal from "./EditProfile";
 import api from "@/utils/axios";
 import toast from "react-hot-toast";
 import { useParams, useRouter } from "next/navigation";
-import useAppStore from "@/store/ZustandStore";
+import useAppStore, { selectSortedChatList } from "@/store/ZustandStore";
+import { useShallow } from 'zustand/react/shallow';
+import { useTranslations } from "next-intl";
 
 import FriendsListModal from "./FriendsListModal";
+import useIsMobile from "@/hooks/useIsMobile";
+import ConfirmModal from "../ui-components/ConfirmModal";
 
 export default function ProfileHeader({ 
   profileData, 
@@ -20,12 +24,15 @@ export default function ProfileHeader({
   onProfileUpdate,
   onUsernameChange // New prop to handle username changes
 }) {
+  const t = useTranslations('profile');
+  const isMobile = useIsMobile();
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isFriendsModalOpen, setIsFriendsModalOpen] = useState(false);
   const [friendsList, setFriendsList] = useState([]);
   const [isLoadingFriends, setIsLoadingFriends] = useState(false);
   const [initialModalTab, setInitialModalTab] = useState("friends");
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const [isBlockConfirmOpen, setIsBlockConfirmOpen] = useState(false);
   
   const avatar = profileData.profilePictureUrl;
   const { username: routeUsername } = useParams();
@@ -33,25 +40,28 @@ export default function ProfileHeader({
 
   const username = profileData.username;
   console.log(profileData)
-  const selectChat = useAppStore((state) => state.selectChat);
-  const showVirtualChat = useAppStore((state) => state.showVirtualChat);
-  const chatList = useAppStore((state) => state.chatList);
-
+  const chatMap = useAppStore((state) => state.chatMap);
+  const { selectChat, showVirtualChat } = useAppStore(useShallow((state) => ({
+    selectChat: state.selectChat,
+    showVirtualChat: state.showVirtualChat,
+  })));
+  const chatList = useMemo(() => selectSortedChatList({ chatMap }), [chatMap]);
   const handleBlockUser = async () => {
-    const confirm = window.confirm(`Bạn có chắc muốn chặn ${routeUsername}?`);
-    if (!confirm) return;
+    setIsBlockConfirmOpen(true);
+  };
 
+  const executeBlockUser = async () => {
     try {
       const res = await api.post(`/v1/blocks/${routeUsername}`);
       if (res.data.code === 200) {
-        toast.success(`Đã chặn ${routeUsername}`);
+        toast.success(t('blockSuccess', { username: routeUsername }));
         setIsDropdownOpen(false);
       } else {
         console.warn("Chặn thất bại:", res.data.message);
       }
     } catch (error) {
       console.error("Lỗi khi chặn người dùng:", error);
-      toast.error("Có lỗi xảy ra khi chặn người dùng.");
+      toast.error(t('blockError'));
     }
   };
 
@@ -73,7 +83,7 @@ export default function ProfileHeader({
     console.log("🔍 handleChatClick:", { targetUserId, targetUsername });
 
     if (!targetUserId) {
-      toast.error("Không thể tìm thấy thông tin người dùng");
+      toast.error(t('chatError'));
       return;
     }
 
@@ -111,22 +121,22 @@ export default function ProfileHeader({
   const cancelFriendRequest = async () => {
     try {
       await api.delete(`/v1/friend-request/delete/${username}`);
-      toast.success("Đã hủy lời mời kết bạn");
+      toast.success(t('cancelRequestSuccess'));
       // FIX: Set request to "NONE" so "Kết bạn" button shows up again
       onProfileUpdate({ ...profileData, request: "NONE" });
     } catch (error) {
-      toast.error("Lỗi khi hủy lời mời");
+      toast.error(t('cancelRequestError'));
     }
   };
 
   const declineFriendRequest = async () => {
     try {
       await api.delete(`/v1/friend-request/delete/${username}`);
-      toast.success("Đã từ chối lời mời");
+      toast.success(t('declineSuccess'));
       // FIX: Set request to "NONE" so "Kết bạn" button shows up again
       onProfileUpdate({ ...profileData, request: "NONE" });
     } catch (error) {
-      toast.error("Lỗi khi từ chối lời mời");
+      toast.error(t('declineError'));
     }
   };
 
@@ -134,11 +144,12 @@ export default function ProfileHeader({
     try {
       const res = await api.post(`/v1/friend-request/send/${username}`);
       if (res.data.code === 200) {
-        toast.success("Gửi lời mời thành công");
+        toast.success(t('sendRequestSuccess'));
         onProfileUpdate({ ...profileData, request: "OUT" });
       }
     } catch (error) {
       console.error("Lỗi gửi lời mời:", error);
+      toast.error(t('sendRequestError'));
     }
   };
 
@@ -152,7 +163,7 @@ export default function ProfileHeader({
     };
     
     onProfileUpdate(optimisticData);
-    toast.success("Đã chấp nhận kết bạn");
+    toast.success(t('acceptSuccess'));
     
     try {
       const res = await api.post(`/v1/friend-request/accept/${username}`);
@@ -164,7 +175,7 @@ export default function ProfileHeader({
           request: "IN",
           friendCount: profileData.friendCount
         });
-        toast.error("Có lỗi xảy ra khi chấp nhận kết bạn");
+        toast.error(t('acceptError'));
       }
     } catch (error) {
       // Rollback nếu có lỗi
@@ -174,14 +185,14 @@ export default function ProfileHeader({
         request: "IN",
         friendCount: profileData.friendCount
       });
-      toast.error("Lỗi khi chấp nhận kết bạn");
+      toast.error(t('acceptError'));
     }
   };
 
   const unfriend = async () => {
     try {
       await api.delete(`/v1/friends/${username}`);
-      toast.success("Đã hủy kết bạn");
+      toast.success(t('unfriendSuccess'));
       // FIX: Set request to "NONE" so "Kết bạn" button shows up again
       onProfileUpdate({
         ...profileData,
@@ -191,7 +202,7 @@ export default function ProfileHeader({
       });
       setIsDropdownOpen(false);
     } catch (error) {
-      toast.error("Lỗi khi hủy kết bạn");
+      toast.error(t('unfriendError'));
     }
   };
 
@@ -213,11 +224,11 @@ export default function ProfileHeader({
         setInitialModalTab("friends");
         setIsFriendsModalOpen(true);
       } else {
-        toast.error("Không thể tải danh sách bạn bè");
+        toast.error(t('loadFriendsError'));
       }
     } catch (error) {
       console.error("Lỗi khi lấy danh sách bạn bè:", error);
-      toast.error("Có lỗi xảy ra, vui lòng thử lại sau");
+      toast.error(t('commonError'));
     } finally {
       setIsLoadingFriends(false);
     }
@@ -241,11 +252,11 @@ export default function ProfileHeader({
         setInitialModalTab("mutual");
         setIsFriendsModalOpen(true);
       } else {
-        toast.error("Không thể tải danh sách bạn bè");
+        toast.error(t('loadFriendsError'));
       }
     } catch (error) {
       console.error("Lỗi khi lấy danh sách bạn bè:", error);
-      toast.error("Có lỗi xảy ra, vui lòng thử lại sau");
+      toast.error(t('commonError'));
     } finally {
       setIsLoadingFriends(false);
     }
@@ -261,7 +272,7 @@ export default function ProfileHeader({
             className="flex items-center gap-2 px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded-full text-sm font-medium shadow-md hover:shadow-lg transition-all duration-200"
           >
             <UserMinus size={16} />
-            <span>Hủy lời mời</span>
+            <span>{t('cancelRequest')}</span>
           </button>
         );
       } else if (profileData.request === "IN") {
@@ -272,14 +283,14 @@ export default function ProfileHeader({
               className="flex items-center gap-2 px-4 py-2 bg-green-500 hover:bg-green-600 text-white rounded-full text-sm font-medium shadow-md hover:shadow-lg transition-all duration-200"
             >
               <UserCheck size={16} />
-              <span>Đồng ý</span>
+              <span>{t('accept')}</span>
             </button>
             <button
               onClick={declineFriendRequest}
               className="flex items-center gap-2 px-4 py-2 bg-gray-500 hover:bg-gray-600 text-white rounded-full text-sm font-medium shadow-md hover:shadow-lg transition-all duration-200"
             >
               <UserX size={16} />
-              <span>Từ chối</span>
+              <span>{t('decline')}</span>
             </button>
           </div>
         );
@@ -295,7 +306,7 @@ export default function ProfileHeader({
             className="flex items-center gap-2 px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-full text-sm font-medium shadow-md hover:shadow-lg transition-all duration-200"
           >
             <UserPlus size={16} />
-            <span>Kết bạn</span>
+            <span>{t('addFriend')}</span>
           </button>
         </div>
       );
@@ -315,7 +326,7 @@ export default function ProfileHeader({
             className="w-full px-4 py-2 text-left text-sm text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 flex items-center gap-2 rounded-t-lg"
           >
             <UserMinus size={16} />
-            <span>Hủy kết bạn</span>
+            <span>{t('unfriend')}</span>
           </button>
         )}
         <button
@@ -323,11 +334,12 @@ export default function ProfileHeader({
           className="w-full px-4 py-2 text-left text-sm text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 flex items-center gap-2 rounded-b-lg"
         >
           <Shield size={16} />
-          <span>Chặn</span>
+          <span>{t('block')}</span>
         </button>
       </div>
     );
   };
+
 
   const handleTabClick = (tabName) => {
     if (onTabChange) {
@@ -338,49 +350,50 @@ export default function ProfileHeader({
   return (
     <div className="w-full">
       <div className="flex flex-col sm:flex-row items-center gap-4 sm:gap-6 p-4 sm:p-6">
-        <Avatar
-          src={avatar}
-          alt="Avatar"
-          className="rounded-full object-cover w-24 h-24 sm:w-32 sm:h-32 shadow-md"
-        />
-        <div className="flex-1">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <h2 className="text-xl font-semibold text-[var(--foreground)]">
+        <div className="avatar-wrapper">
+          <Avatar
+            src={avatar}
+            alt="Avatar"
+            size={isMobile ? 96 : 128}
+            className="rounded-full object-cover shadow-md"
+          />
+          {profileData.online && <div className="online-ring" />}
+        </div>
+        
+        <div className="flex-1 text-center sm:text-left">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div>
+              <h2 className="text-2xl font-bold text-[var(--foreground)]">
                 {profileData?.givenName || ""} {profileData?.familyName || ""}
               </h2>
+              <p className="text-[var(--muted-foreground)] font-medium text-sm mt-0.5">@{profileData?.username}</p>
             </div>
             
-            {/* Các nút action luôn ở cùng vị trí */}
-         
-          </div>
-          <div className="flex gap-4 py-2 items-center">
-          <p className="text-[var(--muted-foreground)] text-sm mt-1">@{profileData?.username}</p>
-   <div className="flex gap-2 items-center">
+            <div className="flex flex-wrap justify-center sm:justify-end gap-2">
               {isOwnProfile ? (
                 <button
                   onClick={() => setIsEditModalOpen(true)}
-                  className="flex items-center gap-2 px-4 py-2 border border-[var(--border)] bg-[var(--card)] hover:bg-[var(--muted)] text-[var(--foreground)] rounded-full text-sm font-medium shadow-sm hover:shadow-md transition-all duration-200"
+                  className="btn-primary"
                 >
                   <Edit size={16} />
-                  <span>Chỉnh sửa hồ sơ</span>
+                  <span>{t('editProfile')}</span>
                 </button>
               ) : (
                 <>
                   {renderActionButtons()}
                   <button
-          onClick={handleChatClick}
-          className="flex items-center gap-2 px-4 py-2 bg-[#7a7d81] hover:bg-[#6b7280] text-white rounded-full text-sm font-medium shadow-md hover:shadow-lg transition-all duration-200"
-        >
-          <MessageCircle size={16} />
-          <span>Nhắn tin</span>
-        </button>
+                    onClick={handleChatClick}
+                    className="btn-primary"
+                  >
+                    <MessageCircle size={16} />
+                    <span>{t('sendMessage')}</span>
+                  </button>
                   <div className="relative">
                     <button
                       onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-                      className="flex items-center justify-center w-10 h-10 bg-[var(--muted)] hover:bg-[var(--accent)] rounded-full text-[var(--foreground)] shadow-sm hover:shadow-md transition-all duration-200"
+                      className="nav-item bg-[var(--muted)]"
                     >
-                      <MoreVertical size={16} />
+                      <MoreVertical size={18} />
                     </button>
                     {renderDropdownMenu()}
                   </div>
@@ -389,58 +402,50 @@ export default function ProfileHeader({
             </div>
           </div>
 
-          <div className="flex gap-4 mt-2 text-sm">
-            <span className="text-[var(--foreground)]">
-              <strong>{profileData.postCount || 0}</strong> Bài viết
-            </span>
+          <div className="profile-stats mt-6 justify-center sm:justify-start">
+            <div className="stat-item cursor-default">
+              <span className="stat-number">{profileData.postCount || 0}</span>
+              <span className="stat-label">{t('posts')}</span>
+            </div>
             <button 
               onClick={handleGetListFriend}
               disabled={isLoadingFriends}
-              className="hover:text-blue-500 transition-colors duration-200 disabled:opacity-50 font-medium text-[var(--foreground)]"
+              className="stat-item"
             >
-              <strong>{profileData?.friendCount || 0}</strong> Bạn bè
-              {isLoadingFriends && <span className="ml-1 animate-pulse">...</span>}
+              <span className="stat-number">{profileData?.friendCount || 0}</span>
+              <span className="stat-label">{t('friends')}</span>
             </button>
             <button 
               onClick={handleGetMutualFriends}
               disabled={isLoadingFriends}
-              className="hover:text-blue-500 transition-colors duration-200 disabled:opacity-50 font-medium text-[var(--foreground)]"
+              className="stat-item"
             >
-              <strong>{profileData?.mutualFriendsCount || 0}</strong> Bạn chung
-              {isLoadingFriends && <span className="ml-1 animate-pulse">...</span>}
+              <span className="stat-number">{profileData?.mutualFriendsCount || 0}</span>
+              <span className="stat-label">{t('mutualFriends')}</span>
             </button>
           </div>
 
-          <p className="text-sm mt-2 text-[var(--muted-foreground)]">
-            {profileData?.bio || "Chưa có mô tả cá nhân."}
+          <p className="text-sm mt-4 text-[var(--muted-foreground)] leading-relaxed max-w-xl">
+            {profileData?.bio || t('noBio')}
           </p>
         </div>
       </div>
 
-      <div className="flex justify-around text-sm border-t border-[var(--border)] mt-4 pt-3">
+      <div className="profile-tabs px-6">
         <button
-          className={`flex items-center gap-2 px-4 py-2 rounded-full font-medium transition-all duration-200 ${
-            activeTab === "posts"
-              ? "bg-[var(--primary)] text-[var(--primary-foreground)] shadow-md hover:shadow-lg"
-              : "text-[var(--muted-foreground)] hover:bg-[var(--muted)] hover:text-[var(--foreground)]"
-          }`}
+          className={`tab-btn ${activeTab === "posts" ? "active" : ""}`}
           onClick={() => handleTabClick("posts")}
         >
-          <FileText size={16} />
-          <span>Bài viết</span>
+          <FileText size={18} />
+          <span>{t('posts')}</span>
         </button>
         <button
-          className={`flex items-center gap-2 px-4 py-2 rounded-full font-medium transition-all duration-200 ${
-            activeTab === "file"
-              ? "bg-[var(--primary)] text-[var(--primary-foreground)] shadow-md hover:shadow-lg"
-              : "text-[var(--muted-foreground)] hover:bg-[var(--muted)] hover:text-[var(--foreground)]"
-          }`}
+          className={`tab-btn ${activeTab === "file" ? "active" : ""}`}
           onClick={() => handleTabClick("file")}
         >
-          <FileImage size={16} />
-          <span>Ảnh và video</span>
+          <FileImage size={18} />
+          <span>{t('media')}</span>
         </button>
-       
       </div>
 
       {/* Overlay để đóng dropdown khi click outside */}
@@ -466,6 +471,14 @@ export default function ProfileHeader({
           initialTab={initialModalTab}
         />
       </Modal>
-    </div>
-  );
-}
+
+      <ConfirmModal
+        isOpen={isBlockConfirmOpen}
+        onClose={() => setIsBlockConfirmOpen(false)}
+        onConfirm={executeBlockUser}
+        title={t('block')}
+        message={t('blockConfirm', { username: routeUsername })}
+      />
+      </div>
+      );
+      }

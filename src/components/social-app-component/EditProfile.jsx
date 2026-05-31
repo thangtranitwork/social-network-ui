@@ -6,7 +6,10 @@ import Input from "../ui-components/Input"
 import api, { refreshTokenManually, setAuthToken, setUserName } from "@/utils/axios"
 import { uploadFile } from "@/utils/fileUpload"
 import axios from "axios"
+import { useTranslations } from "next-intl"
+
 export default function EditProfileModal({ profileData, onSave }) {
+  const t = useTranslations("profile.editModal")
   const [formData, setFormData] = useState({
     firstname: profileData.givenName || "",
     lastname: profileData.familyName || "",
@@ -48,7 +51,7 @@ export default function EditProfileModal({ profileData, onSave }) {
 
     const updates = [
       {
-        label: "Name",
+        label: t("givenName"),
         check:
           formData.firstname !== profileData.givenName ||
           formData.lastname !== profileData.familyName,
@@ -74,7 +77,7 @@ export default function EditProfileModal({ profileData, onSave }) {
         errorKey: "name",
       },
       {
-        label: "Username",
+        label: t("username"),
         check: formData.username !== profileData.username,
         request: () =>
           fetch(`${process.env.NEXT_PUBLIC_API_URL}/v1/users/update-username`, {
@@ -95,7 +98,7 @@ export default function EditProfileModal({ profileData, onSave }) {
         errorKey: "username",
       },
       {
-        label: "Bio",
+        label: t("bio"),
         check: formData.bio !== profileData.bio,
         request: () =>
           fetch(`${process.env.NEXT_PUBLIC_API_URL}/v1/users/update-bio`, {
@@ -116,7 +119,7 @@ export default function EditProfileModal({ profileData, onSave }) {
         errorKey: "bio",
       },
       {
-        label: "Avatar",
+        label: t("avatar") || "Avatar",
         check: !!avatarFile,
         request: async () => {
           const fileId = await uploadFile(avatarFile)
@@ -136,11 +139,11 @@ export default function EditProfileModal({ profileData, onSave }) {
         try {
           const res = await item.request()
           console.log(`✅ Response for ${item.label}:`, res)
-          setSuccessMessages((prev) => [...prev, `${item.label} updated successfully`])
+          setSuccessMessages((prev) => [...prev, t("success", { label: item.label })])
           successCount++
 
           // Check if username was successfully updated
-          if (item.label === "Username") {
+          if (item.label === t("username")) {
             usernameUpdated = true
           }
         } catch (err) {
@@ -148,7 +151,7 @@ export default function EditProfileModal({ profileData, onSave }) {
           setErrors((prev) => ({
             ...prev,
             [item.errorKey]:
-              err.response?.data?.message || `Failed to update ${item.label.toLowerCase()}`,
+              err.response?.data?.message || t("error", { label: item.label.toLowerCase() }),
           }))
         }
       }
@@ -198,7 +201,7 @@ export default function EditProfileModal({ profileData, onSave }) {
   return (
     <div className="h-full flex flex-col">
       <div className="p-6 border-b">
-        <h2 className="text-xl font-semibold">Chỉnh sửa thông tin cá nhân</h2>
+        <h2 className="text-xl font-semibold">{t("title")}</h2>
       </div>
 
       {successMessages.length > 0 && (
@@ -236,21 +239,21 @@ export default function EditProfileModal({ profileData, onSave }) {
 
           <div className="w-full max-w-md space-y-4">
             <div>
-              <Input name="firstname" label="Tên" value={formData.firstname} onChange={handleInputChange} />
+              <Input name="firstname" label={t("givenName")} value={formData.firstname} onChange={handleInputChange} />
               {errors.name && <p className="text-red-500 text-xs mt-1">{errors.name}</p>}
             </div>
             <div>
-              <Input name="lastname" label="Họ" value={formData.lastname} onChange={handleInputChange} />
+              <Input name="lastname" label={t("familyName")} value={formData.lastname} onChange={handleInputChange} />
             </div>
             <div>
-              <Input name="username" label="Username" value={formData.username} onChange={handleInputChange} />
+              <Input name="username" label={t("username")} value={formData.username} onChange={handleInputChange} />
               {errors.username && <p className="text-red-500 text-xs mt-1">{errors.username}</p>}
             </div>
             <div>
-              <Input name="birthday" label="Ngày sinh" value={formData.birthday} onChange={handleInputChange} placeholder="DD/MM/YYYY" />
+              <Input name="birthday" label={t("birthdate")} value={formData.birthday} onChange={handleInputChange} placeholder="DD/MM/YYYY" />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-500 mb-2">Tiểu sử</label>
+              <label className="block text-sm font-medium text-gray-500 mb-2">{t("bio")}</label>
               <div className={`text-xs text-[var(--muted-foreground)] mt-1 text-right ${formData.bio.length > 10000 && "text-red-500"}`}>
                 {formData.bio.length}/256
               </div>
@@ -261,7 +264,7 @@ export default function EditProfileModal({ profileData, onSave }) {
                 rows={3}
                 max={256}
                 className="w-full px-3 py-2 border-b-2 border-[var(--border)] bg-transparent outline-none resize-none text-[var(--foreground)]"
-                placeholder="Giới thiệu về bạn ❤️"
+                placeholder={t("bioPlaceholder")}
               />
               {errors.bio && <p className="text-red-500 text-xs mt-1">{errors.bio}</p>}
             </div>
@@ -275,7 +278,7 @@ export default function EditProfileModal({ profileData, onSave }) {
             className={`px-6 py-2 rounded-md text-white ${loading ? "bg-gray-400 cursor-not-allowed" : "bg-blue-500 hover:bg-blue-600"
               }`}
           >
-            {loading ? "Đang lưu..." : "Lưu thay đổi"}
+            {loading ? t("saving") : t("saveChanges")}
           </button>
         </div>
       </form>

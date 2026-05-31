@@ -175,23 +175,25 @@ export default function ViewPostPage() {
   }, [])
 
   return (
-      <main className="max-w-4xl mx-auto mt-4 px-4">
+      <main className="max-w-4xl mx-auto mt-4 px-4 animate-fade-up">
         <div className="space-y-6 flex flex-col items-center">
           {/* Container wrapper for centering */}
           <div className="w-full max-w-2xl space-y-6">
             {/* Header */}
-            <div className="flex items-center justify-between bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
-              <div className="flex items-center gap-4">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 p-5 rounded-2xl admin-card shadow-sm">
+              <div className="flex items-center gap-3">
                 <button
                     onClick={handleBackToStats}
-                    className="flex items-center gap-2 px-4 py-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
+                    className="admin-btn-back flex items-center gap-2 px-3.5 py-2 text-xs md:text-sm font-semibold rounded-xl transition-colors"
                 >
                   <ArrowLeft className="w-4 h-4" />
-                  Back to Statistics
+                  Quay lại Thống kê
                 </button>
-                <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
-                  All Posts ({totalPosts})
-                </h2>
+                <div>
+                  <h2 className="text-lg font-bold text-[var(--foreground)]">
+                    Danh sách bài đăng ({totalPosts})
+                  </h2>
+                </div>
               </div>
             </div>
 

@@ -37,7 +37,7 @@ const useAppStore = create(
       setFilterType: (filterType) => set({ filterType }),
 
       // ============ CHAT STATE ============
-      chatList: [],
+      chatMap: {}, // O(1) access by chatId
       chatsLoaded: false,
       conversationMap: new Map(),
       isLoadingChats: false,
@@ -45,17 +45,18 @@ const useAppStore = create(
       unreadMessageCount: 0,
 
       // Helper function to calculate unread message count
-      calculateUnreadMessageCount: (chatList) => {
-        const total = chatList.reduce((sum, chat) => {
-          return sum + (chat.notReadMessageCount || 0);
-        }, 0);
+      calculateUnreadMessageCount: (chatMap) => {
+        let total = 0;
+        for (const key in chatMap) {
+          total += (chatMap[key].notReadMessageCount || 0);
+        }
         return total;
       },
 
       // Update unread message count
       updateUnreadMessageCount: () => {
-        const { chatList } = get();
-        const newCount = get().calculateUnreadMessageCount(chatList);
+        const { chatMap } = get();
+        const newCount = get().calculateUnreadMessageCount(chatMap);
 
         set({ unreadMessageCount: newCount });
         console.log(`✅ ${STORE_EVENTS.UNREAD_MESSAGE_COUNT_UPDATED} - Total unread messages: ${newCount}`);
@@ -73,23 +74,27 @@ const useAppStore = create(
 
           const data = res.data.body || res.data || [];
 
-          // Reverse the chat list when fetching
-          const reversedData = [...data].reverse();
+          // Convert to Map
+          const newChatMap = {};
+          data.forEach(chat => {
+            const id = chat.chatId || chat.id;
+            newChatMap[id] = chat;
+          });
 
           // Calculate unread message count
-          const unreadCount = get().calculateUnreadMessageCount(reversedData);
+          const unreadCount = get().calculateUnreadMessageCount(newChatMap);
 
           set({
-            chatList: reversedData,
+            chatMap: newChatMap,
             isLoadingChats: false,
             chatsLoaded: true,
             error: null,
             unreadMessageCount: unreadCount
           });
 
-          console.log(`✅ ${STORE_EVENTS.CHAT_LIST_LOAD} - ${reversedData.length} chats loaded`);
+          console.log(`✅ ${STORE_EVENTS.CHAT_LIST_LOAD} - ${data.length} chats loaded`);
           console.log(`✅ ${STORE_EVENTS.UNREAD_MESSAGE_COUNT_UPDATED} - Total unread messages: ${unreadCount}`);
-          return reversedData;
+          return data;
         } catch (error) {
           console.error('❌ Error fetching chats:', error);
           const errorMessage = error.response?.data?.message || error.message || 'Failed to load chats';
@@ -98,7 +103,7 @@ const useAppStore = create(
             isLoadingChats: false,
             chatsLoaded: true,
             error: errorMessage,
-            chatList: [],
+            chatMap: {},
             unreadMessageCount: 0
           });
 
@@ -109,9 +114,13 @@ const useAppStore = create(
       // Update chat user online status
       updateChatUserOnlineStatus: (userId, onlineStatusData) => {
         set((state) => {
-          const updatedChatList = state.chatList.map((chat) => {
+          let updated = false;
+          const newChatMap = { ...state.chatMap };
+          
+          for (const key in newChatMap) {
+            const chat = newChatMap[key];
             if (chat.target && chat.target.id === userId) {
-              return {
+              newChatMap[key] = {
                 ...chat,
                 target: {
                   ...chat.target,
@@ -119,14 +128,16 @@ const useAppStore = create(
                   lastOnline: onlineStatusData.lastOnline || null
                 }
               };
+              updated = true;
             }
-            return chat;
-          });
+          }
 
-          const unreadCount = get().calculateUnreadMessageCount(updatedChatList);
+          if (!updated) return state;
+
+          const unreadCount = get().calculateUnreadMessageCount(newChatMap);
 
           return {
-            chatList: updatedChatList,
+            chatMap: newChatMap,
             unreadMessageCount: unreadCount
           };
         });
@@ -135,8 +146,8 @@ const useAppStore = create(
 
       // Get block status by chat ID
       getBlockStatusByChatId: (chatId) => {
-        const { chatList } = get();
-        const chat = chatList.find(c => (c.id === chatId || c.chatId === chatId));
+        const { chatMap } = get();
+        const chat = chatMap[chatId];
 
         if (!chat) {
           console.log(`❌ Chat not found for ID: ${chatId}`);
@@ -146,26 +157,22 @@ const useAppStore = create(
         return chat.blockStatus || "NORMAL";
       },
 
-      // Get user by chat ID
-      // getUserByChatId: (chatId) => {
-      //   const chat = get().chatList.find(c => (c.id === chatId || c.chatId === chatId));
-      //   return chat ? chat.target : null;
-      // },
-
       // Mark chat as read
       markChatAsRead: async (chatId) => {
         try {
           set(state => {
-            const updatedChatList = state.chatList.map(chat =>
-                (chat.chatId === chatId || chat.id === chatId)
-                    ? { ...chat, notReadMessageCount: 0 }
-                    : chat
-            );
+            const chat = state.chatMap[chatId];
+            if (!chat) return state;
 
-            const unreadCount = get().calculateUnreadMessageCount(updatedChatList);
+            const newChatMap = {
+              ...state.chatMap,
+              [chatId]: { ...chat, notReadMessageCount: 0 }
+            };
+
+            const unreadCount = get().calculateUnreadMessageCount(newChatMap);
 
             return {
-              chatList: updatedChatList,
+              chatMap: newChatMap,
               unreadMessageCount: unreadCount
             };
           });
@@ -178,44 +185,45 @@ const useAppStore = create(
 
       // Handle received message
       onMessageReceived: (message) => {
-        const { selectedChatId } = get();
+        const { selectedChatId, chatMap } = get();
         const isCurrentChatOpen = selectedChatId === message.chatId;
         const currentUserId = typeof window !== 'undefined' ? localStorage.getItem("userId") : null;
         const isOwnMessage = message.sender?.id === currentUserId;
 
-        set(state => {
-          const updatedChats = state.chatList
-              .map(chat => {
-                if (chat.chatId === message.chatId || chat.id === message.chatId) {
-                  return {
-                    ...chat,
-                    latestMessage: {
-                      id: message.id,
-                      content: message.content,
-                      sentAt: message.sentAt || message.createdAt,
-                      sender: message.sender,
-                      messageType: message.messageType || message.type,
-                      attachment: message.attachment,
-                      attachments: message.attachments,
-                      deleted: message.deleted || false,
-                    },
-                    lastMessage: message,
-                    updatedAt: message.createdAt || message.sentAt,
-                    notReadMessageCount: isCurrentChatOpen
-                        ? 0
-                        : isOwnMessage
-                            ? (chat.notReadMessageCount || 0)
-                            : (chat.notReadMessageCount || 0) + 1
-                  };
-                }
-                return chat;
-              })
-              .sort((a, b) => new Date(b.updatedAt || b.createdAt) - new Date(a.updatedAt || a.createdAt));
+        const chatId = message.chatId;
+        const existingChat = chatMap[chatId];
 
-          const unreadCount = get().calculateUnreadMessageCount(updatedChats);
+        if (!existingChat) return;
+
+        set(state => {
+          const newChatMap = {
+            ...state.chatMap,
+            [chatId]: {
+              ...existingChat,
+              latestMessage: {
+                id: message.id,
+                content: message.content,
+                sentAt: message.sentAt || message.createdAt,
+                sender: message.sender,
+                messageType: message.messageType || message.type,
+                attachment: message.attachment,
+                attachments: message.attachments,
+                deleted: message.deleted || false,
+              },
+              lastMessage: message,
+              updatedAt: message.createdAt || message.sentAt,
+              notReadMessageCount: isCurrentChatOpen
+                  ? 0
+                  : isOwnMessage
+                      ? (existingChat.notReadMessageCount || 0)
+                      : (existingChat.notReadMessageCount || 0) + 1
+            }
+          };
+
+          const unreadCount = get().calculateUnreadMessageCount(newChatMap);
 
           return {
-            chatList: updatedChats,
+            chatMap: newChatMap,
             unreadMessageCount: unreadCount
           };
         });
@@ -225,17 +233,18 @@ const useAppStore = create(
 
       // Handle new chat creation
       onChatCreated: (newChat) => {
+        const id = newChat.chatId || newChat.id;
         set(state => {
-          const updatedChatList = [newChat, ...state.chatList];
-          const unreadCount = get().calculateUnreadMessageCount(updatedChatList);
+          const newChatMap = { ...state.chatMap, [id]: newChat };
+          const unreadCount = get().calculateUnreadMessageCount(newChatMap);
 
           return {
-            chatList: updatedChatList,
+            chatMap: newChatMap,
             unreadMessageCount: unreadCount
           };
         });
 
-        console.log(`📊 ${STORE_EVENTS.CHAT_CREATED} - ${newChat.id}`);
+        console.log(`📊 ${STORE_EVENTS.CHAT_CREATED} - ${id}`);
       },
 
       // ============ NOTIFICATIONS STATE ============
@@ -403,7 +412,7 @@ const useAppStore = create(
       // ============ UTILITY ============
       clearAllData: () => {
         set({
-          chatList: [],
+          chatMap: {},
           chatsLoaded: false,
           filterType: "RELEVANT",
           conversationMap: new Map(),
@@ -438,5 +447,14 @@ const useAppStore = create(
       name: 'app-store'
     })
 );
+
+// Derived selector for getting sorted chat list
+export const selectSortedChatList = (state) => {
+  return Object.values(state.chatMap).sort((a, b) => {
+    const timeA = new Date(a.updatedAt || a.createdAt).getTime();
+    const timeB = new Date(b.updatedAt || b.createdAt).getTime();
+    return timeB - timeA;
+  });
+};
 
 export default useAppStore;

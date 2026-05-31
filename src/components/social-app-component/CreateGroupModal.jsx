@@ -6,8 +6,11 @@ import Input from "../ui-components/Input";
 import api from "@/utils/axios";
 import toast from "react-hot-toast";
 import { X, Search, Users } from "lucide-react";
+import { useTranslations } from "next-intl";
 
 export default function CreateGroupModal({ onClose, onChatCreated }) {
+  const t = useTranslations("chat.createGroupModal");
+  const tCommon = useTranslations("common");
   const [groupName, setGroupName] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
   const [friends, setFriends] = useState([]);
@@ -78,11 +81,11 @@ export default function CreateGroupModal({ onClose, onChatCreated }) {
 
   const handleCreate = async () => {
     if (!groupName.trim()) {
-      toast.error("Vui lòng nhập tên nhóm!");
+      toast.error(t("nameRequired"));
       return;
     }
     if (selectedUsers.length === 0) {
-      toast.error("Vui lòng chọn ít nhất 1 thành viên!");
+      toast.error(t("memberRequired"));
       return;
     }
 
@@ -105,17 +108,17 @@ export default function CreateGroupModal({ onClose, onChatCreated }) {
           adminId: currentUserId,
         };
 
-        toast.success("Tạo nhóm thành công!");
+        toast.success(tCommon("success"));
         if (onChatCreated) {
           onChatCreated(newChatId, newGroup);
         }
         onClose();
       } else {
-        toast.error(res.data.message || "Không thể tạo nhóm");
+        toast.error(res.data.message || tCommon("error"));
       }
     } catch (err) {
       console.error("Failed to create group chat:", err);
-      toast.error(err.response?.data?.error || "Đã xảy ra lỗi khi tạo nhóm");
+      toast.error(err.response?.data?.error || tCommon("error"));
     } finally {
       setIsCreating(false);
     }
@@ -129,7 +132,7 @@ export default function CreateGroupModal({ onClose, onChatCreated }) {
       <div className="flex items-center justify-between p-4 border-b border-[var(--border)]">
         <div className="flex items-center gap-2">
           <Users className="w-5 h-5 text-blue-500" />
-          <h3 className="text-lg font-semibold">Tạo nhóm trò chuyện mới</h3>
+          <h3 className="text-lg font-semibold">{t("title")}</h3>
         </div>
       </div>
 
@@ -137,11 +140,11 @@ export default function CreateGroupModal({ onClose, onChatCreated }) {
       <div className="flex-1 overflow-y-auto p-4 space-y-4">
         {/* Name input */}
         <div className="space-y-1">
-          <label className="text-sm font-medium text-muted-foreground">Tên nhóm</label>
+          <label className="text-sm font-medium text-muted-foreground">{t("name")}</label>
           <Input
             value={groupName}
             onChange={(e) => setGroupName(e.target.value)}
-            placeholder="Nhập tên nhóm trò chuyện..."
+            placeholder={t("namePlaceholder")}
             className="w-full"
             maxLength={100}
           />
@@ -151,7 +154,7 @@ export default function CreateGroupModal({ onClose, onChatCreated }) {
         {selectedUsers.length > 0 && (
           <div className="space-y-1">
             <label className="text-sm font-medium text-muted-foreground">
-              Thành viên đã chọn ({selectedUsers.length})
+              {t("selectedMembers", { count: selectedUsers.length })}
             </label>
             <div className="flex flex-wrap gap-2 p-2 bg-[var(--accent)] rounded-lg max-h-24 overflow-y-auto">
               {selectedUsers.map((user) => (
@@ -176,13 +179,13 @@ export default function CreateGroupModal({ onClose, onChatCreated }) {
 
         {/* Search Input */}
         <div className="space-y-1">
-          <label className="text-sm font-medium text-muted-foreground">Thêm thành viên</label>
+          <label className="text-sm font-medium text-muted-foreground">{t("addMembers")}</label>
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
             <Input
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Tìm kiếm thành viên theo tên hoặc username..."
+              placeholder={t("searchPlaceholder")}
               className="w-full pl-9"
             />
           </div>
@@ -191,7 +194,7 @@ export default function CreateGroupModal({ onClose, onChatCreated }) {
         {/* Members List */}
         <div className="space-y-2">
           <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-            {searchQuery.trim() ? "Kết quả tìm kiếm" : "Danh sách bạn bè"}
+            {searchQuery.trim() ? t("searchResults") : t("friendsList")}
           </h4>
 
           {isLoading ? (
@@ -200,7 +203,7 @@ export default function CreateGroupModal({ onClose, onChatCreated }) {
             </div>
           ) : displayedUsers.length === 0 ? (
             <p className="text-sm text-muted-foreground text-center py-4">
-              {searchQuery.trim() ? "Không tìm thấy người dùng phù hợp" : "Danh sách bạn bè trống"}
+              {searchQuery.trim() ? t("noResults") : t("emptyFriends")}
             </p>
           ) : (
             <div className="space-y-1 max-h-56 overflow-y-auto pr-1">
@@ -246,7 +249,7 @@ export default function CreateGroupModal({ onClose, onChatCreated }) {
           onClick={onClose}
           className="px-4 py-2 text-sm font-medium bg-[var(--background)] hover:bg-[var(--accent)] border border-[var(--border)] rounded-lg transition"
         >
-          Hủy bỏ
+          {tCommon("cancel")}
         </button>
         <button
           onClick={handleCreate}
@@ -256,10 +259,10 @@ export default function CreateGroupModal({ onClose, onChatCreated }) {
           {isCreating ? (
             <>
               <div className="animate-spin rounded-full h-3.5 w-3.5 border-b-2 border-white"></div>
-              <span>Đang tạo...</span>
+              <span>{tCommon("loading")}</span>
             </>
           ) : (
-            <span>Tạo nhóm</span>
+            <span>{tCommon("create")}</span>
           )}
         </button>
       </div>

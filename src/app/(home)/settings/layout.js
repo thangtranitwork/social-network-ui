@@ -5,47 +5,46 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import MotionContainer from "@/components/ui-components/MotionContainer";
 import {
-  UserCircle, Lock, Ban, Flag,
-  FileText, Database, MessageCircle, MessageSquare, Mail,
-  Sun, ArrowLeft,
+  UserCircle, Lock, Ban, Sun, ArrowLeft, Shield, Bell,
 } from "lucide-react";
 import {pageMetadata, usePageMetadata} from "@/utils/clientMetadata";
-
-const groupedMenuItems = [
-  {
-    title: "Tài khoản",
-    items: [
-      { id: "personalinfo", icon: UserCircle, label: "Thông tin cá nhân" },
-      { id: "privacy", icon: Lock, label: "Bảo mật & Quyền riêng tư" },
-    ]
-  },
-  {
-    title: "Tương tác",
-    items: [
-      // { id: "connections", icon: Users, label: "Bạn bè & Kết nối" },
-      { id: "blockedlist", icon: Ban, label: "Danh sách chặn" },
-    ]
-  },
-
-  {
-    title: "Ngôn ngữ và hiển thị",
-    items: [
-      { id: "display", icon: Sun, label: "Hiển thị" },
-    ]
-  },
-  {
-    title: "Version 1.0.0",
-    items: []
-  }
-];
+import { useTranslations } from "next-intl";
 
 export default function SettingsLayout({ children }) {
+  const t = useTranslations('settings');
   const pathname = usePathname();
   const router = useRouter();
   const [showSidebar, setShowSidebar] = useState(true);
   const [isMobile, setIsMobile] = useState(false);
 
   usePageMetadata(pageMetadata.settings());
+
+  const groupedMenuItems = [
+    {
+      title: t('account'),
+      items: [
+        { id: "personalinfo", icon: UserCircle, label: t('personalInfo') },
+        { id: "privacy", icon: Lock, label: t('privacy') },
+        { id: "notifications", icon: Bell, label: t('notifications') },
+      ]
+    },
+    {
+      title: t('interaction'),
+      items: [
+        { id: "blockedlist", icon: Ban, label: t('blockedList') },
+      ]
+    },
+    {
+      title: t('displaySection'),
+      items: [
+        { id: "display", icon: Sun, label: t('display') },
+      ]
+    },
+    {
+      title: t('version', { version: '1.0.0' }),
+      items: []
+    }
+  ];
 
   // Check if device is mobile
   useEffect(() => {
@@ -85,7 +84,7 @@ export default function SettingsLayout({ children }) {
         }
       }
     }
-    return 'Cài đặt';
+    return t('title');
   };
 
   return (
@@ -97,7 +96,7 @@ export default function SettingsLayout({ children }) {
         ${isMobile ? 'fixed inset-0 z-10 bg-[var(--background)]' : ''}
       `}>
           <h2 className="text-sm text-[var(--muted-foreground)] font-semibold mb-6">
-            Cài đặt người dùng
+            {t('title')}
           </h2>
           <nav className="space-y-6">
             {groupedMenuItems.map((group, idx) => (

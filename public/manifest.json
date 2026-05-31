@@ -1,11 +1,15 @@
 {
   "name": "PocPoc",
   "short_name": "PocPoc",
-  "description": "Mạng xã hội kết nối mọi người",
-  "start_url": "/",
+  "lang": "vi",
+  "dir": "ltr",
+  "description": "Kết nối bạn bè, chia sẻ khoảnh khắc thời gian thực",
+  "categories": ["social", "communication"],
+  "id": "/",
+  "start_url": "/home",
   "display": "standalone",
-  "background_color": "#ffffff",
-  "theme_color": "#000000",
+  "background_color": "#0C0C0E",
+  "theme_color": "#00E5A0",
   "icons": [
     {
       "src": "/pocpoc.png",
@@ -15,7 +19,8 @@
     {
       "src": "/pocpoc.png",
       "sizes": "512x512",
-      "type": "image/png"
+      "type": "image/png",
+      "purpose": "maskable"
     }
   ]
 }

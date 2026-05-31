@@ -8,6 +8,10 @@ import relativeTime from "dayjs/plugin/relativeTime";
 import toast from "react-hot-toast";
 import { getUserId } from "@/utils/axios";
 import { renderTextWithLinks } from "@/hooks/renderTextWithLinks";
+import { useTranslations } from "next-intl";
+import ConfirmModal from "../ui-components/ConfirmModal";
+import useRepliesQuery from "@/hooks/useRepliesQuery";
+import { uploadFile } from "@/utils/fileUpload";
 
 dayjs.extend(relativeTime);
 
@@ -34,25 +38,26 @@ export const MediaDisplay = memo(({ url, alt, className = "" }) =>
 
 // Optimized Edit Form Component
 export const EditCommentForm = memo(({ comment, onSave, onCancel, isReply = false }) => {
+    const t = useTranslations("comment");
     const [editContent, setEditContent] = useState(comment.content);
     const [isSubmitting, setIsSubmitting] = useState(false);
 
     const handleSubmit = useCallback(async (e) => {
         e.preventDefault();
         if (!editContent.trim()) {
-            toast.error("Nội dung không được để trống");
+            toast.error(t("emptyError"));
             return;
         }
 
         setIsSubmitting(true);
         try {
-            await onSave(comment.id, editContent);
+            await onSave({ commentId: comment.id, newContent: editContent });
         } catch (error) {
             console.error("Error saving edit:", error);
         } finally {
             setIsSubmitting(false);
         }
-    }, [editContent, comment.id, onSave]);
+    }, [editContent, comment.id, onSave, t]);
 
     return (
         <form onSubmit={handleSubmit} className="mt-2 flex flex-col gap-2">
@@ -73,7 +78,7 @@ export const EditCommentForm = memo(({ comment, onSave, onCancel, isReply = fals
                     className="text-xs text-[var(--muted-foreground)] hover:text-[var(--foreground)] flex items-center gap-1"
                 >
                     <X size={12} />
-                    Hủy
+                    {t("cancel")}
                 </button>
                 <button
                     type="submit"
@@ -81,7 +86,7 @@ export const EditCommentForm = memo(({ comment, onSave, onCancel, isReply = fals
                     className="text-xs text-blue-500 font-semibold hover:opacity-80 disabled:opacity-50 flex items-center gap-1"
                 >
                     <Check size={12} />
-                    {isSubmitting ? "Đang lưu..." : "Lưu"}
+                    {isSubmitting ? t("saving") : t("save")}
                 </button>
             </div>
         </form>
@@ -93,9 +98,10 @@ export const CommentActions = memo(({
                                         comment, onLike, onReply, onToggleReplies, onEdit, showReplies,
                                         onDelete, canDeleteComment, canEditComment, isReply = false
                                     }) => {
-    const handleLike = useCallback(() => onLike(comment.id, comment.liked), [comment.id, comment.liked, onLike]);
+    const t = useTranslations("comment");
+    const handleLike = useCallback(() => onLike({ commentId: comment.id, wasLiked: comment.liked }), [comment.id, comment.liked, onLike]);
     const handleReply = useCallback(() => onReply(comment.id), [comment.id, onReply]);
-    const handleToggleReplies = useCallback(() => onToggleReplies(comment.id), [comment.id, onToggleReplies]);
+    const handleToggleReplies = useCallback(() => onToggleReplies(), [onToggleReplies]);
     const handleEdit = useCallback(() => onEdit(comment.id), [comment.id, onEdit]);
     const handleDelete = useCallback(() => onDelete(comment.id), [comment.id, onDelete]);
 
@@ -115,13 +121,13 @@ export const CommentActions = memo(({
                 <>
                     <button className="hover:underline flex items-center gap-1" onClick={handleReply}>
                         <MessageCircle size={14} />
-                        Trả lời
+                        {t("reply")}
                     </button>
 
                     {(comment.replyCount || 0) > 0 && (
                         <button className="hover:underline flex items-center gap-1 text-blue-500" onClick={handleToggleReplies}>
                             {showReplies ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
-                            {comment.replyCount} phản hồi
+                            {t("repliesCount", { count: comment.replyCount })}
                         </button>
                     )}
                 </>
@@ -130,13 +136,13 @@ export const CommentActions = memo(({
             {canEditComment && (
                 <button className="hover:underline text-blue-500 flex items-center gap-1" onClick={handleEdit}>
                     <Edit size={iconSize} />
-                    Sửa
+                    {t("edit")}
                 </button>
             )}
 
             {canDeleteComment && (
                 <button className="hover:underline text-red-500" onClick={handleDelete}>
-                    Xóa
+                    {t("delete")}
                 </button>
             )}
         </div>
@@ -144,41 +150,42 @@ export const CommentActions = memo(({
 });
 
 // Optimized Reply Form Component
-export const ReplyForm = memo(({ commentId, authorName, onSubmit, onCancel, form }) => {
-    const handleSubmit = useCallback((e) => {
-        e.preventDefault();
-        if (!form.content.trim() && !form.file) {
-            toast.error("Vui lòng nhập nội dung phản hồi");
-            return;
-        }
-        onSubmit(form.content, form.file, commentId);
-    }, [form.content, form.file, commentId, onSubmit]);
+export const ReplyForm = memo(({ commentId, authorName, onSubmit, onCancel, useForm }) => {
+    const t = useTranslations("comment");
+    
+    const replyForm = useForm(async (content, file) => {
+      let fileId = null;
+      if (file) {
+        fileId = await uploadFile(file);
+      }
+      await onSubmit({ content, fileId, originalCommentId: commentId });
+    });
 
     return (
         <div className="mt-3 pl-4 border-l-2 border-[var(--border)]">
-            {form.file && (
+            {replyForm.file && (
                 <div className="mb-2">
                     <FilePreviewInChat
-                        selectedFile={form.file}
-                        filePreview={form.previewUrl}
-                        onCancel={form.removeFile}
+                        selectedFile={replyForm.file}
+                        filePreview={replyForm.previewUrl}
+                        onCancel={replyForm.removeFile}
                     />
                 </div>
             )}
 
-            <form onSubmit={handleSubmit} className="flex flex-col gap-2">
+            <form onSubmit={replyForm.submit} className="flex flex-col gap-2">
                 <div className="flex items-center gap-2">
                     <input
                         type="text"
-                        placeholder={`Trả lời ${authorName}...`}
-                        value={form.content}
-                        onChange={(e) => form.setContent(e.target.value)}
+                        placeholder={t("replyPlaceholder", { name: authorName })}
+                        value={replyForm.content}
+                        onChange={(e) => replyForm.setContent(e.target.value)}
                         className="flex-1 bg-[var(--background)] border border-[var(--border)] rounded-lg px-3 py-2 text-sm outline-none focus:border-blue-500"
                         autoFocus
                     />
                     <label className="text-xs text-blue-500 cursor-pointer hover:underline">
-                        + File
-                        <input type="file" accept="image/*,video/*" hidden onChange={form.handleFileChange} />
+                        {t("addFile")}
+                        <input type="file" accept="image/*,video/*" hidden onChange={replyForm.handleFileChange} />
                     </label>
                 </div>
 
@@ -188,14 +195,14 @@ export const ReplyForm = memo(({ commentId, authorName, onSubmit, onCancel, form
                         onClick={onCancel}
                         className="text-xs text-[var(--muted-foreground)] hover:text-[var(--foreground)]"
                     >
-                        Hủy
+                        {t("cancel")}
                     </button>
                     <button
                         type="submit"
-                        disabled={form.isSubmitting || (!form.content.trim() && !form.file)}
+                        disabled={replyForm.isSubmitting || (!replyForm.content.trim() && !replyForm.file)}
                         className="text-xs text-blue-500 font-semibold hover:opacity-80 disabled:opacity-50"
                     >
-                        {form.isSubmitting ? "Đang gửi..." : "Trả lời"}
+                        {replyForm.isSubmitting ? t("replying") : t("reply")}
                     </button>
                 </div>
             </form>
@@ -273,17 +280,24 @@ const CommentItem = memo(({
 
 // Main optimized Comment Component
 export const Comment = memo(({
-                                 comment, comments, onReply, replyingTo, onCancelReply,
-                                 isOwnPost, handleReplySubmit, useForm
+                                 comment, mutations, onReply, replyingTo, onCancelReply,
+                                 isOwnPost, useForm
                              }) => {
+    const t = useTranslations("comment");
     const [editingCommentId, setEditingCommentId] = useState(null);
     const [editingReplyId, setEditingReplyId] = useState(null);
+    const [showReplies, setShowReplies] = useState(false);
+
+    // Confirm modal state
+    const [confirmConfig, setConfirmConfig] = useState({
+        isOpen: false,
+        commentId: null,
+    });
 
     const currentUserId = getUserId();
-    const showReplies = comments.showReplies[comment.id];
-    const isLoadingReplies = comments.loadingReplies[comment.id];
-    const replies = comments.repliesData[comment.id];
-    const replyForm = useForm(() => {});
+    
+    // Use TanStack Query for replies
+    const { data: replies, isLoading: isLoadingReplies } = useRepliesQuery(comment.id, showReplies);
 
     // Unified handlers
     const handlers = {
@@ -297,60 +311,33 @@ export const Comment = memo(({
             setEditingCommentId(null);
         }, []),
 
-        saveEdit: useCallback(async (commentId, newContent) => {
-            try {
-                await comments.editComment(commentId, newContent);
-                setEditingCommentId(null);
-                setEditingReplyId(null);
-            } catch (error) {
-                console.error("Error saving edit:", error);
-            }
-        }, [comments.editComment]),
+        saveEdit: useCallback(async ({ commentId, newContent }) => {
+            await mutations.editComment({ commentId, newContent });
+            setEditingCommentId(null);
+            setEditingReplyId(null);
+        }, [mutations.editComment]),
 
         cancelEdit: useCallback(() => {
             setEditingCommentId(null);
             setEditingReplyId(null);
         }, []),
 
-        submitReply: useCallback(async (content, file, commentId) => {
-            if (!content.trim() && !file) {
-                toast.error("Vui lòng nhập nội dung phản hồi");
-                return;
-            }
+        submitReply: useCallback(async (data) => {
+            await mutations.addReply(data);
+            onCancelReply();
+        }, [mutations.addReply, onCancelReply]),
 
-            replyForm.isSubmitting = true;
-            try {
-                await handleReplySubmit(content, file, commentId);
-                replyForm.reset();
-            } catch (error) {
-                console.error("Error in reply submit:", error);
-            } finally {
-                replyForm.isSubmitting = false;
-            }
-        }, [handleReplySubmit, replyForm]),
-
-        deleteReply: useCallback(async (replyId) => {
-            try {
-                if (comments.deleteComment) {
-                    await comments.deleteComment(replyId);
-                } else {
-                    toast.error("Không thể xóa phản hồi");
-                }
-            } catch (error) {
-                console.error("Error deleting reply:", error);
-                toast.error("Có lỗi xảy ra khi xóa phản hồi");
-            }
-        }, [comments.deleteComment]),
-
-        likeReply: useCallback(async (replyId, liked) => {
-            try {
-                await comments.likeComment(replyId, liked);
-            } catch (error) {
-                console.error("Error liking reply:", error);
-                toast.error("Có lỗi xảy ra khi thích phản hồi");
-            }
-        }, [comments.likeComment])
+        deleteWithConfirm: useCallback((id) => {
+            setConfirmConfig({ isOpen: true, commentId: id });
+        }, [])
     };
+
+    const executeDelete = useCallback(async () => {
+        const commentId = confirmConfig.commentId;
+        if (!commentId) return;
+        await mutations.deleteComment({ commentId });
+        setConfirmConfig({ isOpen: false, commentId: null });
+    }, [mutations.deleteComment, confirmConfig.commentId]);
 
     return (
         <div className="flex gap-3 text-sm">
@@ -390,12 +377,12 @@ export const Comment = memo(({
 
                 <CommentActions
                     comment={comment}
-                    onLike={comments.likeComment}
+                    onLike={mutations.likeComment}
                     onReply={onReply}
-                    onToggleReplies={comments.toggleReplies}
+                    onToggleReplies={() => setShowReplies(!showReplies)}
                     onEdit={handlers.editComment}
                     showReplies={showReplies}
-                    onDelete={comments.deleteComment}
+                    onDelete={handlers.deleteWithConfirm}
                     canDeleteComment={comment.author?.id === currentUserId || isOwnPost}
                     canEditComment={comment.author?.id === currentUserId}
                     isReply={false}
@@ -405,7 +392,7 @@ export const Comment = memo(({
                 {showReplies && (
                     <div className="mt-3 pl-4 border-l-2 border-[var(--border)]">
                         {isLoadingReplies ? (
-                            <p className="text-xs text-[var(--muted-foreground)]">Đang tải phản hồi...</p>
+                            <p className="text-xs text-[var(--muted-foreground)]">{t("loadingReplies")}</p>
                         ) : (
                             <div className="space-y-3">
                                 {replies?.map((reply) => (
@@ -415,8 +402,8 @@ export const Comment = memo(({
                                         currentUserId={currentUserId}
                                         isOwnPost={isOwnPost}
                                         onEdit={handlers.editReply}
-                                        onDelete={handlers.deleteReply}
-                                        onLike={handlers.likeReply}
+                                        onDelete={handlers.deleteWithConfirm}
+                                        onLike={mutations.likeComment}
                                         editingId={editingReplyId}
                                         isReply={true}
                                         onSaveEdit={handlers.saveEdit}
@@ -435,10 +422,18 @@ export const Comment = memo(({
                         authorName={comment.author?.givenName}
                         onSubmit={handlers.submitReply}
                         onCancel={onCancelReply}
-                        form={replyForm}
+                        useForm={useForm}
                     />
                 )}
-            </div>
-        </div>
-    );
-});
+
+                <ConfirmModal
+                    isOpen={confirmConfig.isOpen}
+                    onClose={() => setConfirmConfig({ isOpen: false, commentId: null })}
+                    onConfirm={executeDelete}
+                    title={t("delete")}
+                    message={t("deleteConfirm")}
+                />
+                </div>
+                </div>
+                );
+                });

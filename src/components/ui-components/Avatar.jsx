@@ -7,6 +7,7 @@ export default function Avatar({
   alt = "User avatar",
   width,
   height,
+  size,
   className = "",
   isGroup = false,
   ...props
@@ -35,11 +36,33 @@ export default function Avatar({
     imageSrc.startsWith("data:");
   const showGroupFallback = isGroup && !validSrc;
 
-  const finalWidth = width ?? 48;
-  const finalHeight = height ?? 48;
-  const hasExplicitSize = width !== undefined && height !== undefined;
+  // Map size prop if provided
+  let sizeWidth = width;
+  let sizeHeight = height;
+  if (size !== undefined) {
+    if (typeof size === "number") {
+      sizeWidth = size;
+      sizeHeight = size;
+    } else if (size === "sm") {
+      sizeWidth = 32;
+      sizeHeight = 32;
+    } else if (size === "md") {
+      sizeWidth = 48;
+      sizeHeight = 48;
+    } else if (size === "lg") {
+      sizeWidth = 80;
+      sizeHeight = 80;
+    } else if (!isNaN(Number(size))) {
+      sizeWidth = Number(size);
+      sizeHeight = Number(size);
+    }
+  }
 
-  // Add fallback class if no size provided via className
+  const finalWidth = sizeWidth ?? 48;
+  const finalHeight = sizeHeight ?? 48;
+  const hasExplicitSize = sizeWidth !== undefined && sizeHeight !== undefined;
+
+  // Add fallback class if no size provided via className or size prop
   const shouldApplyDefaultSize =
     !className.includes("w-") && !className.includes("h-") && !hasExplicitSize;
 
@@ -110,8 +133,8 @@ export default function Avatar({
       {...props}
     >
       {isLoading && (
-        <div className="absolute inset-0 flex items-center justify-center bg-gray-100 rounded-full">
-          <div className="w-4 h-4 border-2 border-gray-300 border-t-gray-600 rounded-full animate-spin" />
+        <div className="absolute inset-0 flex items-center justify-center bg-[var(--background)] rounded-full">
+          <div className="spinner" style={{ width: '16px', height: '16px', borderWidth: '2px' }} />
         </div>
       )}
 
@@ -137,7 +160,7 @@ export default function Avatar({
       />
 
       {!imageLoaded && !isLoading && (
-        <div className="absolute inset-0 flex items-center justify-center bg-gray-200 rounded-full">
+        <div className="absolute inset-0 flex items-center justify-center skeleton rounded-full">
           <svg
             className="w-1/2 h-1/2 text-gray-400"
             fill="currentColor"

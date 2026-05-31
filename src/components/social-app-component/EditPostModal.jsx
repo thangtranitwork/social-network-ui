@@ -6,8 +6,13 @@ import Modal from "../ui-components/Modal";
 import ImagePreview from "../ui-components/ImagePreview";
 import toast from "react-hot-toast";
 import api from "@/utils/axios";
+import { useTranslations } from "next-intl";
+import { Globe, Users, Lock, Save, FolderOpen, X, Loader2 } from "lucide-react";
 
 export default function EditPostModal({ isOpen, onClose, post, onPostUpdated }) {
+  const t = useTranslations("post.editModal");
+  const tPost = useTranslations("post");
+  const tCommon = useTranslations("common");
   const fileInputRef = useRef(null);
   const textareaRef = useRef(null);
 
@@ -129,7 +134,7 @@ export default function EditPostModal({ isOpen, onClose, post, onPostUpdated }) 
         const privacyRes = await api.patch(`/v1/posts/update-privacy/${post.id}?privacy=${newPrivacy}`);
         
         if (privacyRes.data.code !== 200) {
-          throw new Error(privacyRes.data.message || "Lỗi khi cập nhật privacy!");
+          throw new Error(privacyRes.data.message || t("error"));
         }
         updatedPost.privacy = newPrivacy;
       }
@@ -162,7 +167,7 @@ export default function EditPostModal({ isOpen, onClose, post, onPostUpdated }) 
         });
         
         if (res.data.code !== 200) {
-          throw new Error(res.data.message || "Lỗi khi cập nhật content!");
+          throw new Error(res.data.message || t("error"));
         }
         
         // Cập nhật post data
@@ -174,12 +179,12 @@ export default function EditPostModal({ isOpen, onClose, post, onPostUpdated }) 
         }
       }
       
-      toast.success("Cập nhật bài viết thành công!");
+      toast.success(t("success"));
       onPostUpdated?.(updatedPost);
       onClose();
       
     } catch (error) {
-      toast.error(error.message || "Lỗi kết nối hoặc máy chủ.");
+      toast.error(error.message || tPost("networkError") || tCommon("error"));
       console.error(error);
     } finally {
       setLoading(false);
@@ -198,10 +203,10 @@ export default function EditPostModal({ isOpen, onClose, post, onPostUpdated }) 
         <div className="relative">
           <div className="flex justify-between items-center mb-4 px-2">
             <h2 className="text-lg font-semibold">
-              {isSharedPost ? "Chỉnh sửa bài chia sẻ" : "Chỉnh sửa bài viết"}
+              {isSharedPost ? t("sharedTitle") : t("title")}
             </h2>
-            <button onClick={onClose} className="text-xl text-gray-400 hover:text-[var(--foreground)]">
-              ✕
+            <button onClick={onClose} className="p-1 text-gray-400 hover:text-[var(--foreground)] hover:bg-[var(--accent)] rounded-full transition-colors">
+              <X size={20} />
             </button>
           </div>
 
@@ -213,8 +218,8 @@ export default function EditPostModal({ isOpen, onClose, post, onPostUpdated }) 
               onDragOver={(e) => e.preventDefault()}
               className="flex flex-col items-center justify-center border-2 border-dashed border-[var(--border)] rounded-lg p-10 text-gray-500 hover:border-[var(--primary)] cursor-pointer transition-colors space-y-2"
             >
-              <p className="text-sm">Chọn ảnh hoặc video, hoặc kéo thả vào đây</p>
-              <div className="text-4xl">📁</div>
+              <p className="text-sm">{tPost("createModal.dropzone")}</p>
+              <FolderOpen className="w-12 h-12 text-[var(--muted-foreground)]" />
               <input
                 type="file"
                 accept="image/*,video/*"
@@ -250,28 +255,28 @@ export default function EditPostModal({ isOpen, onClose, post, onPostUpdated }) 
               {/* Form inputs */}
               <div className={`${canEditFiles && displayMedia.length > 0 ? 'md:w-1/2' : ''} w-full flex flex-col gap-4`}>
                 <div>
-                  <label className="block text-sm font-medium mb-1">Privacy</label>
+                  <label className="block text-sm font-medium mb-1">{tPost("privacy.public")}</label>
                   <select
                     value={newPrivacy}
                     onChange={(e) => setNewPrivacy(e.target.value)}
                     className="w-full px-3 py-2 border rounded-md bg-[var(--input)] text-[var(--foreground)]"
                   >
-                    <option value="PUBLIC">🌍 Public</option>
-                    <option value="FRIEND">👥 Friends</option>
-                    <option value="PRIVATE">🔒 Only me</option>
+                    <option value="PUBLIC">{tPost("privacy.public")}</option>
+                    <option value="FRIEND">{tPost("privacy.friend")}</option>
+                    <option value="PRIVATE">{tPost("privacy.private")}</option>
                   </select>
                 </div>
 
                 <div>
                   <label className="block text-sm font-medium mb-1">
-                    {isSharedPost ? "Nội dung chia sẻ" : "Content"}
+                    {isSharedPost ? t("shareContent") : t("content")}
                   </label>
                   <textarea
                     ref={textareaRef}
                     value={newContent}
                     onChange={handleContentChange}
                     rows={4}
-                    placeholder={isSharedPost ? "Bạn muốn nói gì về bài viết này?" : "Viết điều gì đó..."}
+                    placeholder={isSharedPost ? t("sharePlaceholder") : t("placeholder")}
                     className="w-full px-3 py-2 border rounded-md bg-[var(--input)] text-[var(--foreground)] resize-none overflow-hidden"
                     style={{ minHeight: '96px' }}
                   />
@@ -294,9 +299,14 @@ export default function EditPostModal({ isOpen, onClose, post, onPostUpdated }) 
                   <button
                     onClick={handleSaveEdit}
                     disabled={loading}
-                    className="px-4 py-2 rounded-md bg-[var(--primary)] text-white hover:bg-opacity-90 transition disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="flex items-center gap-2 px-4 py-2 rounded-md bg-[var(--primary)] text-white hover:bg-opacity-90 transition disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    {loading ? "Đang lưu..." : "💾 Lưu"}
+                    {loading ? (
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                    ) : (
+                      <Save size={16} />
+                    )}
+                    {loading ? tCommon("saving") : tCommon("save")}
                   </button>
                 </div>
               </div>
@@ -307,40 +317,45 @@ export default function EditPostModal({ isOpen, onClose, post, onPostUpdated }) 
           {canEditFiles && displayMedia.length === 0 && (
             <div className="mt-4 space-y-4">
               <div>
-                <label className="block text-sm font-medium mb-1">Privacy</label>
+                <label className="block text-sm font-medium mb-1">{tPost("privacy.public")}</label>
                 <select
                   value={newPrivacy}
                   onChange={(e) => setNewPrivacy(e.target.value)}
                   className="w-full px-3 py-2 border rounded-md bg-[var(--input)] text-[var(--foreground)]"
                 >
-                  <option value="PUBLIC">🌍 Public</option>
-                  <option value="FRIEND">👥 Friends</option>
-                  <option value="PRIVATE">🔒 Only me</option>
+                  <option value="PUBLIC">{tPost("privacy.public")}</option>
+                  <option value="FRIEND">{tPost("privacy.friend")}</option>
+                  <option value="PRIVATE">{tPost("privacy.private")}</option>
                 </select>
               </div>
 
               <div>
-                <label className="block text-sm font-medium mb-1">What's on your mind?</label>
+                <label className="block text-sm font-medium mb-1">{tPost("createPost")}</label>
                 <textarea
                   ref={textareaRef}
                   value={newContent}
                   onChange={handleContentChange}
                   rows={4}
-                  placeholder="Viết điều gì đó..."
+                  placeholder={t("placeholder")}
                   className="w-full px-3 py-2 border rounded-md bg-[var(--input)] text-[var(--foreground)] resize-none overflow-hidden"
                   style={{ minHeight: '96px' }}
                 />
               </div>
 
-              <div className="flex justify-end">
-                <button
-                  onClick={handleSaveEdit}
-                  disabled={loading}
-                  className="px-4 py-2 rounded-md bg-[var(--primary)] text-white hover:bg-opacity-90 transition disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  {loading ? "Đang lưu..." : "💾 Lưu"}
-                </button>
-              </div>
+                <div className="flex justify-end">
+                  <button
+                    onClick={handleSaveEdit}
+                    disabled={loading}
+                    className="flex items-center gap-2 px-4 py-2 rounded-md bg-[var(--primary)] text-white hover:bg-opacity-90 transition disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {loading ? (
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                    ) : (
+                      <Save size={16} />
+                    )}
+                    {loading ? tCommon("saving") : tCommon("save")}
+                  </button>
+                </div>
             </div>
           )}
 

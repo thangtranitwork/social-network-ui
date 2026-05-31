@@ -8,18 +8,20 @@ import FilePreviewInChat from "../ui-components/FilePreviewInChat";
 import MediaCarousel from "../ui-components/MediaCarousel";
 import { Comment } from "./Comment";
 import { useRouter } from "next/navigation";
-import { useComments, useForm } from "@/hooks/useComment";
-import api from "@/utils/axios";
+import { useForm } from "@/hooks/useComment";
 import { uploadFile } from "@/utils/fileUpload";
-import toast from "react-hot-toast";
 import {renderTextWithLinks} from "@/hooks/renderTextWithLinks";
 import SharePostModal from "@/components/social-app-component/SharePostModal";
+import useCommentsQuery from "@/hooks/useCommentsQuery";
+import useCommentMutation from "@/hooks/useCommentMutation";
+
+import { useTranslations, useFormatter } from "next-intl";
 
 // Comment filter options
-const COMMENT_FILTER_OPTIONS = [
-  { value: 'RELEVANT', label: 'Liên quan nhất' },
-  { value: 'FRIEND_ONLY', label: 'Chỉ bạn bè' },
-  { value: 'TIME', label: 'Theo thời gian' }
+const getCommentFilterOptions = (t) => [
+  { value: 'RELEVANT', label: t('filter.relevant') },
+  { value: 'FRIEND_ONLY', label: t('filter.friends') },
+  { value: 'TIME', label: t('filter.newest') }
 ];
 
 // Main Post Modal Component
@@ -27,16 +29,18 @@ export default function PostModal({
                                     post,
                                     liked,
                                     likeCount,
-                                    comments = [],
-                                    loadingComments = false,
                                     activeIndex = 0,
                                     isOwnPost,
                                     isAdmin,
                                     onClose,
                                     onLikeToggle,
                                     onCommentSubmit,
-                                    onCommentFilterChange, // New prop for filter change
                                   }) {
+  const t = useTranslations("post");
+  const tComment = useTranslations("comment");
+  const tCommon = useTranslations("common");
+  const format = useFormatter();
+
   // Add error handling for missing or invalid post
   if (!post || !post.id) {
     return (
@@ -46,15 +50,15 @@ export default function PostModal({
               <div className="w-16 h-16 mx-auto bg-[var(--muted)] rounded-full flex items-center justify-center">
                 <MessageCircle className="h-8 w-8 text-[var(--muted-foreground)]" />
               </div>
-              <h3 className="text-lg font-semibold">Bài viết hiện không khả dụng</h3>
+              <h3 className="text-lg font-semibold">{t("unavailable")}</h3>
               <p className="text-sm text-[var(--muted-foreground)] max-w-sm">
-                Bài viết này có thể đã bị xóa hoặc bạn không có quyền truy cập.
+                {t("originalDeleted")}
               </p>
               <button
                   onClick={onClose}
                   className="px-4 py-2 bg-[var(--primary)] text-[var(--primary-foreground)] rounded-lg text-sm hover:opacity-90 transition-opacity"
               >
-                Đóng
+                {tCommon("close")}
               </button>
             </div>
           </div>
@@ -86,8 +90,11 @@ export default function PostModal({
   const [commentFilter, setCommentFilter] = useState('RELEVANT'); // New state for comment filter
   const [showFilterDropdown, setShowFilterDropdown] = useState(false); // New state for dropdown visibility
 
-  //  Initialize comments manager with optimistic updates
-  const commentsManager = useComments(comments, post);
+  // TanStack Query for comments
+  const { data: comments = [], isLoading: loadingComments } = useCommentsQuery(post.id, commentFilter, isAdmin);
+  
+  // Comment Mutations
+  const mutations = useCommentMutation(post.id, commentFilter);
 
   const handleProfileClick = (e, post) => {
     e.stopPropagation();
@@ -111,93 +118,38 @@ export default function PostModal({
   const handleCommentFilterChange = useCallback((filterValue) => {
     setCommentFilter(filterValue);
     setShowFilterDropdown(false);
-    // Call parent callback if provided
-    if (onCommentFilterChange) {
-      onCommentFilterChange(filterValue);
-    }
-  }, [onCommentFilterChange]);
+  }, []);
 
-  // ✅ Handle reply submission with optimistic updates
-  const handleReplySubmit = useCallback(async (content, file, commentId) => {
-    try {
-      console.log("Submitting reply:", { content, file, commentId });
-
-      let fileId = null;
-      if (file) {
-        fileId = await uploadFile(file);
-      }
-
-      const res = await api.post(`/v1/posts/reply-comment`, {
-        originalCommentId: commentId,
-        content: content,
-        fileId: fileId
-      });
-
-      console.log("Reply response:", res.data);
-      const newReply = res.data.body;
-
-      // ✅ Add reply to local state with optimistic update
-      commentsManager.addReply(commentId, newReply);
-
-      // Close reply form
-      setReplyingTo(null);
-
-      toast.success("Đã trả lời bình luận");
-    } catch (error) {
-      console.error("Error submitting reply:", error);
-      toast.error("Lỗi khi gửi phản hồi");
-      throw error;
-    }
-  }, [commentsManager]);
-
-  // ✅ Handle main comment submission with optimistic updates
+  // ✅ Handle main comment submission
   const handleMainCommentSubmit = useCallback(async (content, file) => {
-    try {
-      let fileId = null;
-      if (file) {
-        fileId = await uploadFile(file);
-      }
-
-      const res = await api.post("/v1/posts/comment", {
-        content: content,
-        postId: post.id,
-        fileId: fileId
-      });
-
-      const newComment = res.data.body;
-
-      // ✅ Call the parent callback if provided
-      if (onCommentSubmit) onCommentSubmit(newComment);
-
-      // ✅ Add to local comments state with optimistic update
-      commentsManager.addComment(newComment);
-
-      toast.success("Đã gửi bình luận");
-    } catch (error) {
-      console.error("Error submitting comment:", error);
-      toast.error("Lỗi khi gửi bình luận");
-      throw error;
+    let fileId = null;
+    if (file) {
+      fileId = await uploadFile(file);
     }
-  }, [post.id, onCommentSubmit, commentsManager]);
+
+    const newComment = await mutations.addComment({ content, fileId });
+    
+    // Call the parent callback if provided (for comment count sync if needed)
+    if (onCommentSubmit) onCommentSubmit(newComment);
+  }, [mutations.addComment, onCommentSubmit]);
 
   const mainCommentForm = useForm(handleMainCommentSubmit);
 
   // ✅ Handle reply actions
   const handleReply = useCallback((commentId) => {
-    console.log("Starting reply to comment:", commentId);
     setReplyingTo(commentId);
   }, []);
 
   const handleCancelReply = useCallback(() => {
-    console.log("Cancelling reply");
     setReplyingTo(null);
   }, []);
 
   // Get current filter label
   const currentFilterLabel = useMemo(() => {
-    const option = COMMENT_FILTER_OPTIONS.find(opt => opt.value === commentFilter);
-    return option ? option.label : 'Liên quan nhất';
-  }, [commentFilter]);
+    const options = getCommentFilterOptions(tComment);
+    const option = options.find(opt => opt.value === commentFilter);
+    return option ? option.label : tComment('filter.relevant');
+  }, [commentFilter, tComment]);
 
   // Memoized components to prevent unnecessary re-renders
   const PostHeader = useMemo(() => (
@@ -215,7 +167,7 @@ export default function PostModal({
                     {post.author?.givenName} {post.author?.familyName}
                   </p>
                   <p className="text-xs text-[var(--muted-foreground)]">
-                    Đã chia sẻ • {new Date(post.createdAt).toLocaleString()}
+                    {t("shared")} • {format.dateTime(new Date(post.createdAt), 'short')}
                   </p>
                 </div>
               </div>
@@ -231,7 +183,7 @@ export default function PostModal({
                                 onClick={() => setIsSharedContentExpanded(true)}
                                 className="text-blue-500 hover:text-blue-700 ml-2 text-sm"
                             >
-                              Xem thêm
+                              {t("seeMore")}
                             </button>
                           </>
                       ) : (
@@ -242,7 +194,7 @@ export default function PostModal({
                                     onClick={() => setIsSharedContentExpanded(false)}
                                     className="text-blue-500 hover:text-blue-700 ml-2 text-sm"
                                 >
-                                  Thu gọn
+                                  {t("collapse")}
                                 </button>
                             )}
                           </>
@@ -262,10 +214,10 @@ export default function PostModal({
                 </div>
                 <div className="text-center">
                   <p className="text-sm font-medium text-[var(--muted-foreground)]">
-                    Bài viết không khả dụng
+                    {t("unavailable")}
                   </p>
                   <p className="text-xs text-[var(--muted-foreground)] mt-1">
-                    Bài viết gốc đã bị xóa hoặc không còn khả dụng
+                    {t("originalDeleted")}
                   </p>
                 </div>
               </div>
@@ -282,7 +234,7 @@ export default function PostModal({
                       {displayPost?.author?.givenName} {displayPost?.author?.familyName}
                     </p>
                     <p className="text-xs text-[var(--muted-foreground)]">
-                      {displayPost?.createdAt ? new Date(displayPost.createdAt).toLocaleString() : ''}
+                      {displayPost?.createdAt ? format.dateTime(new Date(displayPost.createdAt), 'short') : ''}
                     </p>
                   </div>
                 </div>
@@ -297,7 +249,7 @@ export default function PostModal({
                                 onClick={() => setIsContentExpanded(true)}
                                 className="text-blue-500 hover:text-blue-700 ml-2 text-sm"
                             >
-                              Xem thêm
+                              {t("seeMore")}
                             </button>
                           </>
                       ) : (
@@ -308,7 +260,7 @@ export default function PostModal({
                                     onClick={() => setIsContentExpanded(false)}
                                     className="text-blue-500 hover:text-blue-700 ml-2 text-sm"
                                 >
-                                  Thu gọn
+                                  {t("collapse")}
                                 </button>
                             )}
                           </>
@@ -341,16 +293,16 @@ export default function PostModal({
             <SendHorizonal className="h-5 w-5" />
           </button>
         </div>
-        <p className="text-xs px-4 pb-2">{likeCount} lượt thích</p>
+        <p className="text-xs px-4 pb-2">{t("likes", { count: likeCount })}</p>
       </div>
       )
-  ), [liked, likeCount, onLikeToggle]);
+  ), [liked, likeCount, onLikeToggle, isAdmin, t]);
 
   // ✅ Memoized comments section with filter dropdown
   const CommentsSection = useMemo(() => (
       <div className="p-4 space-y-2">
         <div className="flex items-center justify-between">
-          <p className="text-sm font-semibold">Bình luận ({commentsManager.localComments.length})</p>
+          <p className="text-sm font-semibold">{t("comment")} ({comments.length})</p>
 
           {/* Comment Filter Dropdown */}
           <div className="relative">
@@ -364,7 +316,7 @@ export default function PostModal({
 
             {showFilterDropdown && (
                 <div className="absolute right-0 top-full mt-1 bg-[var(--card)] border border-[var(--border)] rounded-lg shadow-lg py-1 min-w-[140px] z-10">
-                  {COMMENT_FILTER_OPTIONS.map((option) => (
+                  {getCommentFilterOptions(tComment).map((option) => (
                       <button
                           key={option.value}
                           onClick={() => handleCommentFilterChange(option.value)}
@@ -382,23 +334,21 @@ export default function PostModal({
 
         {loadingComments ? (
             <div className="flex items-center justify-center py-4">
-              <p className="text-xs text-[var(--muted-foreground)]">Đang tải bình luận...</p>
+              <p className="text-xs text-[var(--muted-foreground)]">{tComment("loadingComments")}</p>
             </div>
-        ) : commentsManager.localComments.length === 0 ? (
-            <p className="text-xs text-[var(--muted-foreground)]">Chưa có bình luận nào</p>
+        ) : comments.length === 0 ? (
+            <p className="text-xs text-[var(--muted-foreground)]">{tComment("noComments")}</p>
         ) : (
             <div className="space-y-4 mb-4">
-              {commentsManager.localComments.map((comment) => (
+              {comments.map((comment) => (
                   <Comment
                       key={comment.id}
                       comment={comment}
-                      post={post}
-                      isOwnPost={isOwnPost}
-                      comments={commentsManager}
+                      mutations={mutations}
                       onReply={handleReply}
                       replyingTo={replyingTo}
                       onCancelReply={handleCancelReply}
-                      handleReplySubmit={handleReplySubmit}
+                      isOwnPost={isOwnPost}
                       useForm={useForm}
                   />
               ))}
@@ -407,21 +357,21 @@ export default function PostModal({
       </div>
   ), [
     loadingComments,
-    commentsManager.localComments,
-    post.id, // Use post.id instead of post to reduce re-renders
-    commentsManager,
+    comments,
+    mutations,
     handleReply,
     replyingTo,
     handleCancelReply,
-    handleReplySubmit,
     isOwnPost,
     currentFilterLabel,
     showFilterDropdown,
     commentFilter,
-    handleCommentFilterChange
+    handleCommentFilterChange,
+    t,
+    tComment
   ]);
 
-  // ✅ Memoized comment input with optimistic updates
+  // ✅ Memoized comment input
   const CommentInput = useMemo(() => (
       !isAdmin &&
       <div  className="flex-shrink-0 bg-[var(--card)] border-t border-[var(--border)]">
@@ -442,13 +392,13 @@ export default function PostModal({
           <input
               ref={inputRef}
               type="text"
-              placeholder="Viết bình luận..."
+              placeholder={tComment("placeholder")}
               value={mainCommentForm.content}
               onChange={(e) => mainCommentForm.setContent(e.target.value)}
               className="flex-1 bg-transparent outline-none text-sm p-2"
           />
           <label className="text-sm text-blue-500 cursor-pointer hover:underline">
-            + Ảnh
+            {tComment("addPhoto")}
             <input
                 type="file"
                 accept="image/*,video/*"
@@ -464,11 +414,11 @@ export default function PostModal({
               }
               className="text-blue-500 text-sm font-semibold hover:opacity-80 disabled:opacity-50"
           >
-            {mainCommentForm.isSubmitting ? "Đang gửi..." : "Gửi"}
+            {mainCommentForm.isSubmitting ? tComment("sending") : tComment("send")}
           </button>
         </form>
       </div>
-  ), [mainCommentForm]);
+  ), [mainCommentForm, isAdmin, tComment]);
 
   return (
       <Modal
@@ -526,7 +476,6 @@ export default function PostModal({
               isOpen={showShareModal}
               onClose={() => setShowShareModal(false)}
               post={post}
-              // onShareSuccess={handleShareSuccess}
           />
         </div>
       </Modal>

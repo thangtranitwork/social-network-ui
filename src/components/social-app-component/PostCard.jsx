@@ -5,14 +5,17 @@ import adminApi from "@/utils/adminInterception"
 import api, { getUserId } from "@/utils/axios"
 import dayjs from "dayjs"
 import relativeTime from "dayjs/plugin/relativeTime"
-import { Heart, MessageCircle, MessageSquareShare, MoreVertical, SendHorizonal, Share2 } from "lucide-react"
+import { Globe, Heart, Lock, MessageCircle, MoreVertical, SendHorizonal, Share2, Users, Pencil, Trash2 } from "lucide-react"
 import { useRouter } from "next/navigation"
-import { lazy, memo, Suspense, useCallback, useEffect, useState } from "react"
+import { lazy, memo, Suspense, useCallback, useEffect, useState, useMemo } from "react"
 import toast from "react-hot-toast"
-import Avatar from "../ui-components/Avatar"
-import Card from "../ui-components/Card"
-import ImageView from "../ui-components/ImageView"
-import useAppStore from "@/store/ZustandStore"
+import { useShallow } from 'zustand/react/shallow';
+import Avatar from "../ui-components/Avatar";
+import Card from "../ui-components/Card";
+import ImageView from "../ui-components/ImageView";
+import useAppStore, { selectSortedChatList } from "@/store/ZustandStore";
+import { useTranslations } from "next-intl";
+import ConfirmModal from "../ui-components/ConfirmModal"
 
 // Dynamic imports for heavy components
 const PostModal = lazy(() => import("./PostModal"))
@@ -37,22 +40,27 @@ const PostCard = memo(function PostCard({
     const [showModal, setShowModal] = useState(false)
     const [showOptions, setShowOptions] = useState(false)
     const [showEditModal, setShowEditModal] = useState(false)
-    const [comments, setComments] = useState([])
-    const [loadingComments, setLoadingComments] = useState(false)
     const [showShareModal, setShowShareModal] = useState(false)
     const [showShareToChatModal, setShowShareToChatModal] = useState(false)
     const [deleting, setDeleting] = useState(false)
     const [currentPost, setCurrentPost] = useState(post)
-    const [currentCommentFilter, setCurrentCommentFilter] = useState('RELEVANT') // New state for comment filter
     // Content expansion states
     const [isContentExpanded, setIsContentExpanded] = useState(false)
     const [isOriginalContentExpanded, setIsOriginalContentExpanded] = useState(false)
+
+    // Confirm modal state
+    const [isConfirmOpen, setIsConfirmOpen] = useState(false)
+
+    const t = useTranslations('post');
+    const tCommon = useTranslations('common');
 
     // Optimistic UI state for like
     const [optimisticLiked, setOptimisticLiked] = useState(liked)
     const [optimisticLikeCount, setOptimisticLikeCount] = useState(post.likeCount || 0)
     const [isLiking, setIsLiking] = useState(false)
-    const {chatList} = useAppStore();
+    
+    const chatMap = useAppStore(state => state.chatMap);
+    const chatList = useMemo(() => selectSortedChatList({ chatMap }), [chatMap]);
     const router = useRouter()
     const isModalOpen = activeImageIndex !== null || showModal
 
@@ -69,12 +77,6 @@ const PostCard = memo(function PostCard({
         window.addEventListener("resize", checkScreenSize)
         return () => window.removeEventListener("resize", checkScreenSize)
     }, [])
-
-    useEffect(() => {
-        if (isModalOpen && comments.length === 0) {
-            fetchComments(currentCommentFilter)
-        }
-    }, [isModalOpen])
 
     // Update optimistic state when props change
     useEffect(() => {
@@ -93,45 +95,8 @@ const PostCard = memo(function PostCard({
         return content.length > maxLength ? content.substring(0, maxLength) + '...' : content
     }
 
-    // Updated fetchComments to support filter parameter
-    const fetchComments = useCallback(async (filterType = 'RELEVANT') => {
-        setLoadingComments(true)
-        try {
-            let res;
-
-            if (isAdmin) {
-                res = await adminApi.get(`/v1/comments/of-post/${currentPost.id}`, {
-                    params: { type: filterType }
-                })
-            } else {
-                res = await api.get(`/v1/comments/of-post/${currentPost.id}`, {
-                    params: { type: filterType }
-                })
-            }
-            console.log('Fetched comments with filter:', filterType, res.data)
-            setComments(res.data.body || [])
-        } catch (err) {
-            toast.error("Không thể tải bình luận")
-            console.error(err)
-            // Don't reset comments on error to prevent modal disappearing
-        } finally {
-            setLoadingComments(false)
-        }
-    }, [currentPost.id])
-
-    // Handler for comment filter change
-    const handleCommentFilterChange = useCallback((filterType) => {
-        console.log('Comment filter changed to:', filterType)
-        setCurrentCommentFilter(filterType)
-        // Don't reset comments immediately, let fetchComments handle it
-        fetchComments(filterType)
-    }, [fetchComments])
-
     // Handler for comment submission
     const handleCommentSubmit = useCallback((newComment) => {
-        // Add new comment to the list
-        setComments(prevComments => [newComment, ...prevComments])
-
         // Update post comment count optimistically
         setCurrentPost(prevPost => ({
             ...prevPost,
@@ -165,14 +130,14 @@ const PostCard = memo(function PostCard({
                     // Rollback on failure
                     setOptimisticLiked(prevLiked)
                     setOptimisticLikeCount(prevLikeCount)
-                    toast.error("Không thể thực hiện thao tác")
+                    toast.error(t("likeError"))
                 }
             }
         } catch (error) {
             // Rollback on error
             setOptimisticLiked(prevLiked)
             setOptimisticLikeCount(prevLikeCount)
-            toast.error("Có lỗi xảy ra khi thực hiện thao tác")
+            toast.error(t("likeError"))
             console.error("Like error:", error)
         } finally {
             setIsLiking(false)
@@ -197,11 +162,10 @@ const PostCard = memo(function PostCard({
     }
 
     const handleDeletePost = useCallback(async () => {
-        const confirmMessage = isAdmin && !isOwnPost
-            ? "Bạn có chắc chắn muốn xóa bài viết này với tư cách admin không?"
-            : "Bạn có chắc chắn muốn xóa bài viết này không?"
+        setIsConfirmOpen(true)
+    }, [])
 
-        if (!confirm(confirmMessage)) return
+    const executeDeletePost = async () => {
         setDeleting(true)
         try {
             if (isAdmin) {
@@ -210,27 +174,25 @@ const PostCard = memo(function PostCard({
             else {
                 await api.delete(`/v1/posts/${currentPost.id}`)
             }
-            toast.success("Đã xóa bài viết!")
+            toast.success(t('deleteSuccess'))
 
             // Thay vì refresh, gọi callback để cập nhật state
             if (onPostDeleted) {
                 onPostDeleted(currentPost.id)
             }
         } catch (err) {
-            toast.error("Không thể xóa bài viết!")
+            toast.error(t('deleteError'))
             console.error(err)
         } finally {
             setDeleting(false)
             setShowOptions(false)
         }
-    }, [isAdmin, isOwnPost, currentPost.id, onPostDeleted])
+    }
 
     // Function to open modal - unified logic
     const openModal = useCallback(() => {
         setShowModal(true)
-        // Fetch comments with current filter
-        fetchComments(currentCommentFilter)
-    }, [fetchComments, currentCommentFilter])
+    }, [])
 
     const handleCardClick = (e) => {
         // Không mở modal nếu đang click vào button hoặc đang trong mode edit
@@ -258,10 +220,10 @@ const PostCard = memo(function PostCard({
 
     const renderPrivacyIcon = (privacy) => {
         switch (privacy) {
-            case "PUBLIC": return "🌍"
-            case "FRIEND": return "👥"
-            case "PRIVATE": return "🔒"
-            default: return ""
+            case "PUBLIC": return <Globe size={12} className="text-muted-foreground" />
+            case "FRIEND": return <Users size={12} className="text-muted-foreground" />
+            case "PRIVATE": return <Lock size={12} className="text-muted-foreground" />
+            default: return null
         }
     }
 
@@ -273,9 +235,6 @@ const PostCard = memo(function PostCard({
     const handleCloseModal = useCallback(() => {
         setActiveImageIndex(null)
         setShowModal(false)
-        // Reset comments and filter when closing modal
-        setComments([])
-        setCurrentCommentFilter('RELEVANT')
     }, [])
 
     const renderSharedPostContent = useCallback(() => {
@@ -286,7 +245,7 @@ const PostCard = memo(function PostCard({
                 <div className="mt-3 p-4 border border-[var(--border)] rounded-lg bg-[var(--card)]/50">
                     <div className="flex items-center justify-center py-8">
                         <p className="text-sm text-[var(--muted-foreground)]">
-                            Bài viết hiện không khả dụng
+                            {t("unavailable")}
                         </p>
                     </div>
                 </div>
@@ -325,7 +284,7 @@ const PostCard = memo(function PostCard({
                                     }}
                                     className="text-blue-500  hover:underline hover:text-blue-700 ml-2 text-sm"
                                 >
-                                    Xem thêm
+                                    {t("seeMore")}
                                 </button>
                             </>
                         ) : (
@@ -339,7 +298,7 @@ const PostCard = memo(function PostCard({
                                         }}
                                         className="text-blue-500 hover:text-blue-700 ml-2 text-sm"
                                     >
-                                        Thu gọn
+                                        {t("collapse")}
                                     </button>
                                 )}
                             </>
@@ -367,7 +326,7 @@ const PostCard = memo(function PostCard({
     return (
         <>
             <Card
-                className={`my-2 text-[var(--card-foreground)] rounded-xl shadow-sm 
+                className={`my-2 text-[var(--card-foreground)] rounded-xl shadow-sm card-hover-effect
                     ${size === "compact" ? "p-2 sm:p-3" : size === "large" ? "p-5" : "p-4"} 
                     w-full ${className} cursor-pointer hover:bg-[var(--card)]/90 transition-colors`}
                 onClick={handleCardClick}
@@ -389,7 +348,7 @@ const PostCard = memo(function PostCard({
                                 {currentPost.author?.familyName + " " + currentPost.author?.givenName}
                                 {currentPost.sharedPost && (
                                     <>
-                                        {" đã chia sẻ một bài viết"}
+                                        {" " + t('shared')}
                                         <Share2 className="inline w-4 h-4 ml-1 text-[var(--muted-foreground)]" />
                                     </>
                                 )}
@@ -399,7 +358,7 @@ const PostCard = memo(function PostCard({
                             </p>
                             {currentPost.author?.mutualFriendsCount > 0 && (
                                 <p className="text-xs text-muted-foreground">
-                                    {currentPost.author.mutualFriendsCount} bạn chung
+                                    {t("mutualFriends", { count: currentPost.author.mutualFriendsCount })}
                                 </p>
                             )}
                         </div>
@@ -409,8 +368,8 @@ const PostCard = memo(function PostCard({
                     {showMoreOptions && (
                         <div className="relative">
                             <button
-                                aria-label="More options"
-                                title="More options"
+                                aria-label={t("aria.moreOptions")}
+                                title={t("aria.moreOptions")}
                                 onClick={(e) => {
                                     e.stopPropagation()
                                     setShowOptions(!showOptions)
@@ -419,6 +378,7 @@ const PostCard = memo(function PostCard({
                             >
                                 <MoreVertical className="w-5 h-5" />
                             </button>
+
                             {showOptions && (
                                 <div className="absolute right-0 mt-2 w-36 bg-white dark:bg-[var(--background)] border rounded shadow z-10">
                                     {/* Only show edit button for own posts */}
@@ -428,9 +388,10 @@ const PostCard = memo(function PostCard({
                                                 e.stopPropagation()
                                                 handleEdit()
                                             }}
-                                            className="w-full px-4 py-2 text-left text-sm hover:bg-[var(--input)]"
+                                            className="flex items-center gap-2 w-full px-4 py-2 text-left text-sm hover:bg-[var(--input)] transition-colors"
                                         >
-                                            ✏️ Chỉnh sửa
+                                            <Pencil size={14} className="text-blue-500" />
+                                            <span>{t('edit')}</span>
                                         </button>
                                     )}
                                     <button
@@ -438,10 +399,11 @@ const PostCard = memo(function PostCard({
                                             e.stopPropagation()
                                             handleDeletePost()
                                         }}
-                                        className="w-full px-4 py-2 text-left text-sm hover:bg-[var(--input)] disabled:opacity-50"
+                                        className="flex items-center gap-2 w-full px-4 py-2 text-left text-sm hover:bg-[var(--input)] disabled:opacity-50 text-red-500 transition-colors"
                                         disabled={deleting}
                                     >
-                                        🗑️ {deleting ? "Đang xóa..." : "Xóa"}
+                                        <Trash2 size={14} />
+                                        <span>{deleting ? t('deleting') : t('delete')}</span>
                                     </button>
                                 </div>
                             )}
@@ -467,7 +429,7 @@ const PostCard = memo(function PostCard({
                                         }}
                                         className="text-blue-500 hover:text-blue-700 ml-2 text-sm"
                                     >
-                                        Xem thêm
+                                        {t("seeMore")}
                                     </button>
                                 </>
                             ) : (
@@ -481,7 +443,7 @@ const PostCard = memo(function PostCard({
                                             }}
                                             className="text-blue-500 hover:text-blue-700 ml-2 text-sm"
                                         >
-                                            Thu gọn
+                                            {t("collapse")}
                                         </button>
                                     )}
                                 </>
@@ -505,27 +467,27 @@ const PostCard = memo(function PostCard({
                     </div>
                 )}
                 {!isAdmin &&
-                    (<div className="flex mt-3 gap-4 text-[var(--muted-foreground)]">
+                    (<div className="post-actions">
                         <button
                             onClick={(e) => {
                                 e.stopPropagation()
                                 handleLikeToggle()
                             }}
-                            className={`p-2 rounded-full hover:bg-[var(--input)] transition-colors ${isLiking ? 'opacity-70' : ''}`}
+                            className={`action-btn ${optimisticLiked ? 'liked' : ''}`}
                             disabled={isLiking}
-                            aria-label={optimisticLiked ? "Unlike post" : "Like post"}
-                            title={optimisticLiked ? "Unlike post" : "Like post"}
+                            aria-label={optimisticLiked ? t("aria.unlike") : t("aria.like")}
                         >
-                            <Heart className={`h-5 w-5 transition-colors ${optimisticLiked ? "fill-red-500 text-red-500" : ""}`} />
+                            <Heart className={optimisticLiked ? "fill-[var(--destructive)] text-[var(--destructive)] animate-heart-pop" : ""} size={20} />
+                            <span>{optimisticLikeCount > 0 ? optimisticLikeCount : ''}</span>
                         </button>
 
                         <button
                             onClick={handleMessageCircleClick}
-                            className="p-2 rounded-full hover:bg-[var(--input)]"
-                            aria-label="Comment on post"
-                            title="Comment on post"
+                            className="action-btn"
+                            aria-label={t("aria.comment")}
                         >
-                            <MessageCircle className="h-5 w-5" />
+                            <MessageCircle size={20} />
+                            <span>{currentPost.commentCount > 0 ? currentPost.commentCount : ''}</span>
                         </button>
 
                         <button
@@ -533,44 +495,38 @@ const PostCard = memo(function PostCard({
                                 e.stopPropagation()
                                 handleShare()
                             }}
-                            className="p-2 rounded-full hover:bg-[var(--input)]"
-                            aria-label="Share post"
-                            title="Share post"
+                            className="action-btn"
+                            aria-label={t("aria.share")}
                         >
-                            <SendHorizonal className="h-5 w-5" />
+                            <Share2 size={20} />
                         </button>
                         <button
                             onClick={(e) => {
                                 e.stopPropagation()
                                 handleShareToChat()
                             }}
-                            className="p-2 rounded-full hover:bg-[var(--input)]"
-                            aria-label="Sent to chat"
-                            title="Sent to chat"
+                            className="action-btn"
+                            aria-label={t("aria.sendToChat")}
                         >
-                            <MessageSquareShare className="h-5 w-5" />
+                            <SendHorizonal size={20} />
                         </button>
                     </div>)
                 }
 
-                <p className="text-xs mt-1">
-                    {optimisticLikeCount} lượt thích
-                </p>
-
                 <button
-                    className="text-xs mt-2 hover:underline"
+                    className="text-xs mt-3 text-[var(--muted-foreground)] hover:underline font-medium"
                     onClick={(e) => {
                         e.stopPropagation()
                         openModal()
                     }}
                 >
-                    Xem tất cả {currentPost.commentCount || 0} bình luận
+                    {t('viewAllComments', { count: currentPost.commentCount || 0 })}
                 </button>
             </Card>
 
             {/* Lazy loaded modals - only render when needed */}
             {showEditModal && isOwnPost && (
-                <Suspense fallback={<div>Loading...</div>}>
+                <Suspense fallback={<div>{tCommon("loading")}</div>}>
                     <EditPostModal
                         isOpen={showEditModal}
                         onClose={() => setShowEditModal(false)}
@@ -582,27 +538,24 @@ const PostCard = memo(function PostCard({
 
             {/* Post Modal - only render when needed */}
             {isModalOpen && (
-                <Suspense fallback={<div>Loading...</div>}>
+                <Suspense fallback={<div>{tCommon("loading")}</div>}>
                     <PostModal
                         post={currentPost}
                         liked={optimisticLiked}
                         likeCount={optimisticLikeCount}
                         activeIndex={activeImageIndex}
-                        comments={comments}
-                        loadingComments={loadingComments}
                         isOwnPost={isOwnPost}
                         isAdmin={isAdmin}
                         onClose={handleCloseModal}
                         onLikeToggle={handleLikeToggle}
                         onCommentSubmit={handleCommentSubmit}
-                        onCommentFilterChange={handleCommentFilterChange}
                     />
                 </Suspense>
             )}
 
             {/* Share Modal - only render when needed */}
             {showShareModal && (
-                <Suspense fallback={<div>Loading...</div>}>
+                <Suspense fallback={<div>{tCommon("loading")}</div>}>
                     <SharePostModal
                         isOpen={showShareModal}
                         onClose={() => setShowShareModal(false)}
@@ -613,7 +566,7 @@ const PostCard = memo(function PostCard({
 
             {/* Share to Chat Modal */}
             {showShareToChatModal && (
-                <Suspense fallback={<div>Loading...</div>}>
+                <Suspense fallback={<div>{tCommon("loading")}</div>}>
                     <ShareToChatModal
                         isOpen={showShareToChatModal}
                         onClose={() => setShowShareToChatModal(false)}
@@ -621,8 +574,16 @@ const PostCard = memo(function PostCard({
                     />
                 </Suspense>
             )}
+
+            <ConfirmModal
+                isOpen={isConfirmOpen}
+                onClose={() => setIsConfirmOpen(false)}
+                onConfirm={executeDeletePost}
+                title={t('delete')}
+                message={isAdmin && !isOwnPost ? t('deleteAdminConfirm') : t('deleteConfirm')}
+            />
         </>
     )
 })
 
-export default PostCard
+export default PostCard;

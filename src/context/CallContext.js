@@ -4,10 +4,12 @@ import React, { createContext, useCallback, useContext, useEffect, useState, use
 import { subscribe, sendMessage } from "@/utils/socket";
 import CallModal from "@/components/social-app-component/CallModal";
 import toast from "react-hot-toast";
+import { useTranslations } from "next-intl";
 
 const CallContext = createContext();
 
 export const CallProvider = ({ children }) => {
+  const t = useTranslations("call");
   const [callState, setCallState] = useState("idle"); // "idle" | "calling" | "incoming" | "in-call"
   const [callInfo, setCallInfo] = useState(null);    // { chatId, callerName, callType, offerSdp, participants: [] }
   const [currentChatId, setCurrentChatId] = useState(null);
@@ -30,7 +32,7 @@ export const CallProvider = ({ children }) => {
             
             setCallInfo({
               chatId: msg.chatId,
-              callerName: msg.senderName || "Người dùng",
+              callerName: msg.senderName || t("user"),
               callType: msg.callType || "AUDIO",
               offerSdp: msg.sdp,
               participants: [msg.senderId],
@@ -60,7 +62,7 @@ export const CallProvider = ({ children }) => {
 
   const makeCall = useCallback((targetUsername, isVideo = false, chatId = null) => {
     if (!chatId) {
-        toast.error("Không tìm thấy chatId để bắt đầu cuộc gọi");
+        toast.error(t("noChatId"));
         return;
     }
 
@@ -99,7 +101,7 @@ export const CallProvider = ({ children }) => {
         initializeCall,
         makeCall: (username, isVideo, chatId) => {
             if (!chatId) {
-                toast.error("Không tìm thấy chatId để bắt đầu cuộc gọi");
+                toast.error(t("noChatId"));
                 return;
             }
             makeCall(username, isVideo, chatId);

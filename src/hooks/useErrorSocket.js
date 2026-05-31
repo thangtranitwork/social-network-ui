@@ -8,9 +8,12 @@ import {
   getStompClient,
   stompClientSingleton 
 } from "@/utils/socket";
+import { parseApiError } from "@/utils/errorCodes";
 import { toast } from "react-hot-toast";
+import { useTranslations } from "next-intl";
 
 export default function useErrorSocket(userId) {
+  const t = useTranslations();
   const subscriptionRef = useRef(null);
   const [currentUserId, setCurrentUserId] = useState(null);
   const [isSubscribed, setIsSubscribed] = useState(false);
@@ -52,16 +55,15 @@ export default function useErrorSocket(userId) {
     console.log("🚨 Error received:", errorData);
 
     try {
-      // Determine error message
-      let errorMessage = "Đã xảy ra lỗi";
+      // Sử dụng parseApiError để lấy thông báo lỗi đã được dịch
+      const mockError = {
+        response: {
+          data: errorData,
+          status: errorData.status || 400
+        }
+      };
       
-      if (errorData.message) {
-        errorMessage = errorData.message;
-      } else if (errorData.error) {
-        errorMessage = errorData.error;
-      } else if (typeof errorData === 'string') {
-        errorMessage = errorData;
-      }
+      const errorMessage = parseApiError(mockError, t);
 
       // Toast error notification
       toast.error(errorMessage, {
@@ -79,12 +81,12 @@ export default function useErrorSocket(userId) {
       console.error("❌ Failed to process error message:", error);
       
       // Fallback toast
-      toast.error("Đã xảy ra lỗi không xác định", {
+      toast.error(t('error.unknown'), {
         duration: 5000,
         position: "top-right",
       });
     }
-  }, []);
+  }, [t]);
 
   // Setup subscription với singleton
   useEffect(() => {

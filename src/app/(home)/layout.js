@@ -10,7 +10,7 @@ import Header from "@/components/ui-components/Header";
 import Sidebar from "@/components/ui-components/Sidebar";
 import ProgressBar from "@/components/ui-components/ProgressBar";
 import { Toaster } from "react-hot-toast";
-import ChatList from "@/components/social-app-component/ChatList";
+import FloatingChatWidget from "@/components/social-app-component/FloatingChatWidget";
 import useNotificationSocket from "@/hooks/useNotificationSocket";
 import useMessageNotification from "@/hooks/useMessageNotification";
 import useErrorSocket from "@/hooks/useErrorSocket"; // ✅ Import useErrorSocket
@@ -61,9 +61,6 @@ function MainLayoutContent({ children }) {
 
   const [userId, setUserId] = useState(null);
   const [token, setToken] = useState(null);
-  const [activeChatId, setActiveChatId] = useState(null);
-  const [activeTargetUser, setActiveTargetUser] = useState(null);
-  const [blockStatus, setBlockStatus] = useState(null);
 
   // ✅ Sử dụng Call Hook
   const { initializeCall, currentCall, isCallEnding } = useCall();
@@ -91,53 +88,14 @@ function MainLayoutContent({ children }) {
   useErrorSocket(userId); // ✅ Subscribe tới error channel
 
   useEffect(() => {
-    const handleNewMessage = (event) => {
-      const messageData = event.detail;
-      console.log("🔔 [MainLayout] New message received:", messageData);
-      
-      // Logic để handle tin nhắn mới
-      if (pathname === "/chats" && !activeChatId) {
-        // Auto-select chat mới nếu đang ở trang chats
-        setActiveChatId(messageData.chatId);
-        setActiveTargetUser(messageData.sender);
-      }
-    };
-
-    const handleOpenChat = (event) => {
-      const { chatId, targetUser } = event.detail;
-      console.log("💬 [MainLayout] Opening chat:", chatId);
-      
-      // Navigate to chats page nếu chưa ở đó
-      if (pathname !== "/chats") {
-        // Sử dụng router để navigate
-        // router.push("/chats");
-      }
-      
-      // Mở chat
-      setActiveChatId(chatId);
-      setActiveTargetUser(targetUser);
-    };
-
     // ✅ Handle error events từ useErrorSocket
     const handleErrorReceived = (event) => {
       const errorData = event.detail;
       console.log("🚨 [MainLayout] Error received:", errorData);
-      
-      // Có thể thêm logic xử lý error cụ thể ở đây
-      // Ví dụ: redirect về login nếu token expired, etc.
     };
-
-    // Register event listeners
-    window.addEventListener('newMessageReceived', handleNewMessage);
-    window.addEventListener('openChat', handleOpenChat);
-    window.addEventListener('errorReceived', handleErrorReceived); // ✅ Listen for errors
-    
-    return () => {
-      window.removeEventListener('newMessageReceived', handleNewMessage);
-      window.removeEventListener('openChat', handleOpenChat);
-      window.removeEventListener('errorReceived', handleErrorReceived); // ✅ Cleanup
-    };
-  }, [pathname, activeChatId]);
+    window.addEventListener('errorReceived', handleErrorReceived);
+    return () => window.removeEventListener('errorReceived', handleErrorReceived);
+  }, []);
 
   // Xử lý animation theme change
   useEffect(() => {
@@ -153,57 +111,16 @@ function MainLayoutContent({ children }) {
     }
   }, [resolvedTheme, mounted]);
 
-  // Xác định các route ẩn right sidebar
+  // Xác định các route ẩn floating chat
   const hideRightSidebar =
     pathname.startsWith("/settings") ||
     pathname.startsWith("/search") ||
     pathname.startsWith("/chats");
 
-  // Xử lý chat
-  const handleSelectChat = (chatId, user, chat) => {
-    setActiveChatId(chatId);
-    setActiveTargetUser(user);
-    setBlockStatus(chat.blockStatus);
-  };
-
-  const handleBackToList = () => {
-    setActiveChatId(null);
-    setActiveTargetUser(null);
-  };
-
-  // ✅ Callback khi tạo chat mới từ ChatBox
-  const handleChatCreated = (newChatId, targetUser) => {
-    setActiveChatId(newChatId);
-    setActiveTargetUser(targetUser);
-  };
-
-  const renderRightSidebar = () => {
-    if (hideRightSidebar) return null;
-
-    return (
-      <aside className="hidden md:flex justify-center items-end w-[80px] lg:w-[400px] lg:max-w-[400px] h-[calc(100vh-64px)] p-4">
-        <div className="flex flex-col w-full h-full relative">
-          {activeChatId && activeTargetUser ? (
-            <Chatbox
-              chatId={activeChatId}
-              targetUser={activeTargetUser}
-              onBack={handleBackToList}
-              onChatCreated={handleChatCreated}
-              // ✅ Pass token cho call functionality
-              beToken={token}
-              recipientId={activeTargetUser?.id || activeTargetUser?.userId}
-            />
-          ) : (
-            <div className="flex flex-col w-full h-full">
-              <ChatList
-                onSelectChat={handleSelectChat}
-                selectedChatId={activeChatId}
-              />
-            </div>
-          )}
-        </div>
-      </aside>
-    );
+  // Floating chat widget - quản lý state nội bộ, không reset khi switch chat
+  const renderFloatingChat = () => {
+    if (pathname.startsWith("/chats")) return null;
+    return <FloatingChatWidget beToken={token} />;
   };
 
   // ✅ Tính toán header height và padding top
@@ -247,23 +164,23 @@ const layoutContent = (
   <Sidebar />
 </aside>
 
-        {/* Main Content - điều chỉnh height và padding */}
+        {/* Main Content - chiếm toàn bộ width vì floating chat */}
         <main className={`flex-1 ${showHeader ? 'h-[calc(100vh-64px)]' : 'h-screen'} overflow-y-auto`}>
           <div
             className={`${
-              hideRightSidebar ? "max-w-7xl" : "max-w-5xl"
-            } w-full mx-auto space-y-6 pb-[72px] md:pb-0 px-4 sm:px-6`}
+              hideRightSidebar ? "max-w-7xl" : "max-w-3xl"
+            } w-full mx-auto space-y-6 pb-[calc(56px+env(safe-area-inset-bottom))] md:pb-6 px-4 sm:px-6`}
           >
             {children}
           </div>
         </main>
 
-        {/* Right Sidebar */}
-        {renderRightSidebar()}
+        {/* Floating Chat Widget - bottom right giống Facebook */}
+        {renderFloatingChat()}
       </div>
 
       {/* ✅ Bottom Navigation - Fixed position trên mobile */}
-      <div className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-white dark:bg-gray-900 border-t h-[72px]">
+      <div className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-[var(--card)] border-t border-[var(--border)] h-[56px] pb-[env(safe-area-inset-bottom)]">
         <Sidebar />
       </div>
     </div>
@@ -288,7 +205,6 @@ const layoutContent = (
 
 // ✅ Main Layout với CallProvider wrapper
 export default function MainLayout({ children }) {
-  usePageMetadata(pageMetadata.home());
   return (
     <CallProvider>
     <ThemeProvider>

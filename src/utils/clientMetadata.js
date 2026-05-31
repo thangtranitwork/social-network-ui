@@ -78,9 +78,11 @@ export function updatePageMetadata(config) {
 
 // ✅ Hook cho React components
 export function usePageMetadata(config) {
+    const configStr = JSON.stringify(config);
     useEffect(() => {
         updatePageMetadata(config)
-    }, [config])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [configStr])
 }
 
 // ✅ Preset metadata cho các page phổ biến
@@ -120,7 +122,7 @@ export const pageMetadata = {
         title: 'PocPoc - Cài Đặt',
         description: 'PocPoc - Quản lý tài khoản và cài đặt ứng dụng',
         keywords: ['settings', 'account', 'preferences'],
-        image: '/og-settings.jpg',
+        image: '/pocpoc.png',
         url: '/settings',
         noIndex: true
     }),
@@ -129,7 +131,7 @@ export const pageMetadata = {
         title: 'PocPoc - Tìm Kiếm',
         description: 'PocPoc - Tìm kiếm người dùng, nội dung và cuộc trò chuyện',
         keywords: ['search', 'find', 'users'],
-        image: '/og-search.jpg',
+        image: '/pocpoc.png',
         url: '/search'
     })
 }

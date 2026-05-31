@@ -7,10 +7,12 @@ import Input from "@/components/ui-components/Input";
 import UserHeader from "@/components/social-app-component/UserHeader";
 import { useRouter } from "next/navigation";
 import {pageMetadata, usePageMetadata} from "@/utils/clientMetadata";
+import { useTranslations } from "next-intl";
 
 let debounceTimeout = null;
 
 export default function ExplorerPage() {
+  const t = useTranslations('search');
   const [query, setQuery] = useState("");
   const [results, setResults] = useState({ USER: [], POST: [] });
   const [loading, setLoading] = useState(false);
@@ -73,25 +75,25 @@ export default function ExplorerPage() {
     <div className="flex flex-col lg:flex-row gap-6 px-4 py-6">
       {/* Cột trái */}
       <div className="flex-1 space-y-6">
-        <h1 className="text-xl font-bold">Khám phá</h1>
+        <h1 className="text-xl font-bold">{t('title')}</h1>
         <div className="flex gap-2">
           <Input
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="Tìm kiếm người dùng hoặc bài viết..."
+            placeholder={t('placeholder')}
             className="flex-1"
           />
         </div>
 
-        {loading && <p className="text-sm text-gray-500">Đang tìm kiếm...</p>}
+        {loading && <p className="text-sm text-[var(--muted-foreground)]">{t('searching')}</p>}
 
-        {!loading && query && results.USER.length === 0 && results.POST.length === 0 && (
-          <p className="text-gray-500">Không có kết quả.</p>
+        {!loading && query && (!results.USER || results.USER.length === 0) && (!results.POST || results.POST.length === 0) && (
+          <p className="text-[var(--muted-foreground)]">{t('noResults')}</p>
         )}
 
-        {results.USER.length > 0 && (
+        {results.USER && results.USER.length > 0 && (
           <div className="space-y-3">
-            <h2 className="text-lg font-semibold">Người dùng</h2>
+            <h2 className="text-lg font-semibold">{t('users')}</h2>
             <ul className="space-y-2">
               {results.USER.map((user) => (
                 <li
@@ -115,9 +117,9 @@ export default function ExplorerPage() {
           </div>
         )}
 
-        {results.POST.length > 0 && (
+        {results.POST && results.POST.length > 0 && (
           <div className="space-y-3">
-            <h2 className="text-lg font-semibold">Bài viết</h2>
+            <h2 className="text-lg font-semibold">{t('posts')}</h2>
             {results.POST.map((post) => (
               <PostCard key={post.id} post={post} />
             ))}
@@ -128,10 +130,10 @@ export default function ExplorerPage() {
       {/* Cột phải */}
       <div className="w-full lg:w-[300px] shrink-0">
         <div className="sticky top-20 space-y-4">
-          <h2 className="text-lg font-semibold">Gợi ý cho bạn</h2>
+          <h2 className="text-lg font-semibold">{t('suggestions')}</h2>
           <ul className="space-y-3">
             {suggestedUsers.length === 0 ? (
-              <p className="text-sm text-gray-500">Không có gợi ý nào.</p>
+              <p className="text-sm text-[var(--muted-foreground)]">{t('noSuggestions')}</p>
             ) : (
               suggestedUsers.map((user) => (
                 <li

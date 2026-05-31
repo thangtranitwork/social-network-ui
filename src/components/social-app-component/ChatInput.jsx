@@ -3,6 +3,8 @@
 import { useEffect, useRef } from "react";
 import GifPicker from "./GifPicker";
 import VoiceRecorder from "./VoiceRecorder";
+import { useTranslations } from "next-intl";
+import { Pencil, Paperclip } from "lucide-react";
 
 export default function ChatInput({
   input,
@@ -26,6 +28,7 @@ export default function ChatInput({
   onBlur,   // ✅ Typing blur handler từ useTypingNotification
   placeholder,
 }) {
+  const t = useTranslations("chat.input");
   const fileInputRef = useRef(null)
   const textareaRef = useRef(null)
   // Auto focus input when component mounts or editing mode changes
@@ -151,8 +154,8 @@ export default function ChatInput({
       {editingMessage && (
         <div className="flex items-center justify-between px-3 py-1.5 bg-yellow-50 dark:bg-yellow-900/20 rounded-xl mb-2">
           <div className="flex items-center space-x-2">
-            <span className="text-sm">✏️</span>
-            <span className="text-xs font-medium text-yellow-600 dark:text-yellow-400">Đang sửa tin nhắn</span>
+            <Pencil size={14} className="text-yellow-600 dark:text-yellow-400" />
+            <span className="text-xs font-medium text-yellow-600 dark:text-yellow-400">{t("editing")}</span>
           </div>
           <button
             onClick={onCancelEdit}
@@ -169,7 +172,7 @@ export default function ChatInput({
       {selectedFile && (
         <div className="flex items-center justify-between px-3 py-1.5 bg-blue-50 dark:bg-blue-900/20 rounded-xl mb-2">
           <div className="flex items-center space-x-2 min-w-0 flex-1">
-            <span className="text-sm">📎</span>
+            <Paperclip size={14} className="text-blue-600 dark:text-blue-400" />
             <span className="text-xs font-medium text-blue-600 dark:text-blue-400 truncate">{selectedFile.name}</span>
           </div>
           <button
@@ -198,7 +201,7 @@ export default function ChatInput({
                 ? "text-[var(--muted-foreground)] opacity-50 cursor-not-allowed"
                 : "text-[var(--muted-foreground)] hover:bg-[var(--accent)] hover:text-[var(--foreground)]"
             }`}
-            title="Đính kèm file"
+            title={t("attachFile")}
           >
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path
@@ -227,7 +230,7 @@ export default function ChatInput({
             onFocus={handleTextareaFocus}
             onBlur={handleTextareaBlur}
             disabled={disabled}
-            placeholder={selectedFile ? "Thêm mô tả cho file (tùy chọn)..." : placeholder}
+            placeholder={selectedFile ? t("filePlaceholder") : placeholder}
             className={`w-full px-3 py-2 border border-[var(--border)] rounded-xl resize-none focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-transparent bg-[var(--background)] text-[var(--foreground)] transition-all text-sm block ${
               disabled ? "opacity-50 cursor-not-allowed" : ""
             }`}

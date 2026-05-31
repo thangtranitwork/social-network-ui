@@ -5,12 +5,15 @@ import { useRouter } from "next/navigation";
 import Avatar from "../ui-components/Avatar";
 import api from "@/utils/axios";
 import toast from "react-hot-toast";
+import { useTranslations } from "next-intl";
 
 export default function FriendsListModal({ 
   username, 
   initialFriends = [], 
   initialTab = "friends" // Thêm prop để xác định tab mặc định
 }) {
+  const t = useTranslations("profile.friendsModal");
+  const tCommon = useTranslations("common");
   const [activeTab, setActiveTab] = useState(initialTab); // Sử dụng initialTab
   const [friends, setFriends] = useState(initialFriends);
   const [mutualFriends, setMutualFriends] = useState([]);
@@ -38,11 +41,11 @@ export default function FriendsListModal({
         const mutuals = res.data.body || [];
         setMutualFriends(mutuals);
       } else {
-        toast.error("Không thể tải danh sách bạn chung");
+        toast.error(t("loadMutualError"));
       }
     } catch (error) {
       console.error("Lỗi khi lấy danh sách bạn chung:", error);
-      toast.error("Có lỗi xảy ra khi tải bạn chung");
+      toast.error(tCommon("error"));
     } finally {
       setIsLoadingMutual(false);
     }
@@ -110,7 +113,7 @@ export default function FriendsListModal({
     <div className="p-6 h-full flex flex-col">
       {/* Header */}
       <div className="flex-shrink-0 mb-4">
-        <h3 className="text-lg font-semibold">Danh sách bạn bè</h3>
+        <h3 className="text-lg font-semibold">{t("title")}</h3>
         
         {/* Tabs */}
         <div className="flex mt-4 border-b">
@@ -122,7 +125,7 @@ export default function FriendsListModal({
             }`}
             onClick={() => handleTabChange("friends")}
           >
-            Bạn bè ({friends.length})
+            {t("friendsTab", { count: friends.length })}
           </button>
           <button
             className={`px-4 py-2 text-sm font-medium transition-colors ${
@@ -132,7 +135,7 @@ export default function FriendsListModal({
             }`}
             onClick={() => handleTabChange("mutual")}
           >
-            Bạn chung ({mutualFriends.length})
+            {t("mutualTab", { count: mutualFriends.length })}
           </button>
         </div>
       </div>
@@ -143,7 +146,7 @@ export default function FriendsListModal({
           <UserList 
             users={friends}
             isLoading={false}
-            emptyMessage="Chưa có bạn bè nào"
+            emptyMessage={t("noFriends")}
           />
         )}
         
@@ -151,7 +154,7 @@ export default function FriendsListModal({
           <UserList 
             users={mutualFriends}
             isLoading={isLoadingMutual}
-            emptyMessage="Không có bạn chung"
+            emptyMessage={t("noMutual")}
           />
         )}
       </div>

@@ -11,6 +11,7 @@ import api from "@/utils/axios";
 
 import { useCall } from "@/context/CallContext";
 import useTypingNotification from "@/hooks/useTypingNotification";
+import { useTranslations } from "next-intl";
 
 // Components
 import FilePreviewInChat from "../ui-components/FilePreviewInChat";
@@ -20,7 +21,8 @@ import ChatInput from "./ChatInput";
 import MessageItem from "./MessageItem";
 import ChatDetailsSidebar from "./ChatDetailsSidebar";
 
-export default function ChatBox({ chatId, targetUser, onBack, onChatCreated, onChatUpdated }) {
+export default function ChatBox({ chatId, targetUser, onBack, onChatCreated, onChatUpdated, hideHeader = false, beToken }) {
+  const t = useTranslations('chat');
   // State management
   const [input, setInput] = useState("");
   const [showDetails, setShowDetails] = useState(false);
@@ -57,12 +59,14 @@ export default function ChatBox({ chatId, targetUser, onBack, onChatCreated, onC
   const isBlockedByOther = blockStatus === "HAS_BEEN_BLOCKED";
   const hasBlockedOther = blockStatus === "BLOCKED";
 
-  const { messages, loading, loadingMore, hasMore, totalMessages, loadMoreMessages, isTyping } = useChat(currentChatId);
+  const { messages, loading, loadingMore, hasMore, totalMessages, loadMoreMessages, isTyping, currentUserId } = useChat(currentChatId);
   const { sendMessage, isConnected } = useSendMessage({
     chatId: currentChatId,
     receiverUsername: targetUser?.username,
   });
   const { initializeCall, makeCall } = useCall();
+  // Subscribe WebSocket để nhận typing events từ người kia
+  useTypingNotification(currentChatId);
   const [isTypingState, setIsTypingState] = useState(false);
 
   // Handlers
@@ -201,14 +205,14 @@ export default function ChatBox({ chatId, targetUser, onBack, onChatCreated, onC
           selectChat(newChatId);
           if (onChatCreated) onChatCreated(newChatId, targetUser);
 
-          toast.success("Đã tạo cuộc trò chuyện mới!");
+          toast.success(t("newChatCreated"));
           return newChatId;
         }
-        throw new Error("Không thể tạo chat mới");
+        throw new Error(t("createChatError"));
       } catch (error) {
         if (error.name === 'AbortError' || abortController.signal.aborted) return null;
         console.error("Error creating chat:", error);
-        toast.error("Không thể tạo cuộc trò chuyện mới");
+        toast.error(t("createChatError"));
         throw error;
       } finally {
         setIsCreatingChat(false);
@@ -227,7 +231,7 @@ export default function ChatBox({ chatId, targetUser, onBack, onChatCreated, onC
   const handleSend = async () => {
     const trimmed = input.trim();
     if (!trimmed || !canSendMessage || isSendingMessage || isCreatingChat) {
-      if (!canSendMessage) toast.error("Không thể gửi tin nhắn do bạn đã bị chặn");
+      if (!canSendMessage) toast.error(t('cantSendBlocked'));
       return;
     }
 
@@ -238,7 +242,7 @@ export default function ChatBox({ chatId, targetUser, onBack, onChatCreated, onC
         await createNewChat(trimmed);
       } else {
         if (!isConnected) {
-          toast.error("Chưa kết nối đến server");
+          toast.error(t('notConnected'));
           return;
         }
         await sendMessage(trimmed);
@@ -246,7 +250,7 @@ export default function ChatBox({ chatId, targetUser, onBack, onChatCreated, onC
       setInput("");
     } catch (err) {
       if (err.name !== 'AbortError') {
-        toast.error("Lỗi khi gửi tin nhắn");
+        toast.error(t('sendError'));
       }
     } finally {
       setIsSendingMessage(false);
@@ -257,7 +261,7 @@ export default function ChatBox({ chatId, targetUser, onBack, onChatCreated, onC
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
       if (!canSendMessage) {
-        toast.error("Không thể gửi tin nhắn do bạn đã bị chặn");
+        toast.error(t('cantSendBlocked'));
         return;
       }
       if (selectedFile) handleSendFile();
@@ -275,15 +279,9 @@ export default function ChatBox({ chatId, targetUser, onBack, onChatCreated, onC
     const file = e.target.files?.[0];
     if (!file) return;
 
-    const errors = {
-      blocked: "Không thể gửi file do bạn đã bị chặn",
-      newChat: "Vui lòng gửi tin nhắn đầu tiên trước khi gửi file",
-      size: "File quá lớn! Vui lòng chọn file < 10MB"
-    };
-
-    if (!canSendMessage) return toast.error(errors.blocked);
-    if (isNewChat) return toast.error(errors.newChat);
-    if (file.size > 10 * 1024 * 1024) return toast.error(errors.size);
+    if (!canSendMessage) return toast.error(t("cantSendFile"));
+    if (isNewChat) return toast.error(t("startConversationFirst"));
+    if (file.size > 10 * 1024 * 1024) return toast.error(t("fileTooLarge"));
 
     setSelectedFile(file);
     setFilePreview(file.type.startsWith("image/") ? URL.createObjectURL(file) : null);
@@ -292,7 +290,7 @@ export default function ChatBox({ chatId, targetUser, onBack, onChatCreated, onC
 
   const handleSendFile = async () => {
     if (!selectedFile || !currentChatId || !targetUser?.username || !canSendMessage) {
-      if (!canSendMessage) toast.error("Không thể gửi file do bạn đã bị chặn");
+      if (!canSendMessage) toast.error(t('cantSendFile'));
       return;
     }
 
@@ -303,10 +301,10 @@ export default function ChatBox({ chatId, targetUser, onBack, onChatCreated, onC
         username: targetUser.username,
         fileId: fileId,
       });
-      toast.success("File đã được gửi!");
+      toast.success(t('fileSentSuccess'));
       handleCancelFile();
     } catch {
-      toast.error("Lỗi khi gửi file");
+      toast.error(t('fileError'));
     } finally {
       setUploading(false);
     }
@@ -314,7 +312,7 @@ export default function ChatBox({ chatId, targetUser, onBack, onChatCreated, onC
 
   const handleSendVoice = async (blob) => {
     if (!blob || !currentChatId || !targetUser?.username || !canSendMessage) {
-      if (!canSendMessage) toast.error("Không thể gửi tin nhắn thoại do bạn đã bị chặn");
+      if (!canSendMessage) toast.error(t('cantSendVoice'));
       return;
     }
 
@@ -327,7 +325,7 @@ export default function ChatBox({ chatId, targetUser, onBack, onChatCreated, onC
       });
       handleCancelFile();
     } catch {
-      toast.error("Lỗi khi gửi tin nhắn thoại");
+      toast.error(t('sendError'));
     } finally {
       setUploading(false);
     }
@@ -335,7 +333,7 @@ export default function ChatBox({ chatId, targetUser, onBack, onChatCreated, onC
 
   const handleSendGif = async (url) => {
     if (!targetUser?.username || !canSendMessage) {
-      if (!canSendMessage) toast.error("Không thể gửi gif do bạn đã bị chặn");
+      if (!canSendMessage) toast.error(t('cantSendGif'));
       return;
     }
 
@@ -347,7 +345,7 @@ export default function ChatBox({ chatId, targetUser, onBack, onChatCreated, onC
       });
     } catch (err) {
       console.error("Error sending GIF:", err);
-      toast.error("Lỗi khi gửi GIF. Vui lòng thử lại.");
+      toast.error(t('sendError'));
     } finally {
       setUploading(false);
     }
@@ -375,9 +373,9 @@ export default function ChatBox({ chatId, targetUser, onBack, onChatCreated, onC
     try {
       await api.delete(`/v1/chat/${messageId}`);
       setSelectedMessage(null);
-      toast.success("Đã xóa tin nhắn");
+      toast.success(t('messageDeleted'));
     } catch {
-      toast.error("Lỗi xóa tin nhắn");
+      toast.error(t('deleteError'));
     }
   };
 
@@ -404,10 +402,10 @@ export default function ChatBox({ chatId, targetUser, onBack, onChatCreated, onC
       if (res.data.code === 200) {
         setEditingMessage(null);
         setInput("");
-        toast.success("Sửa tin nhắn thành công!");
+        toast.success(t('editSuccess'));
       }
     } catch {
-      toast.error("Có lỗi khi sửa tin nhắn");
+      toast.error(t('editError'));
     }
   };
 
@@ -417,13 +415,13 @@ export default function ChatBox({ chatId, targetUser, onBack, onChatCreated, onC
 
     const statusConfig = {
       HAS_BEEN_BLOCKED: {
-        message: `Bạn đã bị ${targetUser?.displayName || targetUser?.username} chặn. Không thể gửi tin nhắn.`,
+        message: t("blockedByOther", { name: targetUser?.displayName || targetUser?.username }),
         bgColor: "bg-red-50",
         textColor: "text-red-700",
         borderColor: "border-red-200"
       },
       BLOCKED: {
-        message: `Bạn đã chặn ${targetUser?.displayName || targetUser?.username}. Bỏ chặn để có thể nhắn tin.`,
+        message: t("blockedOther", { name: targetUser?.displayName || targetUser?.username }),
         bgColor: "bg-yellow-50",
         textColor: "text-yellow-700",
         borderColor: "border-yellow-200"
@@ -452,9 +450,9 @@ export default function ChatBox({ chatId, targetUser, onBack, onChatCreated, onC
   const renderMessages = () => {
     if (loading && currentChatId) {
       return (
-        <div className="text-center py-4">
-          <div className="inline-block animate-spin rounded-full h-6 w-6 border-b-2 border-blue-500"></div>
-          <p className="text-sm text-[var(--muted-foreground)] mt-2">Đang tải tin nhắn...</p>
+        <div className="flex flex-col items-center justify-center py-8">
+          <div className="spinner"></div>
+          <p className="text-sm text-[var(--muted-foreground)] mt-4">{t("loading")}</p>
         </div>
       );
     }
@@ -462,7 +460,7 @@ export default function ChatBox({ chatId, targetUser, onBack, onChatCreated, onC
     if (isNewChat) {
       return (
         <div className="text-center py-8 text-[var(--muted-foreground)] text-sm">
-          Bắt đầu cuộc trò chuyện với {targetUser?.displayName || targetUser?.username}
+          {t("startConversation", { name: targetUser?.displayName || targetUser?.username })}
         </div>
       );
     }
@@ -470,7 +468,7 @@ export default function ChatBox({ chatId, targetUser, onBack, onChatCreated, onC
     if (messages?.length === 0) {
       return (
         <p className="text-center text-sm text-[var(--muted-foreground)] py-8">
-          Chưa có tin nhắn nào
+          {t("noMessages")}
         </p>
       );
     }
@@ -480,29 +478,32 @@ export default function ChatBox({ chatId, targetUser, onBack, onChatCreated, onC
         <TypingIndicator isTyping={isTyping} />
 
         {loadingMore && (
-          <div className="text-center py-2">
-            <div className="inline-block animate-spin rounded-full h-4 w-4 border-b-2 border-blue-500"></div>
-            <p className="text-xs text-[var(--muted-foreground)] mt-1">Đang tải thêm tin nhắn...</p>
+          <div className="flex flex-col items-center justify-center py-4">
+            <div className="spinner" style={{ width: '20px', height: '20px' }}></div>
+            <p className="text-xs text-[var(--muted-foreground)] mt-2">{t("loadingMore")}</p>
           </div>
         )}
 
         {!hasMore && totalMessages > 20 && (
           <div className="text-center py-2">
-            <p className="text-xs text-[var(--muted-foreground)]">Đã hiển thị tất cả tin nhắn</p>
+            <p className="text-xs text-[var(--muted-foreground)]">{t("allLoaded")}</p>
           </div>
         )}
 
-        {messages.map((msg) => (
-          <MessageItem
-            key={msg.id}
-            msg={msg}
-            targetUser={targetUser}
-            selectedMessage={selectedMessage}
-            onMessageClick={handleMessageClick}
-            onEditMessage={handleEditMessage}
-            onDeleteMessage={handleDeleteMessage}
-          />
-        ))}
+        {messages.map((msg) => {
+          const isOwn = msg.sender?.id === currentUserId;
+          return (
+            <MessageItem
+              key={msg.id}
+              msg={msg}
+              targetUser={targetUser}
+              isOwn={isOwn}
+              showAvatar={!isOwn}
+              onEdit={handleEditMessage}
+              onDelete={handleDeleteMessage}
+            />
+          );
+        })}
 
         <div ref={bottomElementRef} className="h-1" />
       </>
@@ -514,26 +515,28 @@ export default function ChatBox({ chatId, targetUser, onBack, onChatCreated, onC
 
   const inputPlaceholder = !canSendMessage
     ? isBlockedByOther
-      ? "Bạn đã bị chặn, không thể gửi tin nhắn"
-      : "Bạn đã chặn người này"
+      ? t('cantSendBlocked')
+      : t('cantSendBlockedOther')
     : isCreatingChat
-      ? "Đang tạo cuộc trò chuyện..."
+      ? t('creatingChat')
       : isSendingMessage
-        ? "Đang gửi tin nhắn..."
+        ? t('sendingMessage')
         : isNewChat
-          ? `Nhắn tin cho ${targetUser?.displayName || targetUser?.username}...`
-          : "Nhập tin nhắn...";
+          ? t('newChatPlaceholder', { name: targetUser?.displayName || targetUser?.username })
+          : t('placeholder');
 
   return (
     <div className="flex flex-col h-full w-full bg-[var(--card)] text-[var(--foreground)] rounded-2xl overflow-hidden shadow-sm">
-      <ChatHeader
-        targetUser={targetUser}
-        isConnected={isNewChat ? true : isConnected}
-        onBack={onBack}
-        onCall={() => makeCall(targetUser?.username, false, currentChatId)}
-        onVideoCall={() => makeCall(targetUser?.username, true, currentChatId)}
-        onMoreOptions={() => setShowDetails((prev) => !prev)}
-      />
+      {!hideHeader && (
+        <ChatHeader
+          targetUser={targetUser}
+          isConnected={isNewChat ? true : isConnected}
+          onBack={onBack}
+          onCall={() => makeCall(targetUser?.username, false, currentChatId)}
+          onVideoCall={() => makeCall(targetUser?.username, true, currentChatId)}
+          onMoreOptions={() => setShowDetails((prev) => !prev)}
+        />
+      )}
 
       <div className="flex flex-1 overflow-hidden relative">
         <div className="flex-1 flex flex-col min-w-0 h-full relative">

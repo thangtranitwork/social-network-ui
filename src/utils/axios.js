@@ -1,4 +1,5 @@
 import axios from "axios";
+import { parseApiError } from "./errorCodes";
 
 const api = axios.create({
   baseURL: process.env.NEXT_PUBLIC_API_URL,
@@ -15,22 +16,13 @@ const isClient = typeof window !== "undefined";
 
 // Simplified error handling
 function handleApiError(error) {
-  if (!error.response) {
-    return Promise.reject({
-      ...error,
-      message: "Lỗi kết nối mạng",
-      type: "network_error"
-    });
-  }
-
-  const { status, data } = error.response;
-  const message = data?.message || `Lỗi ${status}`;
+  const message = parseApiError(error);
 
   return Promise.reject({
     ...error,
     message,
-    type: "api_error",
-    shouldRetry: [500, 502, 503, 429].includes(status)
+    type: error.response ? "api_error" : "network_error",
+    shouldRetry: error.response ? [500, 502, 503, 429].includes(error.response.status) : false
   });
 }
 

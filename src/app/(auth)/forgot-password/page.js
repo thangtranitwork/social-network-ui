@@ -8,9 +8,14 @@ import { motion } from "framer-motion"
 import useMeasure from "react-use-measure"
 import MotionContainer from "@/components/ui-components/MotionContainer"
 import api from "@/utils/axios"
+import { parseApiError } from "@/utils/errorCodes"
 import Link from "next/link"
+import { useTranslations } from "next-intl"
 
 export default function ForgotPasswordPage() {
+  const tAuth = useTranslations('auth');
+  const tError = useTranslations('error');
+  const tCommon = useTranslations('common');
   const [email, setEmail] = useState("")
   const formRef = useRef(null)
   const [loading, setLoading] = useState(false)
@@ -21,14 +26,14 @@ export default function ForgotPasswordPage() {
     setMessage("")
 
     if (!email) {
-      setMessage("❌ Vui lòng nhập email.")
+      setMessage(`❌ ${tAuth('forgotPassword.emailRequired')}`)
       return
     }
 
     setLoading(true)
     try {
       const origin = window.location.origin
-      const res=await api.post("/v1/update-password", null, {
+      const res = await api.post("/v1/update-password", null, {
         params: { email },
         headers: {
           "X-Continue-Page": `${origin}/reset-password`,
@@ -36,13 +41,9 @@ export default function ForgotPasswordPage() {
       })
       console.log(res)
 
-      setMessage("✅ Email khôi phục mật khẩu đã được gửi! Vui lòng kiểm tra hộp thư.")
+      setMessage(`✅ ${tAuth('forgotPassword.success')}`)
     } catch (error) {
-      setMessage(
-        `❌ Gửi email thất bại: ${
-          error.response?.data?.message || error.message || "Lỗi server"
-        }`
-      )
+      setMessage(`❌ ${tAuth('forgotPassword.failed', { error: parseApiError(error, tError) })}`)
     } finally {
       setLoading(false)
     }
@@ -72,9 +73,15 @@ export default function ForgotPasswordPage() {
               onClick={scrollToForm}
               className="flex items-center gap-2 bg-primary text-primary-foreground px-6 py-3 rounded-full shadow-lg hover:opacity-90 transition-opacity"
             >
-              Reset Password
+              {tAuth('forgotPassword.title')}
               <ArrowDown className="h-4 w-4" />
             </button>
+          </div>
+          <div className="absolute bottom-10 left-10 right-10 text-center md:text-left hidden md:block">
+            <h2 className="text-3xl font-bold mb-4">{tAuth('register.hello')}</h2>
+            <p className="text-gray-500 text-sm">
+              {tCommon('metadata.description')}
+            </p>
           </div>
         </div>
 
@@ -94,7 +101,7 @@ export default function ForgotPasswordPage() {
               >
                 <ArrowLeft className="h-5 w-5" />
               </Link>
-              <h1 className="text-2xl font-bold">Reset Password</h1>
+              <h1 className="text-2xl font-bold">{tAuth('forgotPassword.title')}</h1>
             </div>
 
             <motion.div
@@ -105,7 +112,7 @@ export default function ForgotPasswordPage() {
               <div ref={formBoundsRef}>
                 <MotionContainer modeKey="forgot" effect="fadeUp">
                   <div className="mb-6 text-sm text-muted-foreground">
-                    Nhập địa chỉ email của bạn, chúng tôi sẽ gửi liên kết để đặt lại mật khẩu.
+                    {tAuth('forgotPassword.instruction')}
                   </div>
 
                   {message && (
@@ -123,31 +130,31 @@ export default function ForgotPasswordPage() {
                   <form onSubmit={handleSubmit} className="space-y-6">
                     {/* Email */}
                     <div className="space-y-2">
-                      <h4 className="text-sm font-medium text-muted-foreground">Email</h4>
+                      <h4 className="text-sm font-medium text-muted-foreground">{tAuth('register.email')}</h4>
                       <input
                         type="email"
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
                         className="w-full bg-transparent border-b border-input px-0 py-1 focus:outline-none focus:border-primary text-foreground"
-                        placeholder="Nhập địa chỉ email"
+                        placeholder={tAuth('forgotPassword.emailPlaceholder')}
                         required
                       />
                     </div>
 
                     <div className="flex justify-center">
                       <Button type="submit" disabled={loading} className="w-full max-w-xs text-center">
-                        {loading ? "Đang gửi..." : "Gửi liên kết khôi phục"}
+                        {loading ? tAuth('forgotPassword.sending') : tAuth('forgotPassword.submit')}
                       </Button>
                     </div>
 
                     <div className="mt-6 text-center text-sm text-muted-foreground">
                       <div>
-                        Nhớ mật khẩu?{" "}
+                        {tAuth('forgotPassword.rememberPassword')}{" "}
                         <Link
                           href="/register"
                           className="text-blue-500 dark:text-blue-400 hover:underline"
                         >
-                          Quay lại đăng nhập
+                          {tAuth('forgotPassword.backToLogin')}
                         </Link>
                       </div>
                     </div>

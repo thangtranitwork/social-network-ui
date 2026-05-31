@@ -8,8 +8,12 @@ import useAppStore from "@/store/ZustandStore";
 import { X, Edit2, Check, UserPlus, Trash2, LogOut, Users, User, Loader2, Shield, Camera } from "lucide-react";
 import Link from "next/link";
 import { uploadFile } from "@/utils/fileUpload";
+import { useTranslations } from "next-intl";
+import ConfirmModal from "../ui-components/ConfirmModal";
 
 export default function ChatDetailsSidebar({ chatId, targetUser, onClose, onChatUpdated }) {
+  const t = useTranslations("chat.details");
+  const tCommon = useTranslations("common");
   const [members, setMembers] = useState([]);
   const [loadingMembers, setLoadingMembers] = useState(false);
   const [isEditingName, setIsEditingName] = useState(false);
@@ -19,6 +23,14 @@ export default function ChatDetailsSidebar({ chatId, targetUser, onClose, onChat
   const [loadingFriends, setLoadingFriends] = useState(false);
   const [friendSearchQuery, setFriendSearchQuery] = useState("");
   const [updatingAvatar, setUpdatingAvatar] = useState(false);
+
+  // Confirm modal state
+  const [confirmConfig, setConfirmConfig] = useState({
+    isOpen: false,
+    title: "",
+    message: "",
+    onConfirm: () => {},
+  });
 
   const fileInputRef = useRef(null);
 
@@ -42,7 +54,7 @@ export default function ChatDetailsSidebar({ chatId, targetUser, onClose, onChat
       setMembers(res.data.body || []);
     } catch (err) {
       console.error("Failed to load group members:", err);
-      toast.error("Không thể tải danh sách thành viên");
+      toast.error(t("loadMembersError"));
     } finally {
       setLoadingMembers(false);
     }
@@ -76,7 +88,7 @@ export default function ChatDetailsSidebar({ chatId, targetUser, onClose, onChat
 
   const handleUpdateGroupName = async () => {
     if (!groupName.trim()) {
-      toast.error("Tên nhóm không được để trống");
+      toast.error(t("nameEmpty"));
       return;
     }
     try {
@@ -84,14 +96,14 @@ export default function ChatDetailsSidebar({ chatId, targetUser, onClose, onChat
         name: groupName.trim(),
         avatar: targetUser?.avatar || "",
       });
-      toast.success("Cập nhật tên nhóm thành công");
+      toast.success(t("updateNameSuccess"));
       setIsEditingName(false);
       if (onChatUpdated) {
         onChatUpdated(chatId, { name: groupName.trim() });
       }
     } catch (err) {
       console.error("Failed to update group name:", err);
-      toast.error("Không thể cập nhật tên nhóm");
+      toast.error(t("updateNameError"));
     }
   };
 
@@ -115,11 +127,11 @@ export default function ChatDetailsSidebar({ chatId, targetUser, onClose, onChat
         
         // 3. Update group metadata in DB
         await api.put(`/v1/chat/groups/${chatId}`, {
-          name: groupName.trim() || targetUser?.name || "Trò chuyện nhóm",
+          name: groupName.trim() || targetUser?.name || t("groupChat"),
           avatar: fileId,
         });
         
-        toast.success("Cập nhật ảnh đại diện nhóm thành công");
+        toast.success(t("updateAvatarSuccess"));
         
         // 4. Trigger server sync to get resolved/presigned URLs
         if (onChatUpdated) {
@@ -127,7 +139,7 @@ export default function ChatDetailsSidebar({ chatId, targetUser, onClose, onChat
         }
       } catch (err) {
         console.error("Failed to update group avatar:", err);
-        toast.error("Không thể cập nhật ảnh đại diện nhóm");
+        toast.error(t("updateAvatarError"));
       } finally {
         setUpdatingAvatar(false);
       }
@@ -136,18 +148,24 @@ export default function ChatDetailsSidebar({ chatId, targetUser, onClose, onChat
   };
 
   const handleKickMember = async (userId, userFullName) => {
-    if (!confirm(`Bạn có chắc chắn muốn xóa ${userFullName} khỏi nhóm?`)) return;
-    try {
-      await api.delete(`/v1/chat/groups/${chatId}/members/${userId}`);
-      toast.success(`Đã xóa ${userFullName} khỏi nhóm`);
-      fetchGroupMembers();
-      if (onChatUpdated) {
-        onChatUpdated(chatId, {});
+    setConfirmConfig({
+      isOpen: true,
+      title: t("kickConfirmTitle") || tCommon("confirm"),
+      message: t("kickConfirm", { name: userFullName }),
+      onConfirm: async () => {
+        try {
+          await api.delete(`/v1/chat/groups/${chatId}/members/${userId}`);
+          toast.success(t("kickSuccess", { name: userFullName }));
+          fetchGroupMembers();
+          if (onChatUpdated) {
+            onChatUpdated(chatId, {});
+          }
+        } catch (err) {
+          console.error("Failed to kick member:", err);
+          toast.error(t("kickMemberError"));
+        }
       }
-    } catch (err) {
-      console.error("Failed to kick member:", err);
-      toast.error("Không thể xóa thành viên");
-    }
+    });
   };
 
   const handleAddMember = async (friend) => {
@@ -155,7 +173,7 @@ export default function ChatDetailsSidebar({ chatId, targetUser, onClose, onChat
       await api.post(`/v1/chat/groups/${chatId}/members`, {
         memberIds: [friend.id],
       });
-      toast.success(`Đã thêm ${friend.givenName} vào nhóm`);
+      toast.success(t("addSuccess", { name: friend.givenName }));
       fetchGroupMembers();
       setIsAddingMember(false);
       setFriendSearchQuery("");
@@ -164,22 +182,28 @@ export default function ChatDetailsSidebar({ chatId, targetUser, onClose, onChat
       }
     } catch (err) {
       console.error("Failed to add member:", err);
-      toast.error("Không thể thêm thành viên");
+      toast.error(t("addMemberError"));
     }
   };
 
   const handleLeaveGroup = async () => {
-    if (!confirm("Bạn có chắc chắn muốn rời khỏi nhóm trò chuyện này?")) return;
-    try {
-      await api.delete(`/v1/chat/groups/${chatId}/members/${currentUserId}`);
-      toast.success("Đã rời khỏi nhóm");
-      onClose();
-      await fetchChatList();
-      window.location.href = "/chats"; // Redirect to clean state
-    } catch (err) {
-      console.error("Failed to leave group:", err);
-      toast.error("Không thể rời khỏi nhóm");
-    }
+    setConfirmConfig({
+      isOpen: true,
+      title: t("leaveGroup") || tCommon("confirm"),
+      message: t("leaveConfirm"),
+      onConfirm: async () => {
+        try {
+          await api.delete(`/v1/chat/groups/${chatId}/members/${currentUserId}`);
+          toast.success(t("leaveSuccess"));
+          onClose();
+          await fetchChatList();
+          window.location.href = "/chats"; // Redirect to clean state
+        } catch (err) {
+          console.error("Failed to leave group:", err);
+          toast.error(t("leaveGroupError"));
+        }
+      }
+    });
   };
 
   // Filter friends who are not already in the group
@@ -198,10 +222,11 @@ export default function ChatDetailsSidebar({ chatId, targetUser, onClose, onChat
     <aside className="w-80 md:w-96 border-l border-[var(--border)] bg-[var(--card)] flex flex-col h-full z-10 animate-in slide-in-from-right duration-200">
       {/* Header */}
       <div className="flex items-center justify-between p-4 border-b border-[var(--border)]">
-        <h3 className="font-semibold text-base">Thông tin hội thoại</h3>
+        <h3 className="font-semibold text-base">{t("title")}</h3>
         <button
           onClick={onClose}
           className="p-1.5 text-muted-foreground hover:text-foreground hover:bg-[var(--accent)] rounded-full transition-colors"
+          title={t("close")}
         >
           <X className="w-4 h-4" />
         </button>
@@ -256,6 +281,7 @@ export default function ChatDetailsSidebar({ chatId, targetUser, onClose, onChat
                 <button
                   onClick={handleUpdateGroupName}
                   className="p-1.5 bg-green-500 hover:bg-green-600 text-white rounded-md transition"
+                  title={tCommon("save")}
                 >
                   <Check className="w-4 h-4" />
                 </button>
@@ -265,6 +291,7 @@ export default function ChatDetailsSidebar({ chatId, targetUser, onClose, onChat
                     setGroupName(targetUser?.name || "");
                   }}
                   className="p-1.5 bg-gray-500 hover:bg-gray-600 text-white rounded-md transition"
+                  title={tCommon("cancel")}
                 >
                   <X className="w-4 h-4" />
                 </button>
@@ -273,14 +300,14 @@ export default function ChatDetailsSidebar({ chatId, targetUser, onClose, onChat
               <div className="flex items-center justify-center gap-1.5 group">
                 <h4 className="font-bold text-lg line-clamp-1 text-[var(--foreground)]">
                   {isGroup
-                    ? targetUser?.name || "Trò chuyện nhóm"
+                    ? targetUser?.name || t("groupChat")
                     : `${targetUser?.givenName || ""} ${targetUser?.familyName || ""}`.trim() || targetUser?.username}
                 </h4>
                 {isAdmin && (
                   <button
                     onClick={() => setIsEditingName(true)}
                     className="p-1 text-muted-foreground hover:text-foreground rounded transition opacity-0 group-hover:opacity-100"
-                    title="Đổi tên nhóm"
+                    title={tCommon("edit")}
                   >
                     <Edit2 className="w-3.5 h-3.5" />
                   </button>
@@ -290,7 +317,7 @@ export default function ChatDetailsSidebar({ chatId, targetUser, onClose, onChat
 
             <p className="text-xs text-muted-foreground mt-1">
               {isGroup
-                ? `Nhóm trò chuyện • ${members.length} thành viên`
+                ? t("groupChatMembers", { count: members.length })
                 : `@${targetUser?.username || ""}`}
             </p>
           </div>
@@ -305,7 +332,7 @@ export default function ChatDetailsSidebar({ chatId, targetUser, onClose, onChat
                 className="flex items-center gap-3 p-3 rounded-xl hover:bg-[var(--accent)] transition text-sm font-medium"
               >
                 <User className="w-4 h-4 text-blue-500" />
-                <span>Xem trang cá nhân</span>
+                <span>{t("viewProfile")}</span>
               </Link>
             )}
           </div>
@@ -317,7 +344,7 @@ export default function ChatDetailsSidebar({ chatId, targetUser, onClose, onChat
             <div className="flex items-center justify-between border-b border-[var(--border)] pb-2">
               <h5 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-1">
                 <Users className="w-3.5 h-3.5" />
-                <span>Thành viên nhóm ({members.length})</span>
+                <span>{t("members", { count: members.length })}</span>
               </h5>
               {isAdmin && (
                 <button
@@ -325,7 +352,7 @@ export default function ChatDetailsSidebar({ chatId, targetUser, onClose, onChat
                   className="text-xs font-semibold text-blue-500 hover:text-blue-600 flex items-center gap-1 transition"
                 >
                   <UserPlus className="w-3.5 h-3.5" />
-                  <span>{isAddingMember ? "Đóng" : "Thêm"}</span>
+                  <span>{isAddingMember ? t("close") : t("add")}</span>
                 </button>
               )}
             </div>
@@ -333,11 +360,11 @@ export default function ChatDetailsSidebar({ chatId, targetUser, onClose, onChat
             {/* Add Member Subsection */}
             {isAddingMember && (
               <div className="p-3 bg-[var(--accent)]/50 rounded-xl space-y-2.5 border border-[var(--border)] animate-in fade-in duration-200">
-                <p className="text-xs font-medium text-muted-foreground">Thêm bạn bè vào nhóm</p>
+                <p className="text-xs font-medium text-muted-foreground">{t("addFriendsToGroup")}</p>
                 <div className="relative">
                   <input
                     type="text"
-                    placeholder="Tìm bạn bè..."
+                    placeholder={t("searchFriends")}
                     value={friendSearchQuery}
                     onChange={(e) => setFriendSearchQuery(e.target.value)}
                     className="w-full text-xs py-1.5 px-3 bg-[var(--background)] border border-[var(--border)] rounded-lg outline-none text-[var(--foreground)] placeholder-muted-foreground"
@@ -350,7 +377,7 @@ export default function ChatDetailsSidebar({ chatId, targetUser, onClose, onChat
                   </div>
                 ) : filteredFriends.length === 0 ? (
                   <p className="text-xs text-muted-foreground text-center py-1">
-                    Không tìm thấy bạn bè nào phù hợp
+                    {t("noFriendsFound")}
                   </p>
                 ) : (
                   <div className="space-y-1.5 max-h-36 overflow-y-auto pr-1">
@@ -374,7 +401,7 @@ export default function ChatDetailsSidebar({ chatId, targetUser, onClose, onChat
                           onClick={() => handleAddMember(friend)}
                           className="px-2 py-1 bg-blue-500 hover:bg-blue-600 text-white rounded text-[10px] font-semibold transition"
                         >
-                          Thêm
+                          {t("add")}
                         </button>
                       </div>
                     ))}
@@ -408,7 +435,7 @@ export default function ChatDetailsSidebar({ chatId, targetUser, onClose, onChat
                         <div>
                           <p className="font-semibold text-sm flex items-center gap-1.5">
                             <span className="line-clamp-1">{fullName}</span>
-                            {isSelf && <span className="text-[10px] text-muted-foreground font-normal">(Bạn)</span>}
+                            {isSelf && <span className="text-[10px] text-muted-foreground font-normal">({tCommon("you")})</span>}
                           </p>
                           <p className="text-xs text-muted-foreground">@{member.username}</p>
                         </div>
@@ -417,11 +444,11 @@ export default function ChatDetailsSidebar({ chatId, targetUser, onClose, onChat
                       <div className="flex items-center gap-1.5">
                         {isMemberAdmin && (
                           <span
-                            title="Quản trị viên"
+                            title={t("admin")}
                             className="text-[10px] font-bold text-amber-500 bg-amber-500/10 px-1.5 py-0.5 rounded-full flex items-center gap-0.5"
                           >
                             <Shield className="w-2.5 h-2.5" />
-                            <span>Admin</span>
+                            <span>{t("admin")}</span>
                           </span>
                         )}
 
@@ -429,7 +456,7 @@ export default function ChatDetailsSidebar({ chatId, targetUser, onClose, onChat
                           <button
                             onClick={() => handleKickMember(member.id, fullName)}
                             className="p-1 text-red-500 hover:bg-red-500/10 rounded transition opacity-0 group-hover/item:opacity-100"
-                            title="Xóa khỏi nhóm"
+                            title={t("kickMemberError")}
                           >
                             <Trash2 className="w-4 h-4" />
                           </button>
@@ -452,10 +479,19 @@ export default function ChatDetailsSidebar({ chatId, targetUser, onClose, onChat
             className="w-full flex items-center justify-center gap-2 py-2.5 px-4 bg-red-500/10 hover:bg-red-500 text-red-500 hover:text-white rounded-xl transition font-medium text-sm"
           >
             <LogOut className="w-4 h-4" />
-            <span>Rời khỏi nhóm</span>
+            <span>{t("leaveGroup")}</span>
           </button>
         </div>
       )}
+
+      {/* Confirm Modal */}
+      <ConfirmModal
+        isOpen={confirmConfig.isOpen}
+        onClose={() => setConfirmConfig({ ...confirmConfig, isOpen: false })}
+        onConfirm={confirmConfig.onConfirm}
+        title={confirmConfig.title}
+        message={confirmConfig.message}
+      />
     </aside>
   );
 }

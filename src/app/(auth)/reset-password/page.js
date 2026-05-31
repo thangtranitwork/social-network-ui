@@ -10,11 +10,15 @@ import { motion } from "framer-motion"
 import useMeasure from "react-use-measure"
 import MotionContainer from "@/components/ui-components/MotionContainer"
 import api from "@/utils/axios"
+import { parseApiError } from "@/utils/errorCodes"
 import axios from "axios"
-import process from "next/dist/build/webpack/loaders/resolve-url-loader/lib/postcss";
+import { useTranslations } from "next-intl"
 
 // Separate component that uses useSearchParams
 function ResetPasswordContent() {
+  const tAuth = useTranslations('auth');
+  const tError = useTranslations('error');
+  const tCommon = useTranslations('common');
   const router = useRouter()
   const searchParams = useSearchParams()
   const email = searchParams.get("email")
@@ -33,7 +37,7 @@ function ResetPasswordContent() {
 
   useEffect(() => {
     if (!email || !code) {
-      setError("❌ Đường dẫn không hợp lệ.")
+      setError(`❌ ${tAuth('resetPassword.invalidLink')}`)
       return
     }
 
@@ -43,49 +47,46 @@ function ResetPasswordContent() {
           email,
           code,
         })
-        console.log(res)
         if (res.data.code === 200) {
-          console.log(res)
           setVerified(true)
         }
       } catch (err) {
-        console.log(err.response);
         if (err?.response?.data?.code === 1009 || err?.response?.data?.code === 9996) {
-          setError("❌ Mã xác thực không hợp lệ hoặc đã hết hạn.")
+          setError(`❌ ${tAuth('resetPassword.invalidCode')}`)
           setShowResendButton(true)
           return
         }
-        setError("❌ Mã xác thực không hợp lệ hoặc đã hết hạn. 2")
+        setError(`❌ ${tAuth('resetPassword.invalidCode')}`)
       }
     }
 
     verify()
-  }, [email, code])
+  }, [email, code, tAuth])
 
   const handleResend = async (e) => {
     e.preventDefault()
     setMessage("")
     if (!email) {
-      setMessage("❌ Email không hợp lệ.")
+      setMessage(`❌ ${tAuth('resetPassword.emailInvalid')}`)
       return
     }
     setLoading(true)
     try {
       const res = await api.post(`/v1/forgot-password/resend-email?email=${email}`,
-        {}, // body (empty object vì bạn gửi data qua query string)
+        {},
         {
           headers: {
-            "X-Continue-Page": `${process.env.NEXT_PUBLIC_API_URL}/reset-password`
+            "X-Continue-Page": `${window.location.origin}/reset-password`
           }
         }
       )
       if (res.data.code === 200) {
         setError("");
         setSent(true);
-        setMessage("✅ Gửi lại email thay đổi thành công!")
+        setMessage(`✅ ${tAuth('resetPassword.resendSuccess')}`)
       }
     } catch (err) {
-      setMessage(`❌Gửi email thất bại: ${err.response?.data?.message || err.message}`)
+      setMessage(`❌ ${tAuth('resetPassword.resendFailed', { error: parseApiError(err, tError) })}`)
     } finally {
       setLoading(false)
     }
@@ -95,26 +96,25 @@ function ResetPasswordContent() {
     e.preventDefault()
     setMessage("")
     if (!password || !confirmPassword) {
-      setMessage("❌ Vui lòng nhập đầy đủ mật khẩu.")
+      setMessage(`❌ ${tAuth('validation.fillAllFields')}`)
       return
     }
 
     if (password !== confirmPassword) {
-      setMessage("❌ Mật khẩu xác nhận không khớp.")
+      setMessage(`❌ ${tAuth('validation.passwordNotMatch')}`)
       return
     }
 
     setLoading(true)
     try {
-      const res = await api.patch(`/v1/update-password/update`, {
+      await api.patch(`/v1/update-password/update`, {
         email,
         password: password,
       })
-      console.log(res)
-      setMessage("✅ Mật khẩu của bạn đã được thay đổi thành công!")
+      setMessage(`✅ ${tAuth('resetPassword.updateSuccess')}`)
       setTimeout(() => router.push("/register"), 3000)
     } catch (err) {
-      setMessage(`❌Đặt lại mật khẩu thất bại: ${err.response?.data?.message || err.message}`)
+      setMessage(`❌ ${tAuth('resetPassword.updateFailed', { error: parseApiError(err, tError) })}`)
     } finally {
       setLoading(false)
     }
@@ -130,7 +130,7 @@ function ResetPasswordContent() {
           <Link href="/register" className="mr-4 text-muted-foreground hover:text-foreground transition">
             <ArrowLeft className="h-5 w-5" />
           </Link>
-          <h1 className="text-2xl font-bold">Đặt lại mật khẩu</h1>
+          <h1 className="text-2xl font-bold">{tAuth('resetPassword.title')}</h1>
         </div>
 
         <motion.div animate={{ height }} transition={{ duration: 0.3 }} style={{ overflow: "hidden" }}>
@@ -140,9 +140,8 @@ function ResetPasswordContent() {
                 <div className="space-y-4">
                   <div className="bg-red-100 text-red-800 text-sm p-3 rounded">{error}</div>
                   {showResendButton && (
-
                     <Button disabled={loading} onClick={handleResend} className=" w-full text-md text-white bg-black px-3 py-2 rounded hover:underline">
-                      Gửi lại email xác thực 📩
+                      {tAuth('register.resendEmail')}
                     </Button>
                   )}
                 </div>
@@ -152,7 +151,7 @@ function ResetPasswordContent() {
               >
                 {message}
               </div> : !verified ? (
-                <div className="text-muted-foreground text-sm">Đang xác minh...</div>
+                <div className="text-muted-foreground text-sm">{tAuth('resetPassword.verifying')}</div>
               ) : (
                 <form onSubmit={handleSubmit} className="space-y-6">
                   {message && (
@@ -165,32 +164,32 @@ function ResetPasswordContent() {
                   )}
 
                   <div className="space-y-2">
-                    <h4 className="text-sm font-medium text-muted-foreground">Mật khẩu mới</h4>
+                    <h4 className="text-sm font-medium text-muted-foreground">{tAuth('resetPassword.newPassword')}</h4>
                     <input
                       type="password"
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
                       className="w-full bg-transparent border-b border-input px-0 py-1 focus:outline-none focus:border-primary text-foreground"
-                      placeholder="Nhập mật khẩu mới"
+                      placeholder={tAuth('resetPassword.passwordPlaceholder')}
                       required
                     />
                   </div>
 
                   <div className="space-y-2">
-                    <h4 className="text-sm font-medium text-muted-foreground">Xác nhận mật khẩu</h4>
+                    <h4 className="text-sm font-medium text-muted-foreground">{tAuth('resetPassword.confirmPassword')}</h4>
                     <input
                       type="password"
                       value={confirmPassword}
                       onChange={(e) => setConfirmPassword(e.target.value)}
                       className="w-full bg-transparent border-b border-input px-0 py-1 focus:outline-none focus:border-primary text-foreground"
-                      placeholder="Nhập lại mật khẩu"
+                      placeholder={tAuth('resetPassword.confirmPlaceholder')}
                       required
                     />
                   </div>
 
                   <div className="flex justify-center">
                     <Button type="submit" disabled={loading} className="w-full max-w-xs text-center">
-                      {loading ? "Đang đặt lại..." : "Đặt lại mật khẩu"}
+                      {loading ? tAuth('resetPassword.resetting') : tAuth('resetPassword.submit')}
                     </Button>
                   </div>
                 </form>
@@ -205,6 +204,7 @@ function ResetPasswordContent() {
 
 // Loading fallback component
 function LoadingFallback() {
+  const tAuth = useTranslations('auth');
   return (
     <div className="w-full md:w-1/2 min-h-screen flex items-center justify-center p-6 bg-background">
       <div className="w-full max-w-md text-card-foreground rounded-xl p-8 shadow-xl bg-[var(--card)]">
@@ -212,9 +212,9 @@ function LoadingFallback() {
           <Link href="/login" className="mr-4 text-muted-foreground hover:text-foreground transition">
             <ArrowLeft className="h-5 w-5" />
           </Link>
-          <h1 className="text-2xl font-bold">Đặt lại mật khẩu</h1>
+          <h1 className="text-2xl font-bold">{tAuth('resetPassword.title')}</h1>
         </div>
-        <div className="text-muted-foreground text-sm">Đang tải...</div>
+        <div className="text-muted-foreground text-sm">{tAuth('loading')}</div>
       </div>
     </div>
   )

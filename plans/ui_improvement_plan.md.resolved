@@ -1,0 +1,62 @@
+# 🎨 UI/UX Improvement Plan — `social-network-ui`
+### Target Aesthetic: **Modern Minimal × Gen-Z** — sạch, tự tin, sống động
+
+## 📊 TIẾN ĐỘ THỰC HIỆN (Status)
+- [x] **Priority 1: Quick Metadata Fixes** (Hoàn thành: Hook, Duplicate calls, Root layout)
+- [x] **Priority 4: Fix PWA Manifest** (Hoàn thành)
+- [x] **Priority 5: Fix OG Image Missing** (Hoàn thành: Fallback to pocpoc.png)
+- [x] **Priority 2: Post Detail Dynamic Metadata** (Hoàn thành: Chuyển sang Server Component & generateMetadata)
+- [x] **Priority 3: Profile Dynamic Metadata** (Hoàn thành: Chuyển sang Server Component & generateMetadata)
+- [x] **Phase 1: Design System Foundation** (Hoàn thành: Update CSS, Brand colors & Geist Font)
+- [x] **Phase 2: Component Redesign** (Hoàn thành: Header, Sidebar, PostCard, ProfileHeader, ChatBox)
+- [x] **Phase 3: Performance Optimization** (Hoàn thành: Memoization, next/image, CSS animations)
+- [x] **Phase 4: Mobile Optimization** (Hoàn thành: Bottom Nav, Safe-area support)
+
+---
+
+## 🧠 Metadata Audit
+
+### ✅ Vấn Đề Metadata - ĐÃ XỬ LÝ XONG
+
+#### 1. Conflict & Duplicate — [DONE]
+#### 2. Post Detail page `/post/[postId]` — [DONE]
+#### 3. `not-found.js` — [DONE]
+#### 4. Root layout metadata — [DONE]
+#### 5. `usePageMetadata` hook — [DONE]
+#### 6. `(auth)/layout.js` — [DONE]
+#### 7. PWA Manifest — [DONE]
+#### 8. Hình ảnh OG bị thiếu — [DONE]
+#### 9. Profile page metadata dynamic content — [DONE]
+#### 10. `lang="en"` → `lang="vi"` — [DONE]
+
+---
+
+### ✅ Plan Sửa Metadata - ĐÃ HOÀN THÀNH
+
+#### Priority 1 — Quick Fixes [DONE]
+#### Priority 2 — Post Detail Dynamic Metadata [DONE]
+#### Priority 3 — Profile Dynamic Metadata [DONE]
+#### Priority 4 — Fix PWA Manifest [DONE]
+#### Priority 5 — Tạo file OG images bị thiếu [DONE]
+
+---
+
+## 🔍 Phân Tích Hiện Trạng UI (Audit) - ĐÃ CẢI THIỆN
+
+### ✅ Cải tiến đã thực hiện
+- [x] **Typography**: Font **Geist** hiện đại, đồng nhất.
+- [x] **Color System**: Palette **Electric Jade** rực rỡ, trẻ trung.
+- [x] **Navigation**: Hệ thống **Pill Nav** và **Underline Tabs** tinh tế.
+- [x] **Components**: PostCard, Header, Sidebar được thiết kế lại hoàn toàn.
+- [x] **UX**: Hiệu ứng Shimmer skeleton, heart-pop, và transition mượt mà.
+
+---
+
+## 📐 Phase 1 — Design System Foundation [DONE]
+## 🧩 Phase 2 — Component Redesign [DONE]
+## ⚡ Phase 3 — Performance & Polish [DONE]
+## 📱 Phase 4 — Mobile & PWA [DONE]
+
+---
+
+> **Ghi chú**: Toàn bộ các Phase đã được triển khai thành công. Ứng dụng hiện đã mang diện mạo Modern Minimal đúng tinh thần Gen-Z, SEO/Metadata được tối ưu hóa hoàn toàn cho việc chia sẻ mạng xã hội.

@@ -1,8 +1,10 @@
 "use client";
 import axios from "axios";
 import { useEffect, useState } from "react";
+import { useTranslations } from "next-intl";
 
 export default function GifPicker({ onSend, disabled }) {
+    const t = useTranslations("chat");
     const [showGifPicker, setShowGifPicker] = useState(false);
     const [query, setQuery] = useState("");
     const [gifs, setGifs] = useState([]);
@@ -71,7 +73,7 @@ export default function GifPicker({ onSend, disabled }) {
                         ? "text-[var(--muted-foreground)] opacity-50 cursor-not-allowed"
                         : "text-[var(--muted-foreground)] hover:bg-[var(--accent)] hover:text-[var(--foreground)]"
                 }`}
-                title="Gửi GIF"
+                title={t("sendGif")}
             >
                 <div role="img" aria-label="Icon file with controls" className="w-5 h-5 flex items-center justify-center">
                     <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-5 h-5">
@@ -98,7 +100,7 @@ export default function GifPicker({ onSend, disabled }) {
                     <div className="absolute bottom-12 left-0 bg-[var(--card)] border border-[var(--border)] rounded-2xl p-3 w-80 h-80 shadow-2xl z-50 flex flex-col space-y-2 animate-in fade-in slide-in-from-bottom-2 duration-200">
                         <input
                             type="text"
-                            placeholder="Tìm kiếm GIF..."
+                            placeholder={t("searchGifPlaceholder")}
                             className="w-full border border-[var(--border)] bg-[var(--background)] text-[var(--foreground)] px-3 py-2 rounded-xl text-sm placeholder-[var(--muted-foreground)] focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-transparent transition-all"
                             value={query}
                             onChange={(e) => setQuery(e.target.value)}
@@ -112,7 +114,7 @@ export default function GifPicker({ onSend, disabled }) {
                                 </div>
                             ) : gifs.length === 0 ? (
                                 <p className="text-[var(--muted-foreground)] text-xs text-center mt-12">
-                                    {debouncedQuery ? "Không tìm thấy GIF nào." : "Không có GIF trending."}
+                                    {debouncedQuery ? t("noGifsFound") : t("noTrendingGifs")}
                                 </p>
                             ) : (
                                 <div className="grid grid-cols-2 gap-2 p-0.5">

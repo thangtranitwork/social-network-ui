@@ -1,7 +1,9 @@
 "use client";
 import React, { useState, useRef, useEffect } from "react";
+import { useTranslations } from "next-intl";
 
 export default function VoiceRecorder({ onSend, disabled }) {
+  const t = useTranslations("voice");
   const [isRecording, setIsRecording] = useState(false);
   const [isStopped, setIsStopped] = useState(false);
   const [audioUrl, setAudioUrl] = useState(null);
@@ -52,7 +54,7 @@ export default function VoiceRecorder({ onSend, disabled }) {
   const handleStart = async () => {
     setError(null);
     if (!navigator.mediaDevices || !window.MediaRecorder) {
-      setError("Trình duyệt không hỗ trợ ghi âm.");
+      setError(t("browserError"));
       return;
     }
     try {
@@ -80,7 +82,7 @@ export default function VoiceRecorder({ onSend, disabled }) {
       setAudioUrl(null);
       startTimer();
     } catch (err) {
-      setError("Không thể truy cập micro.");
+      setError(t("accessError"));
     }
   };
 
@@ -155,13 +157,13 @@ export default function VoiceRecorder({ onSend, disabled }) {
           type="button"
           onClick={handleStart}
           disabled={disabled}
-          aria-label="Start recording"
+          aria-label={t("record")}
           className={`flex items-center justify-center w-9 h-9 rounded-xl transition-all ${
             disabled
               ? "text-[var(--muted-foreground)] opacity-50 cursor-not-allowed"
               : "text-[var(--muted-foreground)] hover:bg-[var(--accent)] hover:text-[var(--foreground)]"
           }`}
-          title="Ghi âm giọng nói"
+          title={t("record")}
         >
           <svg
             aria-hidden="true"
@@ -209,9 +211,9 @@ export default function VoiceRecorder({ onSend, disabled }) {
                 <button
                   type="button"
                   onClick={handleStop}
-                  aria-label="Stop recording"
+                  aria-label={t("stop")}
                   className="flex items-center justify-center w-7 h-7 rounded-lg text-red-500 hover:bg-red-500/10 transition-colors"
-                  title="Dừng ghi"
+                  title={t("stop")}
                 >
                   <svg
                     aria-hidden="true"
@@ -233,9 +235,9 @@ export default function VoiceRecorder({ onSend, disabled }) {
                 <button
                   type="button"
                   onClick={handlePlayPause}
-                  aria-label="Play/Pause"
+                  aria-label={t("play")}
                   className="flex items-center justify-center w-7 h-7 rounded-lg text-[var(--foreground)] hover:bg-[var(--accent)] transition-colors"
-                  title="Nghe lại"
+                  title={t("play")}
                 >
                   <svg
                     aria-hidden="true"
@@ -257,9 +259,9 @@ export default function VoiceRecorder({ onSend, disabled }) {
                   <button
                     type="button"
                     onClick={handleCancel}
-                    aria-label="Cancel recording"
+                    aria-label={t("delete")}
                     className="flex items-center justify-center w-7 h-7 rounded-lg text-[var(--muted-foreground)] hover:bg-[var(--accent)] hover:text-red-500 transition-colors"
-                    title="Xóa bản ghi"
+                    title={t("delete")}
                   >
                     <svg
                       aria-hidden="true"
@@ -277,9 +279,9 @@ export default function VoiceRecorder({ onSend, disabled }) {
                   <button
                     type="button"
                     onClick={handleSend}
-                    aria-label="Send recording"
+                    aria-label={t("send")}
                     className="flex items-center justify-center w-7 h-7 rounded-lg text-blue-500 hover:bg-blue-500/10 transition-colors"
-                    title="Gửi âm thanh"
+                    title={t("send")}
                   >
                     <svg
                       aria-hidden="true"

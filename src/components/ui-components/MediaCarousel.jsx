@@ -2,6 +2,7 @@ import Image from "next/image";
 import { useState, useCallback, useEffect } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
+import { useTranslations } from "next-intl";
 
 const variants = {
     enter: (direction) => ({ x: direction > 0 ? 300 : -300, opacity: 0 }),
@@ -31,6 +32,7 @@ const isVideo = (url = "") => {
 };
 
 export default function MediaCarousel({ media, page, setPage }) {
+    const t = useTranslations('errors');
     const [touchStartX, setTouchStartX] = useState(null);
     const [hasError, setHasError] = useState(false);
 
@@ -98,7 +100,7 @@ export default function MediaCarousel({ media, page, setPage }) {
                     transition={{ duration: 0.2 }}
                 >
                     {!isValidMedia || hasError ? (
-                        <p className="text-white">Media not available</p>
+                        <p className="text-white">{t('mediaUnavailable')}</p>
                     ) : isVideo(currentMedia) ? (
                         <video
                             autoPlay

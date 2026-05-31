@@ -1,4 +1,5 @@
 import { X, FileText, Image, Film, Music } from "lucide-react";
+import { useTranslations } from "next-intl";
 
 const getFileIcon = (fileType) => {
   if (!fileType) return <FileText className="w-8 h-8" />;
@@ -22,12 +23,13 @@ export default function FilePreviewInChat({
   filePreview, 
   onCancel 
 }) {
+  const t = useTranslations('chat');
   if (!selectedFile) return null;
 
   return (
     <div className="border-t border-[var(--border)] px-4 py-3 bg-[var(--muted)] space-y-3">
       <div className="flex items-center justify-between">
-        <span className="text-sm font-medium">File được chọn:</span>
+        <span className="text-sm font-medium">{t('fileSelected')}</span>
         <button
           onClick={onCancel}
           className="text-[var(--muted-foreground)] hover:text-red-500"

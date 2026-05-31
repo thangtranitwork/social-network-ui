@@ -1,15 +1,17 @@
 import React from 'react';
+import { useTranslations } from 'next-intl';
 
-const TypingIndicator = ({ isTyping }) => {
+const TypingIndicator = ({ isTyping, typingUser }) => {
+  const t = useTranslations('chat');
   if (!isTyping) return null;
 
   return (
     <div className="px-4 py-2 animate-fade-in">
       <div className="flex items-center gap-2 text-sm text-[var(--muted-foreground)]">
         <div className="flex items-center gap-1">
-          {/* <span>
-            {typingUser?.displayName || typingUser?.username || 'Ai đó'} đang nhập
-          </span> */}
+          <span>
+            {t('typingWithUser', { name: typingUser?.displayName || typingUser?.username || t('someone') })}
+          </span>
         </div>
         
         {/* Animated dots */}

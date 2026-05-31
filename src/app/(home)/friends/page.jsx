@@ -16,8 +16,10 @@ import {
   MoreVertical
 } from "lucide-react";
 import {pageMetadata, updatePageMetadata, usePageMetadata} from "@/utils/clientMetadata"; // Import metadata utility
+import { useTranslations } from "next-intl";
 
 export default function FriendPage() {
+  const t = useTranslations('friends');
   const [activeTab, setActiveTab] = useState("friends");
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -31,47 +33,48 @@ export default function FriendPage() {
 
   const tabConfig = {
     friends: {
-      title: "Bạn bè",
+      title: t('myFriends'),
       endpoint: `/v1/friends/${userName}`,
-      emptyMessage: "Bạn chưa có bạn bè nào",
+      emptyMessage: t('noFriends'),
       successMessages: {
-        unfriend: "Đã hủy kết bạn thành công"
+        unfriend: t('unfriendSuccess')
       }
     },
     requests: {
-      title: "Yêu cầu kết bạn",
+      title: t('requests'),
       endpoint: "/v1/friend-request/received-requests",
-      emptyMessage: "Không có yêu cầu kết bạn nào",
+      emptyMessage: t('noRequests'),
       successMessages: {
-        accept: "Đã chấp nhận yêu cầu kết bạn",
-        reject: "Đã từ chối yêu cầu kết bạn"
+        accept: t('acceptSuccess'),
+        reject: t('rejectSuccess') || t('declineSuccess')
       }
     },
     sent: {
-      title: "Đã gửi",
+      title: t('sentRequests'),
       endpoint: "/v1/friend-request/sent-requests",
-      emptyMessage: "Bạn chưa gửi yêu cầu kết bạn nào",
+      emptyMessage: t('noSentRequests'),
       successMessages: {
-        cancel: "Đã hủy yêu cầu kết bạn"
+        cancel: t('cancelRequestSuccess')
       }
     },
     suggestions: {
-      title: "Gợi ý",
+      title: t('suggestions'),
       endpoint: "/v1/friends/suggested",
-      emptyMessage: "Không có gợi ý nào",
+      emptyMessage: t('noSuggestions'),
       successMessages: {
-        add: "Đã gửi yêu cầu kết bạn thành công"
+        add: t('sendRequestSuccess')
       }
     },
     blocked: {
-      title: "Đã chặn",
+      title: t('blocked'),
       endpoint: "/v1/blocks",
-      emptyMessage: "Bạn chưa chặn ai",
+      emptyMessage: t('noBlocked'),
       successMessages: {
-        unblock: "Đã bỏ chặn thành công"
+        unblock: t('unblockSuccess')
       }
     }
   };
+
   usePageMetadata(pageMetadata.friends());
 
 
@@ -146,7 +149,7 @@ export default function FriendPage() {
         console.log(response.data.body)
       } catch (error) {
         console.error("Lỗi khi tải dữ liệu:", error);
-        toast.error("Lỗi khi tải dữ liệu");
+        toast.error(t('loadError'));
       } finally {
         setLoading(false);
       }
@@ -213,11 +216,11 @@ export default function FriendPage() {
         toast.success(tabConfig[activeTab].successMessages[actionType]);
       } else {
         // Nếu không phải code 200, hiển thị thông báo lỗi từ server
-        toast.error(response.data.message || "Có lỗi xảy ra");
+        toast.error(response.data.message || t('actionError'));
       }
     } catch (error) {
       // Không cần rollback users vì chúng ta chưa thay đổi optimistically
-      toast.error(`Lỗi: ${error.response?.data?.message || error.message}`);
+      toast.error(`${t('actionError')}: ${error.response?.data?.message || error.message}`);
     } finally {
       setActionLoading(prev => ({ ...prev, [userId]: false }));
     }
@@ -231,36 +234,36 @@ export default function FriendPage() {
       friends: {
         icon: UserMinus,
         style: "bg-red-50 text-red-600 hover:bg-red-100",
-        tooltip: "Hủy kết bạn"
+        tooltip: t('unfriend')
       },
       requests: [
         {
           icon: UserCheck,
           style: "bg-blue-50 text-blue-600 hover:bg-blue-100",
           action: "accept",
-          tooltip: "Chấp nhận"
+          tooltip: t('accept')
         },
         {
           icon: UserX,
           style: "bg-gray-50 text-gray-600 hover:bg-gray-100",
           action: "reject",
-          tooltip: "Từ chối"
+          tooltip: t('decline')
         }
       ],
       sent: {
         icon: X,
         style: "bg-gray-50 text-gray-600 hover:bg-gray-100",
-        tooltip: "Hủy yêu cầu"
+        tooltip: t('cancelRequest')
       },
       suggestions: {
         icon: UserPlus,
         style: "bg-green-50 text-green-600 hover:bg-green-100",
-        tooltip: "Thêm bạn"
+        tooltip: t('addFriend')
       },
       blocked: {
         icon: Shield,
         style: "bg-gray-50 text-gray-600 hover:bg-gray-100",
-        tooltip: "Bỏ chặn"
+        tooltip: t('unblock')
       }
     };
 
@@ -312,7 +315,7 @@ export default function FriendPage() {
 
   return (
       <div className=" container mx-auto px-4 py-6 max-w-4xl">
-        <h1 className="text-2xl font-bold mb-6 text-[var(--foreground)]">{tabConfig[activeTab].title}</h1>
+        <h1 className="text-2xl font-bold mb-6 text-[var(--foreground)]">{t('title')}</h1>
 
         <div
             ref={tabContainerRef}

@@ -1,25 +1,34 @@
 import PWAManager from "@/components/ui-components/PWANotificationManager";
 import "./globals.css";
 import ThemeProvider from "@/providers/ThemeProvider";
+import QueryProvider from "@/providers/QueryProvider";
 import Script from "next/script";
+import { NextIntlClientProvider } from "next-intl";
+import { getMessages, getLocale } from "next-intl/server";
+
 
 export const metadata = {
-  title: "PocPoc",
-  description: "Mạng xã hội kết nối mọi người",
-  icons: {
-    icon: "/pocpoc.png", // hoặc .png/.svg tùy loại file
-  },
-  // PWA metadata
-  manifest: "/manifest.json",
-  appleWebApp: {
-    capable: true,
-    statusBarStyle: "default",
-    title: "PocPoc",
-  },
+  metadataBase: new URL('https://pocpoc.online'),
+  title: { default: 'PocPoc', template: '%s | PocPoc' },
+  description: 'Kết nối bạn bè, chia sẻ khoảnh khắc và trò chuyện thời gian thực.',
+  keywords: ['mạng xã hội', 'chat', 'video call', 'kết bạn', 'pocpoc'],
+  icons: { icon: '/pocpoc.png' },
+  manifest: '/manifest.json',
+  robots: { index: true, follow: true },
+  appleWebApp: { capable: true, statusBarStyle: 'default', title: 'PocPoc' },
   openGraph: {
-    title: "PocPoc",
-    description: "Mạng xã hội kết nối mọi người",
-    siteName: "PocPoc",
+    type: 'website',
+    locale: 'vi_VN',
+    url: 'https://pocpoc.online',
+    siteName: 'PocPoc',
+    title: 'PocPoc - Kết nối không giới hạn',
+    description: 'Kết nối bạn bè, chia sẻ khoảnh khắc và trò chuyện thời gian thực.',
+    images: [{ url: '/pocpoc.png', width: 1200, height: 630, alt: 'PocPoc' }],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    site: '@PocPoc',
+    images: ['/pocpoc.png'],
   },
 };
 
@@ -29,9 +38,12 @@ export const viewport = {
   userScalable: false,
 };
 
-export default function RootLayout({ children }) {
+export default async function RootLayout({ children }) {
+  const locale = await getLocale();
+  const messages = await getMessages();
+
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang={locale} suppressHydrationWarning>
       <head>
         {/* PWA Meta Tags */}
         <meta name="application-name" content="PocPoc" />
@@ -116,11 +128,15 @@ export default function RootLayout({ children }) {
 
       </head>
       <body className="antialiased">
-        <ThemeProvider>
-                <PWAManager>
-          {children}
-                </PWAManager>
-        </ThemeProvider>
+        <NextIntlClientProvider locale={locale} messages={messages}>
+          <QueryProvider>
+            <ThemeProvider>
+              <PWAManager>
+                {children}
+              </PWAManager>
+            </ThemeProvider>
+          </QueryProvider>
+        </NextIntlClientProvider>
       </body>
     </html>
   );

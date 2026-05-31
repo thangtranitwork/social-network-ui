@@ -38,13 +38,13 @@ const isVideo = (url = "") => {
 ========================= */
 
 const Skeleton = () => (
-    <div className="absolute inset-0 animate-pulse bg-gray-200" />
+    <div className="absolute inset-0 skeleton" />
 );
 
 const MediaFallback = ({ onClick }) => (
     <div
         onClick={onClick}
-        className="absolute inset-0 flex items-center justify-center bg-gray-100 text-gray-400 text-sm cursor-pointer"
+        className="absolute inset-0 flex items-center justify-center bg-[var(--muted)] text-[var(--muted-foreground)] text-sm cursor-pointer"
     >
         Media not available
     </div>

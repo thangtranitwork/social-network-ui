@@ -6,28 +6,30 @@ import relativeTime from "dayjs/plugin/relativeTime";
 import { memo } from "react";
 import Avatar from "../ui-components/Avatar";
 import Badge from "../ui-components/Badge";
+import { useTranslations } from "next-intl";
+import { Phone, Video, Mic, Image as ImageIcon, FileText, Ban } from "lucide-react";
 
 dayjs.extend(relativeTime);
-dayjs.locale("vi");
 
 function ChatItem({ chat, onClick, selected }) {
+  const t = useTranslations('chat');
   const { chatId, latestMessage, target, notReadMessageCount, isGroup, name, avatar } = chat;
 
   const isOnline = !isGroup && (target?.isOnline || false);
   const isUnread = notReadMessageCount > 0;
   const displayName = isGroup
-    ? (name || "Trò chuyện nhóm")
+    ? (name || t('groupChat'))
     : `${target?.givenName || ""} ${target?.familyName || ""}`.trim() ||
       target?.username ||
-      "Unknown User";
+      t('unknownUser');
   const avatarUrl = isGroup ? avatar : target?.profilePictureUrl;
 
-  let content = "Chưa có tin nhắn nào";
+  let content = t('noMessages');
   let sentTime = "";
 
   if (latestMessage) {
     const isSenderTarget = latestMessage.sender?.id === target?.id;
-    const senderPrefix = isSenderTarget ? "" : isGroup ? `${latestMessage.sender?.givenName || latestMessage.sender?.username || "Ai đó"}: ` : "Bạn: ";
+    const senderPrefix = isSenderTarget ? "" : isGroup ? `${latestMessage.sender?.givenName || latestMessage.sender?.username || t('someone')}: ` : `${t('you')}: `;
     const {
       type,
       callId,
@@ -41,32 +43,68 @@ function ChatItem({ chat, onClick, selected }) {
     } = latestMessage;
 
     if (type === "CALL") {
+      const Icon = latestMessage.isVideoCall ? Video : Phone;
       if (callAt && endAt) {
         // ✅ Cuộc gọi kết thúc
         const durationSec = dayjs(endAt).diff(dayjs(callAt), "second");
         const min = Math.floor(durationSec / 60);
         const sec = durationSec % 60;
         const duration = ` (${min}:${sec.toString().padStart(2, "0")})`;
-        content = `📞 Cuộc gọi đã kết thúc${duration}`;
+        content = (
+          <span className="flex items-center gap-1">
+            <Icon size={14} className="text-muted-foreground" />
+            {t('callEnded')}{duration}
+          </span>
+        );
       } else {
         // ❌ Cuộc gọi nhỡ
-        content = "📞 Cuộc gọi nhỡ";
+        content = (
+          <span className="flex items-center gap-1 text-red-500">
+            <Icon size={14} />
+            {t('missedCall')}
+          </span>
+        );
       }
     } else {
       // ✅ Tin nhắn thường
       if (deleted) {
-        content = "Tin nhắn đã bị thu hồi";
+        content = (
+          <span className="flex items-center gap-1 italic opacity-70">
+            <Ban size={14} />
+            {t('thisMessageRevoked') || t('thisMessageDeleted')}
+          </span>
+        );
       } else if (type === "VOICE") {
-        content = "[Tin nhắn thoại]";
+        content = (
+          <span className="flex items-center gap-1">
+            <Mic size={14} className="text-blue-500" />
+            {t('voiceMessage')}
+          </span>
+        );
       } else if (attachment) {
-        content = "[Tệp đính kèm]";
+        content = (
+          <span className="flex items-center gap-1">
+            <FileText size={14} className="text-blue-500" />
+            {t('attachment')}
+          </span>
+        );
       } else if (type === "GIF") {
-        content = "[GIF đính kèm]";
+        content = (
+          <span className="flex items-center gap-1">
+            <ImageIcon size={14} className="text-pink-500" />
+            {t('gifAttachment')}
+          </span>
+        );
       }
       else {
-        content = msgContent?.slice(0, 60) || "Tin nhắn đã bị xoá";
+        content = msgContent?.slice(0, 60) || t('messageDeleted');
       }
-      content = senderPrefix + content;
+      
+      if (typeof content === 'string') {
+        content = senderPrefix + content;
+      } else {
+        content = <span className="flex items-center gap-1">{senderPrefix}{content}</span>;
+      }
     }
 
     sentTime = dayjs(sentAt).fromNow();

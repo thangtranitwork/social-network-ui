@@ -1,15 +1,17 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import api from "@/utils/axios";
 import ChatList from "@/components/social-app-component/ChatList";
 import ChatBox from "@/components/social-app-component/ChatBox";
-import useAppStore from "@/store/ZustandStore";
+import useAppStore, { selectSortedChatList } from "@/store/ZustandStore";
 import useIsMobile from "@/hooks/useIsMobile";
 import { pageMetadata, usePageMetadata } from "@/utils/clientMetadata";
 import { useSearchParams, useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 
 export default function ChatLayoutInner() {
+  const t = useTranslations('chat');
   const [selectedChatId, setSelectedChatId] = useState(null);
   const [targetUser, setTargetUser] = useState(null);
   const [chatListKey, setChatListKey] = useState(0);
@@ -21,7 +23,8 @@ export default function ChatLayoutInner() {
 
   const chatIdFromUrl = searchParams.get("chatId");
 
-  const chatList = useAppStore((state) => state.chatList);
+  const chatMap = useAppStore(state => state.chatMap);
+  const chatList = useMemo(() => selectSortedChatList({ chatMap }), [chatMap]);
   const chatsLoaded = useAppStore((state) => state.chatsLoaded);
   const fetchChatList = useAppStore((state) => state.fetchChatList);
   const clearChatSelection = useAppStore((state) => state.clearChatSelection);
@@ -231,10 +234,10 @@ export default function ChatLayoutInner() {
               </div>
             </div>
             <h3 className="text-xl font-semibold text-[var(--foreground)] mb-2">
-              Chưa có cuộc trò chuyện được chọn
+              {t('noChatSelected')}
             </h3>
             <p className="text-[var(--muted-foreground)] mb-4 max-w-md">
-              Chọn một cuộc trò chuyện từ danh sách bên trái hoặc bắt đầu cuộc trò chuyện mới để bắt đầu nhắn tin.
+              {t('selectChatDesc')}
             </p>
           </div>
         </main>

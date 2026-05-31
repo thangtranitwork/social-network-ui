@@ -37,64 +37,7 @@ export default function useChat(chatId) {
 
   // Hàm helper để cập nhật chatList
   const updateChatList = useCallback((newMessage) => {
-    console.log("🔄 Processing message for chatList:", newMessage);
-    
-    const { chatList } = useAppStore.getState();
-    console.log("📜 Current chatList:", chatList);
-    
-    const foundChat = chatList.find((c) => c.chatId === chatId);
-    console.log("🔍 Found chat:", foundChat);
-
-    if (foundChat) {
-      console.log("🔍 Current latestMessage:", foundChat.latestMessage);
-      console.log("🆕 New message structure:", {
-        id: newMessage.id,
-        content: newMessage.content,
-        sentAt: newMessage.sentAt,
-        sender: newMessage.sender
-      });
-
-      const updatedChat = {
-        ...foundChat,
-        latestMessage: {
-          id: newMessage.id,
-          content: newMessage.content,
-          sentAt: newMessage.sentAt,
-          sender: newMessage.sender,
-          messageType: newMessage.messageType,
-          attachment: newMessage.attachment,
-          attachments: newMessage.attachments,
-          deleted: newMessage.deleted || false
-        },
-        updatedAt: newMessage.sentAt,
-        notReadMessageCount: 0,
-      };
-      
-      console.log("🆕 UpdatedChat latestMessage:", updatedChat.latestMessage);
-      
-      // Tìm chat được update và các chat khác
-      const otherChats = chatList.filter((c) => c.chatId !== chatId);
-      
-      // Đặt chat được chọn ở cuối, các chat khác giữ nguyên thứ tự
-      const newChatList = [...otherChats, updatedChat];
-
-      console.log("📜 New chatList first item latestMessage:", newChatList[0]?.latestMessage);
-      
-      // Force update bằng cách tạo object mới hoàn toàn
-      useAppStore.setState({ 
-        chatList: newChatList.map(chat => ({...chat}))
-      });
-      
-      console.log("✅ ChatList updated successfully!");
-      
-      // Verify update
-      setTimeout(() => {
-        const { chatList: updatedList } = useAppStore.getState();
-        console.log("🔍 Verified latestMessage after update:", updatedList.find(c => c.chatId === chatId)?.latestMessage);
-      }, 100);
-    } else {
-      console.warn(`⚠️ Không tìm thấy chat với chatId: ${chatId}`);
-    }
+    useAppStore.getState().onMessageReceived({ ...newMessage, chatId });
   }, [chatId]);
 
   // ✅ Xử lý typing notifications

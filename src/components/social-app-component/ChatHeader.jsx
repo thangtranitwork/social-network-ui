@@ -5,6 +5,8 @@ import Avatar from "../ui-components/Avatar"
 import dayjs from "dayjs"
 import relativeTime from "dayjs/plugin/relativeTime"
 import { useRouter } from "next/navigation"
+import { useTranslations } from "next-intl"
+
 // Enable plugin
 dayjs.extend(relativeTime)
 export default function ChatHeader({
@@ -15,6 +17,9 @@ export default function ChatHeader({
   onMoreOptions,
 }) {
   const router = useRouter()
+  const t = useTranslations("chat");
+  const tCall = useTranslations("call");
+  const tCommon = useTranslations("common");
   const isGroup = targetUser?.isGroup || false
 
   const handleProfileClick = (e, user) => {
@@ -24,17 +29,25 @@ export default function ChatHeader({
     }
   }
 
-  let statusText = "Offline 🔴"
+  let statusText = (
+    <span className="flex items-center gap-1">
+      {t("offline")} <span className="w-2 h-2 rounded-full bg-red-500" />
+    </span>
+  )
   if (isGroup) {
-    statusText = "Cuộc trò chuyện nhóm"
+    statusText = t("details.groupChat")
   } else if (targetUser?.isOnline) {
-    statusText = "Online 🟢"
+    statusText = (
+      <span className="flex items-center gap-1">
+        {t("online")} <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
+      </span>
+    )
   } else if (targetUser?.lastOnline) {
     statusText = `${dayjs(targetUser.lastOnline).fromNow()}`
   }
 
   const displayName = isGroup
-    ? (targetUser?.name || "Trò chuyện nhóm")
+    ? (targetUser?.name || t("details.groupChat"))
     : `${targetUser?.givenName || ""} ${targetUser?.familyName || ""}`.trim() || targetUser?.username || "";
 
   const avatarUrl = isGroup ? targetUser?.avatar : targetUser?.profilePictureUrl;
@@ -65,7 +78,7 @@ export default function ChatHeader({
             onCall && onCall()
           }}
           className="p-2 text-[var(--muted-foreground)] hover:text-foreground hover:bg-[var(--accent)] rounded-full transition-colors"
-          title="Voice call"
+          title={tCall("audio")}
         >
           <Phone className="w-5 h-5" />
         </button>
@@ -76,7 +89,7 @@ export default function ChatHeader({
             onVideoCall && onVideoCall()
           }}
           className="p-2 text-[var(--muted-foreground)] hover:text-foreground hover:bg-[var(--accent)] rounded-full transition-colors"
-          title="Video call"
+          title={tCall("video")}
         >
           <Video className="w-5 h-5" />
         </button>
@@ -87,7 +100,7 @@ export default function ChatHeader({
             onMoreOptions && onMoreOptions()
           }}
           className="p-2 text-[var(--muted-foreground)] hover:text-foreground hover:bg-[var(--accent)] rounded-full transition-colors"
-          title="More options"
+          title={tCommon("moreOptions")}
         >
           <MoreVertical className="w-5 h-5" />
         </button>

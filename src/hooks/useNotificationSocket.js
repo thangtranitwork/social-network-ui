@@ -83,51 +83,7 @@ export default function useNotificationSocket(userId) {
           try {
             if (!data.message || !data.message.senderUsername) break;
 
-            const senderUsername = data.message.senderUsername;
-
-            // Truy xuất chatList từ store
-            const { chatList } = useAppStore.getState();
-
-            const foundChat = chatList.find(
-              (chat) => chat.target?.username === senderUsername
-            );
-
-            if (foundChat) {
-              const updatedChat = {
-                ...foundChat,
-                lastMessage: {
-                  ...foundChat.lastMessage,
-                  body: data.message.body,
-                },
-                updatedAt: data.message.createdAt || new Date().toISOString(),
-                notReadMessageCount: (foundChat.notReadMessageCount || 0) + 1,
-              };
-
-              // Tạo chatList mới: chat này đứng đầu, còn lại giữ nguyên nhưng sắp theo updatedAt
-              const newChatList = [
-                updatedChat,
-                ...chatList
-                  .filter((chat) => chat.id !== foundChat.id)
-                  .sort(
-                    (a, b) => new Date(b.updatedAt) - new Date(a.updatedAt)
-                  ),
-              ];
-
-              useAppStore.setState({ chatList: newChatList });
-
-              console.log(
-                "📥 Cập nhật chatList với NEW_MESSAGE từ",
-                senderUsername
-              );
-            } else {
-              console.log(
-                "🔍 Không tìm thấy chat với",
-                senderUsername,
-                "- giữ nguyên danh sách."
-              );
-            }
-
-            // Optionally gọi lại onMessageReceived để cập nhật nếu bạn vẫn muốn
+            // Gọi onMessageReceived để store tự xử lý O(1)
             useAppStore.getState().onMessageReceived(data.message);
           } catch (err) {
             console.error("❌ Failed to process NEW_MESSAGE:", err);

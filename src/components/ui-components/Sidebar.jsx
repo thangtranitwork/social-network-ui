@@ -19,8 +19,10 @@ import Badge from "@/components/ui-components/Badge";
 import api, {clearSession, getUserName} from "@/utils/axios";
 import NotificationList from "../social-app-component/NotificationList";
 import useAppStore from "@/store/ZustandStore";
+import { useTranslations } from "next-intl";
 
 export default function SidebarNavigation() {
+  const t = useTranslations('navigation');
   const pathname = usePathname();
   const router = useRouter();
   const [username, setUsername] = useState(null);
@@ -199,20 +201,20 @@ export default function SidebarNavigation() {
           }}
           disabled={isLoggingOut}
           className="w-full flex items-center px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors disabled:opacity-50"
-          aria-label="Đăng xuất"
+          aria-label={t('logout')}
         >
           <LogOut size={16} className="mr-3" />
-          {isLoggingOut ? "Đang đăng xuất..." : "Đăng xuất"}
+          {isLoggingOut ? t('loggingOut') : t('logout')}
         </button>
         
         <Link
           href="/settings/personalinfo"
           onClick={() => setShowSettingsDropdown(false)}
           className="flex items-center px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
-          aria-label="Cài đặt"
+          aria-label={t('settings')}
         >
           <Settings size={16} className="mr-3" />
-          Cài đặt
+          {t('settings')}
         </Link>
       </div>,
       document.body
@@ -266,156 +268,114 @@ export default function SidebarNavigation() {
           
           {/* Desktop: Thứ tự cũ | Mobile: Home Button ở giữa */}
           
-          {/* Home Button - Desktop: đầu tiên, Mobile: ở giữa */}
+          {/* Home Button */}
           <div className="relative order-4 md:order-1">
             <Link
               href="/home"
-              className={`
-                w-10 h-10 flex items-center justify-center rounded-full transition-colors
-                ${
-                  pathname === "/home"
-                    ? "text-black dark:bg-white"
-                    : "text-black shadow hover:bg-white hover:text-black dark:hover:bg-white"
-                }
-              `}
-              aria-label="Home"
-              title="Home"
+              className={`nav-item ${pathname === "/home" ? "active" : ""}`}
+              aria-label={t('home')}
+              title={t('home')}
             >
-              <Home size={24} strokeWidth={pathname === "/home" ? 3 : 2} />
+              <Home size={24} strokeWidth={pathname === "/home" ? 2.5 : 2} />
+              {pathname === "/home" && <div className="hidden md:block nav-indicator" />}
             </Link>
           </div>
 
-          {/* Search Button - Desktop: thứ 2, Mobile: đầu tiên */}
+          {/* Search Button */}
           <div className="relative order-1 md:order-2">
             <Link
               href="/search"
-              className={`
-                w-10 h-10 flex items-center justify-center rounded-full transition-colors
-                ${
-                  pathname === "/search"
-                    ? "text-black dark:bg-white"
-                    : "text-black shadow hover:bg-white hover:text-black dark:hover:bg-white"
-                }
-              `}
-              aria-label="Search"
-              title="Search"
+              className={`nav-item ${pathname === "/search" ? "active" : ""}`}
+              aria-label={t('search')}
+              title={t('search')}
             >
-              <Search size={24} strokeWidth={pathname === "/search" ? 3 : 2} />
+              <Search size={24} strokeWidth={pathname === "/search" ? 2.5 : 2} />
+              {pathname === "/search" && <div className="hidden md:block nav-indicator" />}
             </Link>
           </div>
 
-          {/* Messages Button - Desktop: thứ 3, Mobile: thứ 2 */}
+          {/* Messages Button */}
           <div className="relative order-2 md:order-3">
             <Link
               href="/chats"
-              className={`
-                w-10 h-10 flex items-center justify-center rounded-full transition-colors
-                ${
-                  pathname === "/chats"
-                    ? "text-black dark:bg-white"
-                    : "text-black shadow hover:bg-white hover:text-black dark:hover:bg-white"
-                }
-              `}
-              aria-label="Messages"
-              title="Messages"
+              className={`nav-item ${pathname === "/chats" ? "active" : ""}`}
+              aria-label={t('chats')}
+              title={t('chats')}
             >
-              <MessageCircle size={24} strokeWidth={pathname === "/chats" ? 3 : 2} />
+              <MessageCircle size={24} strokeWidth={pathname === "/chats" ? 2.5 : 2} />
+              {pathname === "/chats" && <div className="hidden md:block nav-indicator" />}
             </Link>
             
-            {/* ✅ Show badge for message icon when there are unread messages */}
             {unreadMessageCount > 0 && (
-              <Badge asNotification>{unreadMessageCount}</Badge>
+              <div className="absolute -top-1 -right-1">
+                <div className="badge">{unreadMessageCount}</div>
+              </div>
             )}
           </div>
 
-          {/* Friends Button - Desktop: thứ 3, Mobile: thứ 4 */}
+          {/* Friends Button */}
           <div className="relative order-3 md:order-4">
             <Link
               href="/friends"
-              className={`
-                w-10 h-10 flex items-center justify-center rounded-full transition-colors
-                ${
-                  pathname === "/friends"
-                    ? "text-black dark:bg-white"
-                    : "text-black shadow hover:bg-white hover:text-black dark:hover:bg-white"
-                }
-              `}
-              aria-label="Friends"
-              title="Friends"
+              className={`nav-item ${pathname === "/friends" ? "active" : ""}`}
+              aria-label={t('friends')}
+              title={t('friends')}
             >
-              <Users size={24} strokeWidth={pathname === "/friends" ? 3 : 2} />
+              <Users size={24} strokeWidth={pathname === "/friends" ? 2.5 : 2} />
+              {pathname === "/friends" && <div className="hidden md:block nav-indicator" />}
             </Link>
           </div>
 
-          {/* Profile Button - Desktop: thứ 5, Mobile: thứ 5 */}
+          {/* Profile Button */}
           <div className="relative order-5 md:order-5">
             <Link
               href={username ? `/profile/${username}` : "#"}
-              className={`
-                w-10 h-10 flex items-center justify-center rounded-full transition-colors
-                ${
-                  pathname.startsWith("/profile")
-                    ? "text-black dark:bg-white"
-                    : "text-black shadow hover:bg-white hover:text-black dark:hover:bg-white"
-                }
-              `}
-              aria-label="Profile"
-              title="Profile"
+              className={`nav-item ${pathname.startsWith("/profile") ? "active" : ""}`}
+              aria-label={t('profile')}
+              title={t('profile')}
             >
-              <UserPen size={24} strokeWidth={pathname.startsWith("/profile") ? 3 : 2} />
+              <UserPen size={24} strokeWidth={pathname.startsWith("/profile") ? 2.5 : 2} />
+              {pathname.startsWith("/profile") && <div className="hidden md:block nav-indicator" />}
             </Link>
           </div>
           
-          {/* 🔔 Notification button - Desktop: thứ 6, Mobile: thứ 6 */}
+          {/* 🔔 Notification button */}
           <div className="relative order-6 md:order-6">
             <button
               ref={notificationButtonRef}
               type="button"
-              aria-label="Notifications"
-              title="Notifications"
+              aria-label={t('notifications')}
+              title={t('notifications')}
               onClick={handleNotificationClick}
               disabled={isLoggingOut || isMarkingAsRead}
-              className={`
-                w-10 h-10 flex items-center justify-center rounded-full transition-colors relative
-                ${
-                  showNotifications
-                    ? "text-black dark:bg-white"
-                    : "text-black shadow hover:bg-white hover:text-black dark:hover:bg-white"
-                }
-                ${isLoggingOut || isMarkingAsRead ? 'opacity-50 cursor-not-allowed' : ''}
-              `}
+              className={`nav-item ${showNotifications ? "active" : ""} ${isLoggingOut || isMarkingAsRead ? 'opacity-50 cursor-not-allowed' : ''}`}
             >
-              {/* ✅ Show loading spinner when marking as read */}
               {isMarkingAsRead ? (
-                <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-blue-500" />
+                <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-[var(--accent)]" />
               ) : (
-                <Bell size={24} strokeWidth={showNotifications ? 3 : 2} />
+                <Bell size={24} strokeWidth={showNotifications ? 2.5 : 2} />
               )}
+              {showNotifications && <div className="hidden md:block nav-indicator" />}
               
-              {/* ✅ Show badge only if badgeCount > 0 and not loading */}
               {badgeCount > 0 && !isMarkingAsRead && (
-                <Badge asNotification>{badgeCount}</Badge>
+                <div className="absolute -top-1 -right-1">
+                  <div className="badge">{badgeCount}</div>
+                </div>
               )}
             </button>
           </div>
           
-          {/* More button with dropdown - Desktop: thứ 7, Mobile: thứ 7 */}
+          {/* More button */}
           <div className="relative order-7 md:order-7">
             <button
-              aria-label="Menu"
-              title="Menu"
+              aria-label={t('menu')}
+              title={t('menu')}
               ref={moreButtonRef}
               onClick={handleMoreClick}
-              className={`
-                w-10 h-10 flex items-center justify-center rounded-full transition-colors
-                ${
-                  showSettingsDropdown
-                    ? "text-black dark:bg-white"
-                    : "text-black shadow hover:bg-white hover:text-black dark:hover:bg-white"
-                }
-              `}
+              className={`nav-item ${showSettingsDropdown ? "active" : ""}`}
             >
-              <Menu size={24} strokeWidth={showSettingsDropdown ? 3 : 2} />
+              <Menu size={24} strokeWidth={showSettingsDropdown ? 2.5 : 2} />
+              {showSettingsDropdown && <div className="hidden md:block nav-indicator" />}
             </button>
           </div>
         </nav>

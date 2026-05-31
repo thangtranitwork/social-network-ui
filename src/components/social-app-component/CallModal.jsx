@@ -8,11 +8,14 @@ import {
 import api from "@/utils/axios";
 import { sendMessage, subscribe } from "@/utils/socket";
 import { getUserName, getUserId } from "@/utils/axios";
+import { useTranslations } from "next-intl";
 
 // ──────────────────────────────────────────────────────────────────────────────
 // CallModal (Mesh Group Implementation)
 // ──────────────────────────────────────────────────────────────────────────────
 export default function CallModal({ callState, callInfo, onClose, onConnected }) {
+  const t = useTranslations("call");
+  const tChat = useTranslations("chat");
   const myId = getUserId();
   const pcs = useRef(new Map()); // userId -> RTCPeerConnection
   const localStreamRef = useRef(null);
@@ -252,7 +255,7 @@ export default function CallModal({ callState, callInfo, onClose, onConnected })
           <div className="text-center">
             <p className="text-lg font-bold text-[var(--foreground)]">{callInfo?.callerName}</p>
             <p className="text-sm text-muted-foreground mt-1">
-              Đang mời bạn tham gia cuộc gọi...
+              {t("incoming")}
             </p>
           </div>
           <div className="flex gap-6">
@@ -297,12 +300,12 @@ export default function CallModal({ callState, callInfo, onClose, onConnected })
           {(isCamOff || !isVideo) && (
             <div className="absolute inset-0 flex items-center justify-center bg-gray-800">
                <div className="w-20 h-20 rounded-full bg-blue-600 flex items-center justify-center text-white text-2xl font-bold">
-                 Bạn
+                 {t("you")}
                </div>
             </div>
           )}
           <div className="absolute bottom-2 left-2 px-2 py-1 bg-black/40 rounded text-white text-xs backdrop-blur-md">
-            Bạn (Local)
+            {t("youLocal")}
           </div>
         </div>
 
@@ -321,7 +324,7 @@ export default function CallModal({ callState, callInfo, onClose, onConnected })
                 </div>
             )}
             <div className="absolute bottom-2 left-2 px-2 py-1 bg-black/40 rounded text-white text-xs backdrop-blur-md">
-              Người tham gia
+              {t("participant")}
             </div>
           </div>
         ))}
@@ -330,7 +333,7 @@ export default function CallModal({ callState, callInfo, onClose, onConnected })
         {participantCount === 1 && callState === "calling" && (
             <div className="absolute inset-0 flex items-center justify-center bg-black/20 pointer-events-none">
                 <div className="text-white text-center bg-black/40 p-4 rounded-xl backdrop-blur-md">
-                    <p className="animate-pulse">Đang chờ người khác tham gia...</p>
+                    <p className="animate-pulse">{t("waiting")}</p>
                 </div>
             </div>
         )}
@@ -342,7 +345,11 @@ export default function CallModal({ callState, callInfo, onClose, onConnected })
           <div className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
           {formatDuration(duration)}
         </div>
-        <button onClick={() => setIsMinimised(m => !m)} className="text-white/80 hover:text-white p-2 bg-black/20 rounded-full backdrop-blur-md transition-all pointer-events-auto">
+        <button 
+          onClick={() => setIsMinimised(m => !m)} 
+          className="text-white/80 hover:text-white p-2 bg-black/20 rounded-full backdrop-blur-md transition-all pointer-events-auto"
+          title={isMinimised ? t("maximise") : t("minimise")}
+        >
           {isMinimised ? <Maximize2 size={20} /> : <Minimize2 size={20} />}
         </button>
       </div>
@@ -350,17 +357,29 @@ export default function CallModal({ callState, callInfo, onClose, onConnected })
       {/* Bottom Controls */}
       {!isMinimised && (
         <div className="p-6 flex items-center justify-center gap-6 bg-gradient-to-t from-black/80 to-transparent">
-          <button onClick={toggleMic} className={`w-14 h-14 rounded-full flex items-center justify-center transition-all ${isMuted ? "bg-red-500 text-white" : "bg-white/10 text-white hover:bg-white/20"}`}>
+          <button 
+            onClick={toggleMic} 
+            className={`w-14 h-14 rounded-full flex items-center justify-center transition-all ${isMuted ? "bg-red-500 text-white" : "bg-white/10 text-white hover:bg-white/20"}`}
+            title={isMuted ? t("unmute") : t("mute")}
+          >
             {isMuted ? <MicOff /> : <Mic />}
           </button>
           
           {isVideo && (
-            <button onClick={toggleCam} className={`w-14 h-14 rounded-full flex items-center justify-center transition-all ${isCamOff ? "bg-red-500 text-white" : "bg-white/10 text-white hover:bg-white/20"}`}>
+            <button 
+              onClick={toggleCam} 
+              className={`w-14 h-14 rounded-full flex items-center justify-center transition-all ${isCamOff ? "bg-red-500 text-white" : "bg-white/10 text-white hover:bg-white/20"}`}
+              title={isCamOff ? t("camOn") : t("camOff")}
+            >
               {isCamOff ? <VideoOff /> : <Video />}
             </button>
           )}
 
-          <button onClick={hangup} className="w-16 h-16 rounded-full bg-red-600 text-white flex items-center justify-center shadow-lg hover:bg-red-700 transition-all hover:scale-105 active:scale-95">
+          <button 
+            onClick={hangup} 
+            className="w-16 h-16 rounded-full bg-red-600 text-white flex items-center justify-center shadow-lg hover:bg-red-700 transition-all hover:scale-105 active:scale-95"
+            title={t("hangup")}
+          >
             <PhoneOff size={28} />
           </button>
         </div>
@@ -368,7 +387,11 @@ export default function CallModal({ callState, callInfo, onClose, onConnected })
 
       {/* Mini hangup */}
       {isMinimised && (
-        <button onClick={hangup} className="absolute bottom-4 right-4 w-12 h-12 rounded-full bg-red-500 text-white flex items-center justify-center shadow-lg hover:bg-red-600 transition-all">
+        <button 
+          onClick={hangup} 
+          className="absolute bottom-4 right-4 w-12 h-12 rounded-full bg-red-500 text-white flex items-center justify-center shadow-lg hover:bg-red-600 transition-all"
+          title={t("hangup")}
+        >
           <PhoneOff size={20} />
         </button>
       )}

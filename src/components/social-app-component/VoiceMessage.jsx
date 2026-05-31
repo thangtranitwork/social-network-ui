@@ -1,8 +1,10 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
 import WaveSurfer from "wavesurfer.js";
+import { useTranslations } from "next-intl";
 
 export default function VoiceMessage({ msg }) {
+  const t = useTranslations("voice");
   const [isPlaying, setIsPlaying] = useState(false);
   const [duration, setDuration] = useState(0);
   const waveformRef = useRef(null);
@@ -32,9 +34,9 @@ export default function VoiceMessage({ msg }) {
       responsive: true,
       height: 36,
     });
-
+    console.log("tdxt-check", msg)
     // Load audio file
-    wavesurfer.current.load(msg.attachment);
+    wavesurfer.current.load(msg?.attachment);
 
     // Lấy thời lượng khi sẵn sàng
     wavesurfer.current.on("ready", () => {
@@ -53,7 +55,7 @@ export default function VoiceMessage({ msg }) {
     return () => {
       wavesurfer.current.destroy();
     };
-  }, [msg.attachment]);
+  }, [msg?.attachment]);
 
   const togglePlay = () => {
     wavesurfer.current.playPause();
@@ -72,6 +74,7 @@ export default function VoiceMessage({ msg }) {
           togglePlay();
         }}
         className="flex items-center justify-center w-8 h-8 rounded-full hover:bg-gray-200 dark:hover:bg-gray-800 transition"
+        aria-label={isPlaying ? t("stop") : t("play")}
       >
         {isPlaying ? (
           <svg

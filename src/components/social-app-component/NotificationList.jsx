@@ -6,41 +6,20 @@ import PostModal from '@/components/social-app-component/PostModal';
 import toast from 'react-hot-toast';
 import Avatar from '../ui-components/Avatar';
 import dayjs from "dayjs";
-import "dayjs/locale/vi";
 import relativeTime from "dayjs/plugin/relativeTime";
+import { useTranslations } from 'next-intl';
 
 dayjs.extend(relativeTime);
-dayjs.locale("vi");
 
-function formatNotificationText(n) {
-  const name = n.creator?.givenName || "Người dùng";
-  switch (n.action) {
-    case "SENT_ADD_FRIEND_REQUEST":
-      return `${name} đã gửi lời mời kết bạn`;
-    case "BE_FRIEND":
-      return `${name} đã trở thành bạn bè`;
-    case "POST":
-      return `${name} đã đăng một bài viết mới`;
-    case "SHARE":
-      return `${name} đã chia sẻ bài viết của bạn`;
-    case "LIKE_POST":
-      return `${name} đã thích bài viết của bạn`;
-    case "COMMENT":
-      return `${name} đã bình luận về bài viết của bạn`;
-    case "REPLY_COMMENT":
-      return `${name} đã trả lời bình luận của bạn`;
-    case "LIKE_COMMENT":
-      return `${name} đã thích bình luận của bạn`;
-    case "DELETE_POST":
-      return `${name} đã xóa bài viết của bạn`;
-    case "DELETE_COMMENT":
-      return `${name} đã xóa bình luận của bạn`;
-    default:
-      return `🔔 Có thông báo mới từ ${name}`;
-  }
+function formatNotificationText(n, t, tCommon) {
+  const name = n.creator?.givenName || tCommon("you"); // Use "You" or a generic name
+  const typeKey = `types.${n.action}`;
+  return t(typeKey, { name });
 }
 
 export default function NotificationList() {
+  const t = useTranslations("notifications");
+  const tCommon = useTranslations("common");
   const router = useRouter();
   const [selectedPost, setSelectedPost] = useState(null);
   const [isPostModalOpen, setIsPostModalOpen] = useState(false);
@@ -70,7 +49,7 @@ export default function NotificationList() {
       console.log('Comments response:', res);
       setComments(res.data.body || []);
     } catch (err) {
-      toast.error("Không thể tải bình luận");
+      toast.error(tCommon("error"));
       console.error('Error fetching comments:', err);
     } finally {
       setLoadingComments(false);
@@ -100,12 +79,12 @@ export default function NotificationList() {
           fetchComments(notification.targetId);
         } else {
           console.error('No post data in response body');
-          toast.error('Không thể tải bài viết - dữ liệu trống');
+          toast.error(tCommon("error"));
         }
       } catch (error) {
         console.error('Error fetching post:', error);
         console.error('Error response:', error.response);
-        toast.error('Không thể tải bài viết');
+        toast.error(tCommon("error"));
       } finally {
         setIsLoadingPost(false);
       }
@@ -126,12 +105,12 @@ export default function NotificationList() {
           fetchComments(notification.postId);
         } else {
           console.error('No post data in response body');
-          toast.error('Không thể tải bài viết - dữ liệu trống');
+          toast.error(tCommon("error"));
         }
       } catch (error) {
         console.error('Error fetching post:', error);
         console.error('Error response:', error.response);
-        toast.error('Không thể tải bài viết');
+        toast.error(tCommon("error"));
       } finally {
         setIsLoadingPost(false);
       }
@@ -155,22 +134,22 @@ export default function NotificationList() {
         <div className="bg-[var(--card)] border border-[var(--border)] rounded-xl shadow-sm">
           <div className="p-4 border-b border-[var(--border)]">
             <h2 className="text-lg font-semibold text-[var(--foreground)]">
-              Thông báo
+              {t("title")}
             </h2>
           </div>
 
           <div className="p-4">
             {loading ? (
               <div className="text-center py-8 text-[var(--muted-foreground)]">
-                Đang tải...
+                {tCommon("loading")}
               </div>
             ) : error ? (
               <div className="text-center py-8 text-red-500">
-                Không thể tải thông báo.
+                {t("loadError")}
               </div>
             ) : notifications.length === 0 ? (
               <div className="text-center py-8 text-[var(--muted-foreground)]">
-                Không có thông báo nào.
+                {t("noNotifications")}
               </div>
             ) : (
               <div className="space-y-3">
@@ -195,7 +174,7 @@ export default function NotificationList() {
                     <div className="flex-1 flex flex-col">
                       <div className="flex items-center gap-2">
                         <p className="text-sm text-[var(--foreground)] font-medium">
-                          {formatNotificationText(n)}
+                          {formatNotificationText(n, t, tCommon)}
                         </p>
                       </div>
 
@@ -256,7 +235,7 @@ export default function NotificationList() {
                 }));
               } catch (error) {
                 console.error('Error toggling like:', error);
-                toast.error('Không thể thích bài viết');
+                toast.error(t('likeError'));
               }
             }}
             onCommentSubmit={(newComment) => {

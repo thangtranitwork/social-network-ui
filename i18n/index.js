@@ -1,21 +1,14 @@
 // i18n/index.js
-export const locales = ['en', 'vi'];
+export const locales = ['vi', 'en'];
 export const defaultLocale = 'vi';
+export const cookieName = 'NEXT_LOCALE';
 
-// Pathnames configuration cho next-intl
-export const pathnames = {
-  '/': '/',
-  '/home': '/home',
-  '/profile': '/profile',
-  '/chats': '/chats',
-  '/settings': '/settings',
-  '/search': '/search',
-  '/friends': '/friends',
-  '/register': '/register'
+export const localeLabels = {
+  vi: 'Tiếng Việt',
+  en: 'English',
 };
 
-// Locale labels (optional)
-export const localeLabels = {
-  en: 'English',
-  vi: 'Tiếng Việt'
+export const localeFlags = {
+  vi: '🇻🇳',
+  en: '🇺🇸',
 };

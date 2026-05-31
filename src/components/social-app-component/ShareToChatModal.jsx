@@ -1,14 +1,22 @@
 "use client"
 
+import { useShallow } from 'zustand/react/shallow';
 import { memo, useCallback, useMemo, useState } from "react"
 import toast from "react-hot-toast"
 import { Search, Send, X } from "lucide-react"
 import Avatar from "../ui-components/Avatar"
-import useAppStore from "@/store/ZustandStore"
+import useAppStore, { selectSortedChatList } from "@/store/ZustandStore"
 import api from "@/utils/axios"
+import { useTranslations } from "next-intl"
 
 function ShareToChatModal({ isOpen, onClose, post }) {
-    const { chatList, fetchChatList } = useAppStore()
+    const t = useTranslations("chat")
+    const tCommon = useTranslations("common")
+    const fetchChatList = useAppStore(state => state.fetchChatList)
+    
+    const chatMap = useAppStore(state => state.chatMap);
+    const chatList = useMemo(() => selectSortedChatList({ chatMap }), [chatMap]);
+    
     const [searchQuery, setSearchQuery] = useState("")
     const [sending, setSending] = useState(null) // chatId đang gửi
     const [sentChats, setSentChats] = useState(new Set()) // các chatId đã gửi thành công
@@ -30,13 +38,13 @@ function ShareToChatModal({ isOpen, onClose, post }) {
 
         const username = chat.target?.username
         if (!username) {
-            toast.error("Không tìm thấy người dùng")
+            toast.error(t("noMatches")); // Or a more specific error
             return
         }
 
         const postUrl = `${window.location.origin}/post/${post.id}`
         const authorName = `${post.author?.familyName || ""} ${post.author?.givenName || ""}`.trim()
-        const shareText = `📌 Chia sẻ bài viết của ${authorName}: ${postUrl}`
+        const shareText = `📌 ${t("sharePostText", { name: authorName, url: postUrl })}`; // Added sharePostText key
 
         setSending(chat.chatId)
         try {
@@ -45,14 +53,14 @@ function ShareToChatModal({ isOpen, onClose, post }) {
                 text: shareText,
             })
             setSentChats((prev) => new Set(prev).add(chat.chatId))
-            toast.success("Đã gửi bài viết!")
+            toast.success(t("fileSentSuccess"));
         } catch (err) {
             console.error("Error sharing to chat:", err)
-            toast.error("Không thể gửi bài viết")
+            toast.error(t("sendError"))
         } finally {
             setSending(null)
         }
-    }, [sending, sentChats, post])
+    }, [sending, sentChats, post, t])
 
     if (!isOpen) return null
 
@@ -67,7 +75,7 @@ function ShareToChatModal({ isOpen, onClose, post }) {
                 {/* Header */}
                 <div className="flex items-center justify-between px-5 py-4 border-b border-[var(--border)]">
                     <h2 className="text-lg font-semibold text-[var(--card-foreground)]">
-                        Gửi đến đoạn chat
+                        {t("shareToChatTitle")}
                     </h2>
                     <button
                         onClick={onClose}
@@ -85,7 +93,7 @@ function ShareToChatModal({ isOpen, onClose, post }) {
                             type="text"
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
-                            placeholder="Tìm kiếm đoạn chat..."
+                            placeholder={t("searchPlaceholder")}
                             className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-[var(--border)] bg-[var(--background)] text-sm text-[var(--foreground)] placeholder:text-[var(--muted-foreground)] focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
                             autoFocus
                         />
@@ -105,7 +113,7 @@ function ShareToChatModal({ isOpen, onClose, post }) {
                                 {post.author?.familyName} {post.author?.givenName}
                             </p>
                             <p className="text-xs text-[var(--muted-foreground)] truncate">
-                                {post.content?.substring(0, 60) || "Bài viết được chia sẻ"}
+                                {post.content?.substring(0, 60) || t("sharedPostContentPlaceholder")}
                                 {post.content?.length > 60 ? "..." : ""}
                             </p>
                         </div>
@@ -116,11 +124,11 @@ function ShareToChatModal({ isOpen, onClose, post }) {
                 <div className="max-h-[320px] overflow-y-auto px-3 pb-4">
                     {filteredChats.length === 0 ? (
                         <div className="text-center py-8 text-sm text-[var(--muted-foreground)]">
-                            {searchQuery ? "Không tìm thấy đoạn chat nào" : "Chưa có đoạn chat nào"}
+                            {searchQuery ? t("noMatches") : t("noConversations")}
                         </div>
                     ) : (
                         filteredChats.map((chat) => {
-                            const displayName = `${chat.target?.givenName || ""} ${chat.target?.familyName || ""}`.trim() || chat.target?.username || "Unknown"
+                            const displayName = `${chat.target?.givenName || ""} ${chat.target?.familyName || ""}`.trim() || chat.target?.username || t("unknownUser")
                             const isOnline = chat.target?.isOnline || false
                             const isSending = sending === chat.chatId
                             const isSent = sentChats.has(chat.chatId)
@@ -169,16 +177,16 @@ function ShareToChatModal({ isOpen, onClose, post }) {
                                         }`}
                                     >
                                         {isSent ? (
-                                            "Đã gửi ✓"
+                                            t("sentCheck")
                                         ) : isSending ? (
                                             <div className="flex items-center gap-1">
                                                 <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-blue-500" />
-                                                <span>Đang gửi</span>
+                                                <span>{t("sendingMessage")}</span>
                                             </div>
                                         ) : (
                                             <div className="flex items-center gap-1">
                                                 <Send className="w-3 h-3" />
-                                                <span>Gửi</span>
+                                                <span>{t("send")}</span>
                                             </div>
                                         )}
                                     </button>

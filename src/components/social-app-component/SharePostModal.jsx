@@ -4,12 +4,16 @@ import { useState, useEffect } from "react"
 import Modal from "../ui-components/Modal"
 import toast from "react-hot-toast"
 import api from "@/utils/axios"
+import { useTranslations } from "next-intl"
 
 export default function SharePostModal({
                                            isOpen,
                                            onClose,
                                            post,
                                        }) {
+    const t = useTranslations("post.editModal")
+    const tPost = useTranslations("post")
+    const tCommon = useTranslations("common")
     const [shareContent, setShareContent] = useState("")
     const [sharePrivacy, setSharePrivacy] = useState("FRIEND")
     const [isSharing, setIsSharing] = useState(false)
@@ -34,7 +38,7 @@ export default function SharePostModal({
                 originalPostId: post.id,
             })
             if(res.data.code===200){
-            toast.success("Chia sẻ bài viết thành công!")
+            toast.success(t("success"))
             // Reset form
             setShareContent("")
             setSharePrivacy("FRIEND")
@@ -44,7 +48,7 @@ export default function SharePostModal({
             onClose()
         } catch (err) {
             if(err.response.data.code===5005){
-            toast.error("Chỉ được chia sẻ bài viết công khai")
+            toast.error(tPost("error"))
             }
         } finally {
             setIsSharing(false)
@@ -71,12 +75,12 @@ export default function SharePostModal({
         <Modal isOpen={isOpen} size="medium" onClose={handleClose}>
             <div className="p-4 w-full max-w-md mx-auto">
                 <h2 className="text-lg font-semibold mb-4 text-[var(--card-foreground)]">
-                    Chia sẻ bài viết
+                    {tPost("share")}
                 </h2>
 
                 <div className="mb-4">
                     <label className="block text-sm mb-2 text-[var(--card-foreground)]">
-                        Ai có thể thấy bài viết của bạn
+                        {tPost("createModal.privacyLabel")}
                     </label>
                     <select
                         className="w-full p-2 border border-[var(--border)] rounded-lg bg-[var(--card)] text-[var(--card-foreground)] focus:outline-none focus:ring-2 focus:ring-[var(--ring)]"
@@ -84,19 +88,19 @@ export default function SharePostModal({
                         onChange={(e) => setSharePrivacy(e.target.value)}
                         disabled={isSharing}
                     >
-                        <option value="PUBLIC">🌍 Mọi người</option>
-                        <option value="FRIEND">👥 Chỉ bạn bè</option>
-                        <option value="PRIVATE">🔒 Riêng tư</option>
+                        <option value="PUBLIC">{tPost("privacy.public")}</option>
+                        <option value="FRIEND">{tPost("privacy.friend")}</option>
+                        <option value="PRIVATE">{tPost("privacy.private")}</option>
                     </select>
                 </div>
 
                 <div className="mb-4">
                     <label className="block text-sm mb-2 text-[var(--card-foreground)]">
-                        Bạn muốn nói gì không?
+                        {t("shareContent")}
                     </label>
                     <textarea
                         className="w-full p-3 border border-[var(--border)] rounded-lg resize-none bg-[var(--card)] text-[var(--card-foreground)] placeholder:text-[var(--muted-foreground)] focus:outline-none focus:ring-2 focus:ring-[var(--ring)]"
-                        placeholder="Viết điều gì đó..."
+                        placeholder={t("sharePlaceholder")}
                         rows={4}
                         value={shareContent}
                         onChange={(e) => setShareContent(e.target.value)}
@@ -115,14 +119,14 @@ export default function SharePostModal({
                         className="px-4 py-2 border border-[var(--border)] rounded-lg text-[var(--card-foreground)] hover:bg-[var(--input)] transition-colors disabled:opacity-50"
                         disabled={isSharing}
                     >
-                        Hủy
+                        {tCommon("cancel")}
                     </button>
                     <button
                         onClick={handleSharePost}
                         className="px-4 py-2 bg-[var(--primary)] text-white rounded-lg hover:bg-[var(--primary)]/90 transition-colors disabled:opacity-50"
                         disabled={isSharing || shareContent.length > 10000}
                     >
-                        {isSharing ? "Đang chia sẻ..." : "Chia sẻ"}
+                        {isSharing ? tCommon("loading") : tPost("share")}
                     </button>
                 </div>
             </div>
