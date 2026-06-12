@@ -17,6 +17,7 @@
       "hidePassword": "Ẩn mật khẩu",
       "forgotPassword": "Quên mật khẩu?",
       "createNewPassword": "Tạo mật khẩu mới",
+      "aboutLink": "Giới thiệu về PocPoc",
       "twoFactorRequired": "Yêu cầu mã xác thực 2 lớp (2FA).",
       "twoFactorCode": "Mã xác thực 2 lớp",
       "invalid2FACode": "Mã xác thực không chính xác. Vui lòng thử lại."
@@ -610,6 +611,7 @@
     "displaySection": "Ngôn ngữ và hiển thị",
     "display": "Hiển thị",
     "version": "Phiên bản {version}",
+    "aboutLink": "Giới thiệu về PocPoc",
     "blockedlist": {
       "loadError": "Lỗi khi tải danh sách chặn",
       "unblockSuccess": "Đã bỏ chặn thành công",
@@ -804,6 +806,39 @@
       "fillAll": "Vui lòng điền đầy đủ thông tin",
       "checkingAuth": "Đang kiểm tra xác thực...",
       "verifyingSession": "Đang xác minh phiên làm việc..."
+    }
+  },
+  "about": {
+    "title": "Giới thiệu về PocPoc",
+    "hero": {
+      "headline": "Kết nối không giới hạn",
+      "subhead": "Mạng xã hội thế hệ mới giúp bạn chia sẻ khoảnh khắc chân thực và trò chuyện tức thì với bạn bè.",
+      "ctaStart": "Bắt đầu ngay",
+      "ctaLearn": "Khám phá tính năng"
+    },
+    "features": {
+      "title": "Trải nghiệm vượt trội",
+      "chatTitle": "Trò chuyện trực tuyến",
+      "chatDesc": "Nhắn tin thời gian thực với độ trễ cực thấp, hỗ trợ gửi tệp đính kèm và tin nhắn thoại mượt mà.",
+      "callTitle": "Cuộc gọi chất lượng cao",
+      "callDesc": "Kết nối thoại và video call sắc nét với công nghệ WebRTC hiện đại, không gián đoạn.",
+      "shareTitle": "Chia sẻ khoảnh khắc",
+      "shareDesc": "Tạo bài viết, bày tỏ cảm xúc và thảo luận cùng bạn bè trên bảng tin sinh động.",
+      "secureTitle": "Bảo mật tài khoản",
+      "secureDesc": "Bảo vệ thông tin cá nhân của bạn với xác thực 2 lớp (2FA) và kiểm soát quyền riêng tư tuyệt đối."
+    },
+    "scroll": {
+      "section1Title": "Đơn giản & Tinh tế",
+      "section1Desc": "Giao diện tối giản tập trung vào trải nghiệm cốt lõi của người dùng, mang lại sự mượt mà trên mọi thiết bị.",
+      "section2Title": "Đồng bộ tức thì",
+      "section2Desc": "Mọi tin nhắn, cuộc gọi và bài viết được đồng bộ thời gian thực giúp bạn không bỏ lỡ bất kỳ khoảnh khắc nào.",
+      "section3Title": "Quyền riêng tư hàng đầu",
+      "section3Desc": "Chúng tôi tôn trọng và bảo vệ dữ liệu cá nhân của bạn, cho phép tùy chỉnh chia sẻ với người bạn muốn."
+    },
+    "footer": {
+      "ctaText": "Sẵn sàng kết nối cùng PocPoc?",
+      "ctaDesc": "Tham gia cộng đồng của chúng tôi ngay hôm nay hoàn toàn miễn phí.",
+      "ctaButton": "Tạo tài khoản"
     }
   }
 }

@@ -89,6 +89,20 @@ const nextConfig = {
       }
     ];
   },
+  async redirects() {
+    return [
+      {
+        source: '/register',
+        destination: '/login',
+        permanent: true,
+      },
+      {
+        source: '/admin',
+        destination: '/admin/login',
+        permanent: true,
+      },
+    ];
+  },
   typescript: {
     ignoreBuildErrors: false, // Set to true only if absolutely necessary
   },

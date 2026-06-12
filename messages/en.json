@@ -17,6 +17,7 @@
       "hidePassword": "Hide password",
       "forgotPassword": "Forgot password?",
       "createNewPassword": "Create new password",
+      "aboutLink": "About PocPoc",
       "twoFactorRequired": "Two-factor authentication code required.",
       "twoFactorCode": "Two-Factor Auth Code",
       "invalid2FACode": "Invalid authenticator code. Please try again."
@@ -610,6 +611,7 @@
     "displaySection": "Language & Display",
     "display": "Display",
     "version": "Version {version}",
+    "aboutLink": "About PocPoc",
     "blockedlist": {
       "loadError": "Error loading blocked list",
       "unblockSuccess": "Successfully unblocked",
@@ -804,6 +806,39 @@
       "fillAll": "Please fill in all fields",
       "checkingAuth": "Checking authentication...",
       "verifyingSession": "Verifying admin session..."
+    }
+  },
+  "about": {
+    "title": "About PocPoc",
+    "hero": {
+      "headline": "Connect Infinitely",
+      "subhead": "A next-generation social network helping you share authentic moments and chat instantly with friends.",
+      "ctaStart": "Get Started",
+      "ctaLearn": "Explore Features"
+    },
+    "features": {
+      "title": "Stunning Experience",
+      "chatTitle": "Real-time Messaging",
+      "chatDesc": "Chat in real-time with ultra-low latency, file attachments, and smooth voice messages.",
+      "callTitle": "High-quality Calling",
+      "callDesc": "Connect via crisp voice and video calls powered by modern WebRTC without interruption.",
+      "shareTitle": "Share Moments",
+      "shareDesc": "Create posts, react, and discuss with friends on a vibrant, interactive feed.",
+      "secureTitle": "Account Security",
+      "secureDesc": "Secure your personal information with two-factor authentication (2FA) and absolute privacy controls."
+    },
+    "scroll": {
+      "section1Title": "Simple & Refined",
+      "section1Desc": "Minimalist interface focusing on the core user experience, delivering smoothness on all devices.",
+      "section2Title": "Instant Sync",
+      "section2Desc": "Every message, call, and post is synced in real-time so you never miss a single moment.",
+      "section3Title": "Privacy First",
+      "section3Desc": "We respect and protect your personal data, giving you full control over who you share with."
+    },
+    "footer": {
+      "ctaText": "Ready to connect with PocPoc?",
+      "ctaDesc": "Join our community today completely free of charge.",
+      "ctaButton": "Create Account"
     }
   }
 }

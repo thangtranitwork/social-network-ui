@@ -85,6 +85,16 @@ const PostCard = memo(function PostCard({
         setCurrentPost(post)
     }, [liked, post])
 
+    // Log ad view interaction
+    useEffect(() => {
+        if (currentPost.isAd) {
+            api.post("/v1/ads/interactions", {
+                campaignId: currentPost.adId,
+                interactionType: "VIEW"
+            }).catch(err => console.error("Failed to log view interaction:", err))
+        }
+    }, [currentPost.isAd, currentPost.adId])
+
     // Memoized functions to prevent unnecessary re-renders
     const shouldTruncateContent = (content, maxLength = 200) => {
         return content && content.length > maxLength
@@ -195,6 +205,20 @@ const PostCard = memo(function PostCard({
     }, [])
 
     const handleCardClick = (e) => {
+        if (currentPost.isAd) {
+            e.stopPropagation()
+            try {
+                api.post("/v1/ads/interactions", {
+                    campaignId: currentPost.adId,
+                    interactionType: "CLICK"
+                })
+            } catch (err) {
+                console.error("Failed to log click interaction:", err)
+            }
+            window.open(currentPost.adTargetURL || currentPost.adTargetUrl, "_blank", "noopener,noreferrer")
+            return
+        }
+
         // Không mở modal nếu đang click vào button hoặc đang trong mode edit
         if (e.target.closest('button') || e.target.closest('select') || e.target.closest('textarea') || e.target.closest('a')) {
             return
@@ -204,6 +228,10 @@ const PostCard = memo(function PostCard({
 
     const handleProfileClick = (e) => {
         e.stopPropagation() // Ngăn không cho bubble up tới card click
+        if (currentPost.isAd) {
+            handleCardClick(e)
+            return
+        }
         router.push(`/profile/${currentPost.author?.username}`)
     }
 
@@ -338,25 +366,32 @@ const PostCard = memo(function PostCard({
                         onClick={handleProfileClick}
                     >
                         <Avatar
-                            src={currentPost.author?.profilePictureUrl}
-                            alt={currentPost.author?.username || ""}
+                            src={currentPost.author?.profilePictureUrl || ""}
+                            alt={currentPost.author?.username || "sponsored"}
                             size={size === "compact" ? (isMobile ? 28 : 32) : size === "large" ? (isMobile ? 36 : 48) : (isMobile ? 32 : 40)}
                         />
                         <div>
-                            <p className={`font-semibold 
-                                ${size === "compact" ? "text-sm" : size === "large" ? "text-base" : "text-sm"}`}>
-                                {currentPost.author?.familyName + " " + currentPost.author?.givenName}
-                                {currentPost.sharedPost && (
-                                    <>
-                                        {" " + t('shared')}
-                                        <Share2 className="inline w-4 h-4 ml-1 text-[var(--muted-foreground)]" />
-                                    </>
+                            <div className="flex items-center gap-1.5">
+                                <p className={`font-semibold 
+                                    ${size === "compact" ? "text-sm" : size === "large" ? "text-base" : "text-sm"}`}>
+                                    {currentPost.author?.familyName || currentPost.author?.givenName 
+                                        ? `${currentPost.author?.familyName || ""} ${currentPost.author?.givenName || ""}`.trim() 
+                                        : (currentPost.isAd ? "PocPoc Sponsored Partner" : "")}
+                                    {currentPost.sharedPost && !currentPost.isAd && (
+                                        <>
+                                            {" " + t('shared')}
+                                            <Share2 className="inline w-4 h-4 ml-1 text-[var(--muted-foreground)]" />
+                                        </>
+                                    )}
+                                </p>
+                                {currentPost.isAd && (
+                                    <span className="px-1.5 py-0.5 rounded text-[9px] font-black bg-blue-500/10 text-blue-500 uppercase tracking-wider">Ad</span>
                                 )}
-                            </p>
+                            </div>
                             <p className="text-xs">
-                                {dayjs(currentPost.createdAt).fromNow()} {renderPrivacyIcon(currentPost.privacy)}
+                                {currentPost.isAd ? "Được tài trợ" : dayjs(currentPost.createdAt).fromNow()} {!currentPost.isAd && renderPrivacyIcon(currentPost.privacy)}
                             </p>
-                            {currentPost.author?.mutualFriendsCount > 0 && (
+                            {currentPost.author?.mutualFriendsCount > 0 && !currentPost.isAd && (
                                 <p className="text-xs text-muted-foreground">
                                     {t("mutualFriends", { count: currentPost.author.mutualFriendsCount })}
                                 </p>
@@ -466,62 +501,76 @@ const PostCard = memo(function PostCard({
                         />
                     </div>
                 )}
-                {!isAdmin &&
-                    (<div className="post-actions">
+                {currentPost.isAd ? (
+                    <div className="mt-4 flex items-center justify-between border-t border-[var(--border)] pt-3" onClick={(e) => e.stopPropagation()}>
+                        <span className="text-xs text-[var(--muted-foreground)] font-medium">Được tài trợ bởi PocPoc Ads</span>
                         <button
-                            onClick={(e) => {
-                                e.stopPropagation()
-                                handleLikeToggle()
-                            }}
-                            className={`action-btn ${optimisticLiked ? 'liked' : ''}`}
-                            disabled={isLiking}
-                            aria-label={optimisticLiked ? t("aria.unlike") : t("aria.like")}
+                            onClick={handleCardClick}
+                            className="px-4 py-2 rounded-xl bg-[var(--accent)] text-white text-xs font-bold transition-all hover:opacity-90 hover:scale-105 active:scale-95 shadow-sm"
                         >
-                            <Heart className={optimisticLiked ? "fill-[var(--destructive)] text-[var(--destructive)] animate-heart-pop" : ""} size={20} />
-                            <span>{optimisticLikeCount > 0 ? optimisticLikeCount : ''}</span>
+                            Tìm hiểu thêm
                         </button>
+                    </div>
+                ) : (
+                    <>
+                        {!isAdmin &&
+                            (<div className="post-actions">
+                                <button
+                                    onClick={(e) => {
+                                        e.stopPropagation()
+                                        handleLikeToggle()
+                                    }}
+                                    className={`action-btn ${optimisticLiked ? 'liked' : ''}`}
+                                    disabled={isLiking}
+                                    aria-label={optimisticLiked ? t("aria.unlike") : t("aria.like")}
+                                >
+                                    <Heart className={optimisticLiked ? "fill-[var(--destructive)] text-[var(--destructive)] animate-heart-pop" : ""} size={20} />
+                                    <span>{optimisticLikeCount > 0 ? optimisticLikeCount : ''}</span>
+                                </button>
+
+                                <button
+                                    onClick={handleMessageCircleClick}
+                                    className="action-btn"
+                                    aria-label={t("aria.comment")}
+                                >
+                                    <MessageCircle size={20} />
+                                    <span>{currentPost.commentCount > 0 ? currentPost.commentCount : ''}</span>
+                                </button>
+
+                                <button
+                                    onClick={(e) => {
+                                        e.stopPropagation()
+                                        handleShare()
+                                    }}
+                                    className="action-btn"
+                                    aria-label={t("aria.share")}
+                                >
+                                    <Share2 size={20} />
+                                </button>
+                                <button
+                                    onClick={(e) => {
+                                        e.stopPropagation()
+                                        handleShareToChat()
+                                    }}
+                                    className="action-btn"
+                                    aria-label={t("aria.sendToChat")}
+                                >
+                                    <SendHorizonal size={20} />
+                                </button>
+                            </div>)
+                        }
 
                         <button
-                            onClick={handleMessageCircleClick}
-                            className="action-btn"
-                            aria-label={t("aria.comment")}
-                        >
-                            <MessageCircle size={20} />
-                            <span>{currentPost.commentCount > 0 ? currentPost.commentCount : ''}</span>
-                        </button>
-
-                        <button
+                            className="text-xs mt-3 text-[var(--muted-foreground)] hover:underline font-medium"
                             onClick={(e) => {
                                 e.stopPropagation()
-                                handleShare()
+                                openModal()
                             }}
-                            className="action-btn"
-                            aria-label={t("aria.share")}
                         >
-                            <Share2 size={20} />
+                            {t('viewAllComments', { count: currentPost.commentCount || 0 })}
                         </button>
-                        <button
-                            onClick={(e) => {
-                                e.stopPropagation()
-                                handleShareToChat()
-                            }}
-                            className="action-btn"
-                            aria-label={t("aria.sendToChat")}
-                        >
-                            <SendHorizonal size={20} />
-                        </button>
-                    </div>)
-                }
-
-                <button
-                    className="text-xs mt-3 text-[var(--muted-foreground)] hover:underline font-medium"
-                    onClick={(e) => {
-                        e.stopPropagation()
-                        openModal()
-                    }}
-                >
-                    {t('viewAllComments', { count: currentPost.commentCount || 0 })}
-                </button>
+                    </>
+                )}
             </Card>
 
             {/* Lazy loaded modals - only render when needed */}

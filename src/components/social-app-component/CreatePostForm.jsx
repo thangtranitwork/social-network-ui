@@ -190,9 +190,9 @@ export default function NewPostModal({ isOpen, onClose }) {
                     onChange={(e) => setPrivacy(e.target.value)}
                     className="w-full px-3 py-2 border rounded-xl bg-[var(--input)] text-[var(--foreground)]"
                   >
-                    <option value="PUBLIC">{tPost("privacy.public")}</option>
-                    <option value="FRIEND">{tPost("privacy.friend")}</option>
-                    <option value="PRIVATE">{tPost("privacy.private")}</option>
+                    <option value="PUBLIC">🌎 {tPost("privacy.public")}</option>
+                    <option value="FRIEND">👥 {tPost("privacy.friend")}</option>
+                    <option value="PRIVATE">🔒 {tPost("privacy.private")}</option>
                   </select>
                 </div>
 
@@ -232,9 +232,9 @@ export default function NewPostModal({ isOpen, onClose }) {
                     onChange={(e) => setPrivacy(e.target.value)}
                     className="w-full px-3 py-2 border rounded-xl bg-[var(--input)] text-[var(--foreground)]"
                   >
-                    <option value="PUBLIC">{tPost("privacy.public")}</option>
-                    <option value="FRIEND">{tPost("privacy.friend")}</option>
-                    <option value="PRIVATE">{tPost("privacy.private")}</option>
+                    <option value="PUBLIC">🌎 {tPost("privacy.public")}</option>
+                    <option value="FRIEND">👥 {tPost("privacy.friend")}</option>
+                    <option value="PRIVATE">🔒 {tPost("privacy.private")}</option>
                   </select>
               </div>
 

@@ -11,7 +11,8 @@ import {
   BarChart3, 
   UserCheck, 
   FileText, 
-  LayoutDashboard 
+  LayoutDashboard,
+  Megaphone
 } from "lucide-react"
 import adminApi, { clearAdminSession } from "@/utils/adminInterception"
 import ThemeToggle from "@/components/ui-components/Themetoggle"
@@ -61,6 +62,20 @@ export default function AdminLayout({ children }) {
       icon: FileText,
       active: pathname === "/admin/dashboard/viewposts",
       description: "Quản lý danh sách bài viết"
+    },
+    {
+      href: "/admin/dashboard/announcements",
+      label: "Quản lý Thông báo",
+      icon: Megaphone,
+      active: pathname === "/admin/dashboard/announcements",
+      description: "Tạo & quản lý thông báo hệ thống"
+    },
+    {
+      href: "/admin/dashboard/ads",
+      label: "Quản lý Quảng cáo",
+      icon: BarChart3,
+      active: pathname === "/admin/dashboard/ads",
+      description: "Duyệt & thống kê chiến dịch quảng cáo"
     }
   ]
 
@@ -73,6 +88,10 @@ export default function AdminLayout({ children }) {
       return { title: "👥 Thống kê người dùng", subtitle: "Thống kê số lượng truy cập, đăng ký và hoạt động" }
     } else if (pathname.includes("/posts")) {
       return { title: "📊 Thống kê bài viết", subtitle: "Thống kê tương tác, lượt chia sẻ và phân loại bài viết" }
+    } else if (pathname.includes("/announcements")) {
+      return { title: "📣 Quản lý thông báo", subtitle: "Tạo và hiển thị thông báo chạy chữ (marquee) hệ thống" }
+    } else if (pathname.includes("/ads")) {
+      return { title: "📢 Quản lý quảng cáo", subtitle: "Phê duyệt các chiến dịch quảng cáo toàn hệ thống và theo dõi doanh thu" }
     }
     return { title: "📈 Admin Control Center", subtitle: "Hệ thống quản trị và phân tích PocPoc" }
   }

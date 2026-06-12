@@ -5,7 +5,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import MotionContainer from "@/components/ui-components/MotionContainer";
 import {
-  UserCircle, Lock, Ban, Sun, ArrowLeft, Shield, Bell,
+  UserCircle, Lock, Ban, Sun, ArrowLeft, Shield, Bell, Info,
 } from "lucide-react";
 import {pageMetadata, usePageMetadata} from "@/utils/clientMetadata";
 import { useTranslations } from "next-intl";
@@ -42,7 +42,9 @@ export default function SettingsLayout({ children }) {
     },
     {
       title: t('version', { version: '2.0.0' }),
-      items: []
+      items: [
+        { id: "about", icon: Info, label: t('aboutLink'), isExternal: true },
+      ]
     }
   ];
 
@@ -107,7 +109,7 @@ export default function SettingsLayout({ children }) {
                   {group.items.map((item, subIdx) => (
                       <Link
                           key={subIdx}
-                          href={`/settings/${item.id}`}
+                          href={item.isExternal ? "/about" : `/settings/${item.id}`}
                           className={`w-full flex items-center gap-3 text-left px-4 py-3 rounded-xl hover:bg-[var(--muted)] hover:text-[var(--foreground)] transition-all ${
                               pathname.endsWith(item.id) ? "bg-[var(--accent-subtle)] text-[var(--accent)] font-semibold" : "text-[var(--muted-foreground)]"
                           } ${isMobile ? 'py-4' : 'py-2'}`}

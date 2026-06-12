@@ -1,7 +1,8 @@
 "use client"
 
 import { X } from "lucide-react"
-import React, { useEffect } from "react"
+import React, { useEffect, useState } from "react"
+import { createPortal } from "react-dom"
 import { useTranslations } from "next-intl"
 
 export default function Modal({
@@ -11,6 +12,12 @@ export default function Modal({
   size = "large" // "small", "medium", "large"
 }) {
   const t = useTranslations('common');
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
   // ESC để đóng modal
   useEffect(() => {
     const handleEsc = (e) => {
@@ -41,9 +48,9 @@ export default function Modal({
     }
   }
 
-  if (!isOpen) return null
+  if (!isOpen || !mounted) return null
 
-  return (
+  return createPortal(
     <div
       className="fixed inset-0 z-50 flex items-center justify-center pointer-events-auto"
       aria-modal="true"
@@ -66,7 +73,7 @@ export default function Modal({
 
       {/* Nội dung modal */}
       <div
-        className={`relative z-10 ${getWidthClass()} h-[90vh] max-h-[90vh] rounded-xl bg-[var(--card)] text-[var(--card-foreground)] shadow-xl flex flex-col pointer-events-auto`}
+        className={`relative z-10 ${getWidthClass()} max-h-[90vh] rounded-xl bg-[var(--card)] text-[var(--card-foreground)] shadow-xl flex flex-col pointer-events-auto`}
         onClick={(e) => e.stopPropagation()} // ⛔ Chặn lan click
       >
         {/* Nội dung có thể cuộn */}
@@ -74,6 +81,7 @@ export default function Modal({
           {children}
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   )
 }

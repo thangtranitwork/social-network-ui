@@ -14,6 +14,7 @@ import {
   User,
   Menu,
   Bell,
+  Megaphone,
 } from "lucide-react";
 import Badge from "@/components/ui-components/Badge";
 import api, {clearSession, getUserName} from "@/utils/axios";
@@ -215,6 +216,16 @@ export default function SidebarNavigation() {
         >
           <Settings size={16} className="mr-3" />
           {t('settings')}
+        </Link>
+        
+        <Link
+          href="/ads"
+          onClick={() => setShowSettingsDropdown(false)}
+          className="flex items-center px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors border-t border-gray-100 dark:border-gray-700/50 mt-1 pt-2"
+          aria-label="Quảng cáo"
+        >
+          <Megaphone size={16} className="mr-3" />
+          Quảng cáo
         </Link>
       </div>,
       document.body

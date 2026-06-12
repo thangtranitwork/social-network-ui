@@ -471,11 +471,16 @@ function AuthPageContent() {
                         {status.loading ? tCommon('loading') : mode === "login" ? tAuth('login.submit') : tAuth('register.submit')}
                       </Button>
 
-                      <div className="mt-6 text-center text-sm text-muted-foreground">
+                      <div className="mt-6 text-center text-sm text-muted-foreground space-y-2">
                         <div>
                           {tAuth('login.forgotPassword')}{" "}
                           <Link href="/forgot-password" className="text-blue-500 dark:text-blue-400 hover:underline">
                             {tAuth('login.createNewPassword')}
+                          </Link>
+                        </div>
+                        <div className="pt-2 border-t border-[var(--border)]/20">
+                          <Link href="/about" className="text-xs text-muted-foreground hover:text-foreground hover:underline transition-colors">
+                            {tAuth('login.aboutLink')}
                           </Link>
                         </div>
                       </div>
