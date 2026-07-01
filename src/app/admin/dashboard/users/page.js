@@ -154,9 +154,10 @@ export default function UsersPage() {
 
   const transformWeeklyData = (data) => {
     if (!data) return []
-    return Object.entries(data).map(([day, value]) => ({
+    const days = ["MONDAY", "TUESDAY", "WEDNESDAY", "THURSDAY", "FRIDAY", "SATURDAY", "SUNDAY"]
+    return days.map((day) => ({
       day: day.substring(0, 3),
-      value: value === null ? 0 : value,
+      value: data[day] ?? 0,
     }))
   }
 
@@ -305,18 +306,17 @@ export default function UsersPage() {
               <div className="w-full h-[300px]">
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart data={transformWeeklyData(usersData.thisWeekStatistics)}>
+                    <defs>
+                      <linearGradient id="weeklyColor" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stopColor="#6366F1" stopOpacity={0.9} />
+                        <stop offset="100%" stopColor="#00A3FF" stopOpacity={0.7} />
+                      </linearGradient>
+                    </defs>
                     <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" opacity={0.4} vertical={false} />
                     <XAxis dataKey="day" stroke="var(--muted-foreground)" fontSize={11} tickLine={false} axisLine={false} />
                     <YAxis stroke="var(--muted-foreground)" fontSize={11} tickLine={false} axisLine={false} />
                     <Tooltip content={<CustomTooltip />} cursor={{ fill: 'var(--muted)', opacity: 0.15 }} />
-                    <Bar dataKey="value" fill="url(#weeklyColor)" radius={[4, 4, 0, 0]}>
-                      <defs>
-                        <linearGradient id="weeklyColor" x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="0%" stopColor="#6366F1" stopOpacity={0.9} />
-                          <stop offset="100%" stopColor="#00A3FF" stopOpacity={0.7} />
-                        </linearGradient>
-                      </defs>
-                    </Bar>
+                    <Bar dataKey="value" fill="url(#weeklyColor)" radius={[4, 4, 0, 0]} />
                   </BarChart>
                 </ResponsiveContainer>
               </div>
