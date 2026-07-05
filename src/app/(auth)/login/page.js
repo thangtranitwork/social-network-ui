@@ -230,9 +230,47 @@ function AuthPageContent() {
 
   // Google OAuth Auto-login
   useEffect(() => {
+    const oauthStatus = searchParams.get("oauth");
     const token = searchParams.get("token");
     const userId = searchParams.get("userId");
     const userName = searchParams.get("userName");
+
+    if (oauthStatus === "success") {
+      const syncOAuthSession = async () => {
+        setStatus(prev => ({ ...prev, loading: true }));
+        setMessages(prev => ({ ...prev, general: `✅ ${tAuth('login.success')}` }));
+
+        try {
+          const res = await api.post("/v1/auth/refresh", {}, { skipAuth: true });
+          const newToken = res.data?.body?.token;
+          if (!newToken) throw new Error("No access token returned from refresh");
+
+          const decoded = jwtDecode(newToken);
+          const decodedUserId = decoded.sub || decoded.user_id;
+          const decodedUserName = decoded.username || "";
+
+          localStorage.setItem("role", decoded.scope || decoded.role || "USER");
+          localStorage.setItem("accessToken", newToken);
+          localStorage.setItem("userId", decodedUserId);
+          localStorage.setItem("userName", decodedUserName);
+
+          if (setAuthToken(newToken, decodedUserId, decodedUserName)) {
+            window.history.replaceState({}, document.title, window.location.pathname);
+            setTimeout(() => window.location.href = "/home", 500);
+          } else {
+            throw new Error("Failed to sync auth token");
+          }
+        } catch (error) {
+          setMessages(prev => ({ ...prev, general: `⚠️ ${tAuth('login.syncError')}` }));
+          setTimeout(() => router.push("/register"), 1200);
+        } finally {
+          setStatus(prev => ({ ...prev, loading: false }));
+        }
+      };
+
+      syncOAuthSession();
+      return;
+    }
 
     if (token && userId && userName) {
       setStatus(prev => ({ ...prev, loading: true }));

@@ -140,133 +140,113 @@ export default function NewPostModal({ isOpen, onClose }) {
 
   return (
     <>
-      <Modal isOpen={isOpen} onClose={onClose}>
-        <div className="relative p-5">
-          <div className="flex justify-between items-center mb-4 px-2">
-            <h2 className="text-lg font-semibold">{t("title")}</h2>
+    <Modal isOpen={isOpen} onClose={onClose}>
+      <div className="flex flex-col h-full max-h-[85vh]">
+        {/* Header */}
+        <div className="flex items-center justify-between p-4 border-b border-[var(--border)] shrink-0">
+          <h2 className="text-xl font-bold">{t("title")}</h2>
+        </div>
+
+        {/* Hidden file input */}
+        <input
+          type="file"
+          accept="image/*,video/*"
+          multiple
+          ref={fileInputRef}
+          onChange={handleFileChange}
+          className="hidden"
+        />
+
+        {/* Scrollable Body */}
+        <div className="flex-1 overflow-y-auto p-4 space-y-4 min-h-[300px]">
+          {/* Privacy Selector */}
+          <div className="flex items-center gap-3">
+            <select
+              value={privacy}
+              onChange={(e) => setPrivacy(e.target.value)}
+              className="bg-[var(--muted)] text-[var(--foreground)] text-sm font-semibold py-1.5 px-3 rounded-lg border-none focus:ring-2 focus:ring-[var(--primary)] outline-none cursor-pointer hover:bg-[var(--muted)]/80 transition-colors"
+            >
+              <option value="PUBLIC">🌎 {tPost("privacy.public")}</option>
+              <option value="FRIEND">👥 {tPost("privacy.friend")}</option>
+              <option value="PRIVATE">🔒 {tPost("privacy.private")}</option>
+            </select>
           </div>
 
-          {/* Hidden file input - đặt ở đây để luôn có thể truy cập */}
-          <input
-            type="file"
-            accept="image/*,video/*"
-            multiple
-            ref={fileInputRef}
-            onChange={handleFileChange}
-            className="hidden"
-          />
-
-            {media.length === 0 ? (
-                <div
-                    onClick={handleClickUploadArea}
-                    onDrop={handleDrop}
-                    onDragOver={(e) => e.preventDefault()}
-                    className="flex flex-col items-center justify-center border-2 border-dashed border-[var(--border)] rounded-2xl p-10 text-gray-500 hover:border-[var(--primary)] cursor-pointer transition-colors space-y-2"
-                >
-                  <p className="text-sm">{t("dropzone")}</p>
-                  <p className="text-xs text-gray-400">{t("dropzoneLimit", { count: MAX_FILES })}</p>
-                  <FolderOpen className="w-12 h-12 text-[var(--muted-foreground)]" />
-                </div>
-            ) : (
-                <div className="flex flex-col md:flex-row gap-6 p-4">
-                  <div className="md:w-1/2 w-full">
-                    {/* 🔧 Hiển thị số file hiện tại */}
-                    <div className="mb-2 text-sm text-gray-500">
-                      {t("uploadedCount", { count: media.length, max: MAX_FILES })}
-                    </div>
-                    <ImagePreview
-                        images={media}
-                        onImageClick={(i) => setZoomIndex(i)} // ⚡ xử lý zoom
-                        onDelete={handleRemoveMedia}
-                        onAdd={media.length < MAX_FILES ? handleClickUploadArea : undefined} // 🔧 Chỉ hiển thị nút Add nếu chưa đạt giới hạn
-                    />
-                  </div>
-
-              <div className="md:w-1/2 w-full space-y-4">
-                <div>
-                  <label className="block text-sm font-medium mb-1">{t("privacyLabel")}</label>
-                  <select
-                    value={privacy}
-                    onChange={(e) => setPrivacy(e.target.value)}
-                    className="w-full px-3 py-2 border rounded-xl bg-[var(--input)] text-[var(--foreground)]"
-                  >
-                    <option value="PUBLIC">🌎 {tPost("privacy.public")}</option>
-                    <option value="FRIEND">👥 {tPost("privacy.friend")}</option>
-                    <option value="PRIVATE">🔒 {tPost("privacy.private")}</option>
-                  </select>
-                </div>
-
-                <div className="flex-1">
-                  <label className="block text-sm font-medium mb-1">{t("contentLabel")}</label>
-                  <textarea
-                    ref={textareaRef}
-                    value={content}
-                    onChange={handleContentChange}
-                    rows={4}
-                    placeholder={t("placeholder")}
-                    className="w-full px-3 py-2 border rounded-xl bg-[var(--input)] text-[var(--foreground)] resize-none overflow-hidden min-h-[96px]"
-                    style={{ height: '96px' }}
-                  />
-                </div>
-
-                <div className="flex justify-end">
-                  <button
-                    onClick={handleSubmit}
-                    disabled={isLoading}
-                    className="btn-primary disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    {isLoading ? t("uploading") : tPost("create")}
-                  </button>
-                </div>
-              </div>
+          {/* Text Area */}
+          <div>
+            <textarea
+              ref={textareaRef}
+              value={content}
+              onChange={handleContentChange}
+              placeholder={t("placeholder")}
+              className="w-full bg-transparent text-[var(--foreground)] text-lg placeholder:text-[var(--muted-foreground)] resize-none outline-none min-h-[120px]"
+              style={{ height: '120px' }}
+            />
+            <div className={`text-xs text-[var(--muted-foreground)] mt-1 text-right ${content.length > 10000 && "text-red-500"}`}>
+              {content.length}/10000
             </div>
-          )}
+          </div>
 
-          {/* Nếu không có media */}
-          {media.length === 0 && (
-            <div className="mt-4 space-y-4">
-              <div>
-                <label className="block text-sm font-medium mb-1">{t("privacyLabel")}</label>
-                  <select
-                    value={privacy}
-                    onChange={(e) => setPrivacy(e.target.value)}
-                    className="w-full px-3 py-2 border rounded-xl bg-[var(--input)] text-[var(--foreground)]"
-                  >
-                    <option value="PUBLIC">🌎 {tPost("privacy.public")}</option>
-                    <option value="FRIEND">👥 {tPost("privacy.friend")}</option>
-                    <option value="PRIVATE">🔒 {tPost("privacy.private")}</option>
-                  </select>
+          {/* Media Area */}
+          {media.length > 0 ? (
+            <div className="relative border border-[var(--border)] rounded-xl p-3 bg-[var(--muted)]/10">
+              <div className="mb-3 text-sm font-medium text-[var(--muted-foreground)] flex justify-between items-center px-1">
+                <span>{t("uploadedCount", { count: media.length, max: MAX_FILES })}</span>
+                {media.length < MAX_FILES && (
+                  <button type="button" onClick={handleClickUploadArea} className="text-xs text-[var(--primary)] font-semibold hover:underline flex items-center gap-1">
+                    <Plus className="w-3.5 h-3.5" /> Thêm
+                  </button>
+                )}
               </div>
-
-              <div>
-                <label className="block text-sm font-medium mb-1">{t("contentLabel")}</label>
-                <textarea
-                  ref={textareaRef}
-                  value={content}
-                  onChange={handleContentChange}
-                  rows={4}
-                  placeholder={t("placeholder")}
-                  className="w-full px-3 py-2 border rounded-xl bg-[var(--input)] text-[var(--foreground)] resize-none overflow-hidden min-h-[96px]"
-                  style={{ height: '96px' }}
-                />
-                <div className={`text-xs text-[var(--muted-foreground)] mt-1 text-right ${content.length > 10000 && "text-red-500"}`}>
-                        {content.length}/10000
-                    </div>
+              <ImagePreview
+                images={media}
+                onImageClick={(i) => setZoomIndex(i)}
+                onDelete={handleRemoveMedia}
+                onAdd={media.length < MAX_FILES ? handleClickUploadArea : undefined}
+              />
+            </div>
+          ) : (
+            <div
+              onClick={handleClickUploadArea}
+              onDrop={handleDrop}
+              onDragOver={(e) => e.preventDefault()}
+              className="group flex flex-col items-center justify-center border-2 border-dashed border-[var(--border)] rounded-xl p-8 text-[var(--muted-foreground)] hover:border-[var(--primary)] hover:text-[var(--primary)] hover:bg-[var(--primary)]/5 cursor-pointer transition-all duration-200"
+            >
+              <div className="p-4 bg-[var(--muted)] group-hover:bg-[var(--primary)]/10 rounded-full mb-3 transition-colors">
+                <ImageIcon className="w-8 h-8" />
               </div>
-
-              <div className="flex justify-end">
-                <button
-                  onClick={handleSubmit}
-                  disabled={isLoading || (!content.trim() && media.length === 0) || content.length > 10000}
-                  className="btn-primary disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  {isLoading ? t("uploading") : tPost("create")}
-                </button>
-              </div>
+              <p className="text-base font-medium">{t("dropzone")}</p>
+              <p className="text-xs mt-2 opacity-70">{t("dropzoneLimit", { count: MAX_FILES })}</p>
             </div>
           )}
         </div>
-      </Modal>
+
+        {/* Footer */}
+        <div className="p-4 border-t border-[var(--border)] bg-[var(--background)] shrink-0">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <p className="text-sm font-medium text-[var(--foreground)] hidden sm:block">Thêm vào bài viết</p>
+              <button
+                type="button"
+                onClick={handleClickUploadArea}
+                className="p-2 text-green-500 hover:bg-green-500/10 rounded-full transition-colors"
+                title="Photo/Video"
+              >
+                <ImageIcon className="w-6 h-6" />
+              </button>
+            </div>
+            <button
+              onClick={handleSubmit}
+              disabled={isLoading || (!content.trim() && media.length === 0) || content.length > 10000}
+              className="px-6 py-2 bg-[var(--primary)] text-[var(--primary-foreground)] rounded-lg font-bold hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 transition-all shadow-sm"
+            >
+              {isLoading && <Loader2 className="w-4 h-4 animate-spin" />}
+              {isLoading ? t("uploading") : tPost("create")}
+            </button>
+          </div>
+        </div>
+      </div>
+    </Modal>
 
       {/* 🔍 Modal zoom ảnh/video */}
       {zoomIndex !== null && (

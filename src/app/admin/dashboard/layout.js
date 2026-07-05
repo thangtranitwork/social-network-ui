@@ -12,7 +12,8 @@ import {
   UserCheck, 
   FileText, 
   LayoutDashboard,
-  Megaphone
+  Megaphone,
+  ShieldAlert
 } from "lucide-react"
 import adminApi, { clearAdminSession } from "@/utils/adminInterception"
 import ThemeToggle from "@/components/ui-components/Themetoggle"
@@ -71,6 +72,13 @@ export default function AdminLayout({ children }) {
       description: "Tạo & quản lý thông báo hệ thống"
     },
     {
+      href: "/admin/dashboard/moderation",
+      label: "Kiểm duyệt Nội dung",
+      icon: ShieldAlert,
+      active: pathname === "/admin/dashboard/moderation",
+      description: "Queue AI flag và user report"
+    },
+    {
       href: "/admin/dashboard/ads",
       label: "Quản lý Quảng cáo",
       icon: BarChart3,
@@ -90,6 +98,8 @@ export default function AdminLayout({ children }) {
       return { title: "📊 Thống kê bài viết", subtitle: "Thống kê tương tác, lượt chia sẻ và phân loại bài viết" }
     } else if (pathname.includes("/announcements")) {
       return { title: "📣 Quản lý thông báo", subtitle: "Tạo và hiển thị thông báo chạy chữ (marquee) hệ thống" }
+    } else if (pathname.includes("/moderation")) {
+      return { title: "🛡️ Kiểm duyệt nội dung", subtitle: "Xử lý nội dung bị AI flag hoặc người dùng báo cáo" }
     } else if (pathname.includes("/ads")) {
       return { title: "📢 Quản lý quảng cáo", subtitle: "Phê duyệt các chiến dịch quảng cáo toàn hệ thống và theo dõi doanh thu" }
     }
@@ -223,4 +233,3 @@ export default function AdminLayout({ children }) {
     </div>
   )
 }
-
