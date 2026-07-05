@@ -172,7 +172,7 @@ async function handleAdminTokenRefresh(originalRequest) {
     isRefreshing = true;
     try {
         const { data } = await axios.post(
-            `${process.env.NEXT_PUBLIC_API_URL}/v1/auth/refresh`,
+            `${process.env.NEXT_PUBLIC_API_URL}/v1/auth/refresh-admin`,
             {},
             {
                 withCredentials: true,
@@ -222,7 +222,7 @@ adminApi.interceptors.response.use(
             !originalRequest._retry &&
             !isAdminPublicEndpoint(originalRequest.url) &&
             !originalRequest.skipAuth &&
-            originalRequest.url !== "/auth/refresh"
+            originalRequest.url !== "/v1/auth/refresh-admin"
         ) {
             originalRequest._retry = true;
             return handleAdminTokenRefresh(originalRequest);

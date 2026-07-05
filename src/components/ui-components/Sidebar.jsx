@@ -144,7 +144,7 @@ export default function SidebarNavigation() {
     setIsLoggingOut(true);
    
     try {
-      await api.delete("/v1/auth/logout");
+      await api.delete("/v1/auth/logout-user");
     } catch (err) {
       console.error("Logout failed:", err.response?.data || err.message);
     } finally {

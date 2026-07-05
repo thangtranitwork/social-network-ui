@@ -24,7 +24,7 @@ export default function AdminLayout({ children }) {
 
   const handleLogout = async () => {
     try {
-      await adminApi.delete("/v1/auth/logout")
+      await adminApi.delete("/v1/auth/logout-admin")
     } catch (err) {
       console.error("Logout failed:", err.response?.data || err.message)
     } finally {

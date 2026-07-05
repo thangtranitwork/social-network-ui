@@ -103,7 +103,7 @@ export default function AdminLoginPage() {
 
   const handleLogout = async () => {
     try {
-      await adminApi.delete("/v1/auth/logout");
+      await adminApi.delete("/v1/auth/logout-admin");
     } catch (err) {
       console.error("Admin logout failed:", err.response?.data || err.message);
     } finally {
