@@ -15,6 +15,7 @@ import useNotificationSocket from "@/hooks/useNotificationSocket";
 import useMessageNotification from "@/hooks/useMessageNotification";
 import useErrorSocket from "@/hooks/useErrorSocket"; // ✅ Import useErrorSocket
 import useOnlineNotification from "@/hooks/useOnlineNotification";
+import useFCM from "@/hooks/useFCM"; // ✅ Import FCM hook
 import api, { getAuthInfo } from "@/utils/axios";
 // ✅ Import Call System
 import { CallProvider } from "@/context/CallContext";
@@ -82,11 +83,12 @@ function MainLayoutContent({ children }) {
     }
   }, [initializeCall]);
 
-  // ✅ Sử dụng các socket hooks
+  // ✅ Sử dụng các socket & FCM hooks
   useMessageNotification(userId);
   useNotificationSocket(userId, token);
   useOnlineNotification(userId);
   useErrorSocket(userId); // ✅ Subscribe tới error channel
+  useFCM(userId); // 🔥 Tự động khởi tạo & đồng bộ FCM Token lên Go Backend
 
   useEffect(() => {
     // ✅ Handle error events từ useErrorSocket

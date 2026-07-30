@@ -29,44 +29,66 @@ export default function useNotificationSocket(userId) {
 
       const name = data.creator?.givenName || "ai đó";
 
+      // Helper to show OS native notification banner when tab is hidden
+      const showNativeNotification = (title, body) => {
+        if (typeof window !== "undefined" && "Notification" in window && Notification.permission === "granted") {
+          if (document.hidden) {
+            if ("serviceWorker" in navigator) {
+              navigator.serviceWorker.ready.then((reg) => {
+                reg.showNotification(title, {
+                  body: body,
+                  icon: "/pocpoc.png",
+                  badge: "/pocpoc.png",
+                  tag: "social-notif-" + Date.now(),
+                });
+              });
+            } else {
+              new Notification(title, { body, icon: "/pocpoc.png" });
+            }
+          }
+        }
+      };
+
       // === Toast & store updates by action ===
+      let notifMessage = "";
       switch (data.action) {
         case "SENT_ADD_FRIEND_REQUEST":
-          toast(`${name} đã gửi lời mời kết bạn 💌`);
+          notifMessage = `${name} đã gửi lời mời kết bạn 💌`;
           break;
 
         case "BE_FRIEND":
         case "ACCEPTED_FRIEND_REQUEST":
-          toast(`${name} đã trở thành bạn bè 👥`);
+          notifMessage = `${name} đã trở thành bạn bè 👥`;
           break;
 
         case "POST":
-          toast(`${name} đã đăng một bài viết mới`);
+          notifMessage = `${name} đã đăng một bài viết mới`;
           break;
 
         case "SHARE":
-          toast(`${name} đã chia sẻ một bài viết mới`);
+          notifMessage = `${name} đã chia sẻ một bài viết mới`;
           break;
 
         case "LIKE_POST":
-          toast(`${name} đã thích bài viết của bạn ❤️`);
+          notifMessage = `${name} đã thích bài viết của bạn ❤️`;
           break;
 
         case "COMMENT":
-          toast(`${name} đã bình luận về bài viết của bạn 💬`);
+          notifMessage = `${name} đã bình luận về bài viết của bạn 💬`;
           break;
 
         case "REPLY_COMMENT":
-          toast(`${name} đã trả lời bình luận của bạn 💬`);
+          notifMessage = `${name} đã trả lời bình luận của bạn 💬`;
           break;
         case "DELETE_COMMENT":
-          toast(`${name} đã xóa bình luận của bạn 💬`);
-          break;case "DELETE_POST":
-          toast(`${name} đã xóa bài viết của bạn 💬`);
+          notifMessage = `${name} đã xóa bình luận của bạn 💬`;
+          break;
+        case "DELETE_POST":
+          notifMessage = `${name} đã xóa bài viết của bạn 💬`;
           break;
 
         case "NEW_MESSAGE": {
-          toast(`${name} đã nhắn tin cho bạn 💬`);
+          notifMessage = `${name} đã nhắn tin cho bạn 💬`;
           
           // Play sound notification for new message
           try {
@@ -82,8 +104,6 @@ export default function useNotificationSocket(userId) {
           
           try {
             if (!data.message || !data.message.senderUsername) break;
-
-            // Gọi onMessageReceived để store tự xử lý O(1)
             useAppStore.getState().onMessageReceived(data.message);
           } catch (err) {
             console.error("❌ Failed to process NEW_MESSAGE:", err);
@@ -95,14 +115,17 @@ export default function useNotificationSocket(userId) {
         case "NEW_CHAT_CREATED":
           if (data.chat) {
             onChatCreated(data.chat);
-            toast(`${name} đã tạo cuộc trò chuyện mới 💬`);
-            
-            // Play sound notification for new chat created            
+            notifMessage = `${name} đã tạo cuộc trò chuyện mới 💬`;
           }
           break;
 
         default:
-          toast(`🔔 Có thông báo mới từ ${name}`);
+          notifMessage = `🔔 Có thông báo mới từ ${name}`;
+      }
+
+      if (notifMessage) {
+        toast(notifMessage);
+        showNativeNotification("PocPoc", notifMessage);
       }
 
       // ✅ Đồng bộ thông báo vào store và cập nhật unread count

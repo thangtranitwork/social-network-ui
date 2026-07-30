@@ -1,3 +1,69 @@
+// Firebase Compat SDKs for Web Push Notifications
+try {
+  importScripts('https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js');
+  importScripts('https://www.gstatic.com/firebasejs/10.12.0/firebase-messaging-compat.js');
+
+  const params = new URLSearchParams(self.location.search);
+  const apiKey = params.get('apiKey') || '';
+  const authDomain = params.get('authDomain') || '';
+  const projectId = params.get('projectId') || '';
+  const storageBucket = params.get('storageBucket') || '';
+  const messagingSenderId = params.get('messagingSenderId') || '';
+  const appId = params.get('appId') || '';
+  const measurementId = params.get('measurementId') || '';
+
+  if (apiKey && projectId) {
+    firebase.initializeApp({
+      apiKey,
+      authDomain,
+      projectId,
+      storageBucket,
+      messagingSenderId,
+      appId,
+      measurementId
+    });
+
+    const messaging = firebase.messaging();
+    messaging.onBackgroundMessage((payload) => {
+      console.log('[sw.js] FCM Background message received:', payload);
+      const notificationTitle = payload.notification?.title || payload.data?.title || 'PocPoc Notification';
+      const notificationOptions = {
+        body: payload.notification?.body || payload.data?.body || 'Bạn có thông báo mới',
+        icon: payload.notification?.icon || '/pocpoc.png',
+        badge: '/pocpoc.png',
+        data: payload.data || {},
+        tag: payload.data?.tag || 'fcm-push-notification'
+      };
+      self.registration.showNotification(notificationTitle, notificationOptions);
+    });
+  }
+} catch (e) {
+  console.warn('[sw.js] Firebase Messaging init skipped or failed:', e);
+}
+
+// Fallback listener for raw Web Push events when tab/browser is in background or closed
+self.addEventListener('push', (event) => {
+  if (!event.data) return;
+  try {
+    const payload = event.data.json();
+    console.log('[sw.js] Raw Push event received:', payload);
+    const title = payload.notification?.title || payload.title || 'PocPoc Notification';
+    const options = {
+      body: payload.notification?.body || payload.body || 'Bạn có thông báo mới',
+      icon: payload.notification?.icon || '/pocpoc.png',
+      badge: '/pocpoc.png',
+      data: payload.data || payload,
+      tag: payload.tag || 'web-push'
+    };
+    event.waitUntil(self.registration.showNotification(title, options));
+  } catch (err) {
+    const text = event.data.text();
+    event.waitUntil(
+      self.registration.showNotification('PocPoc', { body: text, icon: '/pocpoc.png' })
+    );
+  }
+});
+
 const CACHE_NAME = 'pocpoc-v1';
 const urlsToCache = [
   '/offline.html',

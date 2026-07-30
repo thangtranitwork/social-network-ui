@@ -100,31 +100,39 @@ export default async function RootLayout({ children }) {
           }}
         />
         
-        {/* PWA Service Worker Registration */}
+        {/* Firebase Messaging Service Worker Registration */}
         <Script
-  id="sw-register"
-  strategy="afterInteractive"
-  dangerouslySetInnerHTML={{
-    __html: `
-      (function() {
-        if ('serviceWorker' in navigator) {
-          navigator.serviceWorker.getRegistration('/sw.js').then(existingReg => {
-            if (!existingReg) {
-              navigator.serviceWorker.register('/sw.js', { scope: '/' })
-                .then(function(reg) {
-                  console.log(' SW registered:', reg);
-                }).catch(function(err) {
-                  console.error(' SW registration failed:', err);
-                });
-            } else {
-              console.log('ℹ SW already registered:', existingReg);
-            }
-          });
-        }
-      })();
-    `
-  }}
-/>
+          id="sw-register"
+          strategy="afterInteractive"
+          dangerouslySetInnerHTML={{
+            __html: `
+              (function() {
+                if ('serviceWorker' in navigator) {
+                  // Clean up legacy sw.js if present
+                  navigator.serviceWorker.getRegistration('/sw.js').then(function(oldReg) {
+                    if (oldReg) {
+                      oldReg.unregister();
+                      console.log('🧹 Unregistered legacy sw.js');
+                    }
+                  });
+                  // Register dedicated Firebase Service Worker
+                  navigator.serviceWorker.getRegistration('/firebase-messaging-sw.js').then(function(existingReg) {
+                    if (!existingReg) {
+                      navigator.serviceWorker.register('/firebase-messaging-sw.js', { scope: '/' })
+                        .then(function(reg) {
+                          console.log('🔥 Firebase Service Worker registered:', reg);
+                        }).catch(function(err) {
+                          console.error('❌ Firebase Service Worker registration failed:', err);
+                        });
+                    } else {
+                      console.log('ℹ️ Firebase Service Worker already registered:', existingReg);
+                    }
+                  });
+                }
+              })();
+            `
+          }}
+        />
 
       </head>
       <body className="antialiased">

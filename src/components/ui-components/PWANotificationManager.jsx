@@ -84,6 +84,14 @@ export default function PWAManager({ children }) {
       setNotificationPermission(permission);
       
       if (permission === 'granted') {
+        // Request FCM Token
+        try {
+          const { requestFCMToken } = await import('@/utils/firebase');
+          await requestFCMToken();
+        } catch (err) {
+          console.warn('FCM token request error:', err);
+        }
+
         // Show success notification
         if ('serviceWorker' in navigator) {
           navigator.serviceWorker.ready.then((registration) => {
