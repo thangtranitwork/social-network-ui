@@ -16,6 +16,7 @@
 - 🎞️ **GIF Picker** — Inline GIF search and sending in chat
 - 🌙 **Dark / Light Mode** — Theme toggle with `next-themes`
 - 🌐 **Internationalisation** — Multi-language support via `next-intl`
+- 🛡️ **Bot Protection** — Cloudflare Turnstile CAPTCHA integration on registration & resend email forms
 - 🛡️ **Admin Dashboard** — User & post management panel
 - 📱 **PWA Ready** — Progressive Web App notification manager
 

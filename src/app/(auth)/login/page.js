@@ -13,6 +13,7 @@ import api, { setAuthToken } from "@/utils/axios";
 import { parseApiError } from "@/utils/errorCodes";
 import { jwtDecode } from "jwt-decode";
 import { useTranslations } from "next-intl";
+import TurnstileWidget from "@/components/ui-components/TurnstileWidget";
 
 // Helper functions
 const validateForm = (mode, formData, t) => {
@@ -195,6 +196,7 @@ function AuthPageContent() {
   });
   const [messages, setMessages] = useState({ verify: "", general: "" });
   const [status, setStatus] = useState({ verifying: false, loading: false });
+  const [captchaToken, setCaptchaToken] = useState("");
 
   const formRef = useRef(null);
   const searchParams = useSearchParams();
@@ -205,6 +207,7 @@ function AuthPageContent() {
     setFormData({ email: "", password: "", confirmPassword: "", givenName: "", familyName: "", birthdate: "", twoFactorCode: "" });
     setShowResendButton(false);
     setShow2FAField(false);
+    setCaptchaToken("");
   };
 
   const handleResend = async () => {
@@ -214,15 +217,27 @@ function AuthPageContent() {
       return;
     }
 
+    if (process.env.NEXT_PUBLIC_CAPTCHA_SITE_KEY && !captchaToken) {
+      setMessages(prev => ({ ...prev, general: "❌ Vui lòng hoàn thành xác thực CAPTCHA để gửi lại email" }));
+      return;
+    }
+
     setStatus(prev => ({ ...prev, loading: true }));
     try {
-      const res = await api.post(`/v1/register/resend-email?email=${email}`);
+      const res = await api.post(`/v1/register/resend-email?email=${encodeURIComponent(email)}&captcha_token=${encodeURIComponent(captchaToken)}`);
       if (res.data.code === 200) {
         setMessages(prev => ({ ...prev, general: `✅ ${tAuth('register.resendSuccess')}` }));
         setShowResendButton(false);
+        setCaptchaToken("");
       }
     } catch (error) {
-      setMessages(prev => ({ ...prev, general: `❌ ${tAuth('register.resendFailed', { error: parseApiError(error, tError) })}` }));
+      const code = error.response?.data?.code;
+      if (code === 1040) {
+        setMessages(prev => ({ ...prev, general: `❌ Xác thực CAPTCHA không hợp lệ hoặc đã hết hạn. Vui lòng thử lại.` }));
+        setCaptchaToken("");
+      } else {
+        setMessages(prev => ({ ...prev, general: `❌ ${tAuth('register.resendFailed', { error: parseApiError(error, tError) })}` }));
+      }
     } finally {
       setStatus(prev => ({ ...prev, loading: false }));
     }
@@ -325,11 +340,17 @@ function AuthPageContent() {
   }, [searchParams]);
 
   const handleRegister = async () => {
+    if (process.env.NEXT_PUBLIC_CAPTCHA_SITE_KEY && !captchaToken) {
+      setMessages(prev => ({ ...prev, general: "❌ Vui lòng hoàn thành xác thực CAPTCHA" }));
+      return;
+    }
+
     setStatus(prev => ({ ...prev, loading: true }));
     try {
       const res = await api.post("/v1/register", {
         email: formData.email, password: formData.password,
         givenName: formData.givenName, familyName: formData.familyName, birthdate: formData.birthdate,
+        captchaToken: captchaToken,
       });
 
       if (res.data.code === 200) {
@@ -344,6 +365,9 @@ function AuthPageContent() {
         setShowResendButton(true);
       } else if (code === 1012) {
         setMessages(prev => ({ ...prev, general: `❌ ${tAuth('register.emailAlreadyExists')}` }));
+      } else if (code === 1040) {
+        setMessages(prev => ({ ...prev, general: `❌ Xác thực CAPTCHA không hợp lệ hoặc đã hết hạn. Vui lòng thử lại.` }));
+        setCaptchaToken("");
       } else {
         setMessages(prev => ({ ...prev, general: `❌ ${tAuth('register.resendFailed', { error: parseApiError(error, tError) })}` }));
       }
@@ -505,9 +529,24 @@ function AuthPageContent() {
                           t={tAuth}
                       />
 
-                      <Button type="submit" disabled={status.loading || status.verifying} className="w-full py-2">
-                        {status.loading ? tCommon('loading') : mode === "login" ? tAuth('login.submit') : tAuth('register.submit')}
-                      </Button>
+                      {(mode === "register" || showResendButton) && (
+                        <TurnstileWidget
+                          siteKey={process.env.NEXT_PUBLIC_CAPTCHA_SITE_KEY}
+                          onSuccess={(token) => setCaptchaToken(token)}
+                          onExpire={() => setCaptchaToken("")}
+                          onError={() => setCaptchaToken("")}
+                        />
+                      )}
+
+                      {showResendButton ? (
+                        <Button type="button" onClick={handleResend} disabled={status.loading || status.verifying} className="w-full py-2 bg-amber-600 hover:bg-amber-700 text-white">
+                          📧 {tAuth('register.resendEmail') || "Gửi lại email xác thực"}
+                        </Button>
+                      ) : (
+                        <Button type="submit" disabled={status.loading || status.verifying} className="w-full py-2">
+                          {status.loading ? tCommon('loading') : mode === "login" ? tAuth('login.submit') : tAuth('register.submit')}
+                        </Button>
+                      )}
 
                       <div className="mt-6 text-center text-sm text-muted-foreground space-y-2">
                         <div>
