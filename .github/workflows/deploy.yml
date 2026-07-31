@@ -1,0 +1,73 @@
+name: Next.js UI CI/CD Pipeline
+
+on:
+  push:
+    branches:
+      - main
+      - master
+  pull_request:
+    branches:
+      - main
+      - master
+
+concurrency:
+  group: cd-ui-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # ========================================================
+  # STEP 1: CI (Lint & Verify Build)
+  # ========================================================
+  ci:
+    name: Lint & Build Verification
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install Dependencies
+        run: npm install
+
+      - name: Run ESLint Check
+        run: npm run lint || true
+
+      - name: Verify Next.js Build
+        run: npm run build
+
+  # ========================================================
+  # STEP 2: CD (Deploy to VPS - Runs ONLY after CI succeeds)
+  # ========================================================
+  deploy-ui:
+    name: Deploy UI Docker Container to VPS
+    runs-on: ubuntu-latest
+    needs: ci
+    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup SSH Key
+        uses: webfactory/ssh-agent@v0.9.0
+        with:
+          ssh-private-key: ${{ secrets.VPS_SSH_KEY }}
+
+      - name: Add VPS to Known Hosts
+        run: |
+          mkdir -p ~/.ssh
+          ssh-keyscan -p ${{ secrets.VPS_PORT || 22 }} ${{ secrets.VPS_HOST }} >> ~/.ssh/known_hosts
+
+      - name: Run UI Deployment Script
+        env:
+          SERVER_IP: ${{ secrets.VPS_HOST }}
+          SSH_USER: ${{ secrets.VPS_USER }}
+          SSH_PORT: ${{ secrets.VPS_PORT || 22 }}
+        run: |
+          chmod +x deploy-ui-vps.sh
+          ./deploy-ui-vps.sh
