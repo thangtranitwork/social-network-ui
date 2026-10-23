@@ -5,7 +5,7 @@ import adminApi from "@/utils/adminInterception"
 import api, { getUserId } from "@/utils/axios"
 import dayjs from "dayjs"
 import relativeTime from "dayjs/plugin/relativeTime"
-import { Globe, Heart, Lock, MessageCircle, MoreVertical, SendHorizonal, Share2, Users, Pencil, Trash2 } from "lucide-react"
+import { Globe, Heart, Lock, MessageCircle, MoreVertical, SendHorizonal, Share2, Users, Pencil, Trash2, Sparkles } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { lazy, memo, Suspense, useCallback, useEffect, useState, useMemo } from "react"
 import toast from "react-hot-toast"
@@ -33,7 +33,10 @@ const PostCard = memo(function PostCard({
     isPriority = false,
     isAdmin = false,
     size = "default",
-    className = ""
+    className = "",
+    highlightedFileId = null,
+    relevanceLabel = null,
+    rawCosine = null
 }) {
     const [isMobile, setIsMobile] = useState(undefined)
     const [activeImageIndex, setActiveImageIndex] = useState(null)
@@ -255,6 +258,41 @@ const PostCard = memo(function PostCard({
         }
     }
 
+    const effectiveRelevance = relevanceLabel || currentPost.relevance_label || currentPost.relevanceLabel
+    const effectiveRawCosine = rawCosine ?? currentPost.raw_cosine ?? currentPost.rawCosine
+
+    const renderRelevanceBadge = () => {
+        if (!effectiveRelevance && effectiveRawCosine === undefined) return null
+
+        let badgeClass = "bg-stone-500/10 text-stone-600 dark:text-stone-300 border-stone-500/20"
+        let labelText = "Khá liên quan"
+        if (effectiveRelevance === "VERY_HIGH" || (effectiveRawCosine && effectiveRawCosine >= 0.85)) {
+            badgeClass = "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/25"
+            labelText = "Rất giống"
+        } else if (effectiveRelevance === "HIGH" || (effectiveRawCosine && effectiveRawCosine >= 0.70)) {
+            badgeClass = "bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/25"
+            labelText = "Tương đồng cao"
+        } else if (effectiveRelevance === "RELATED" || (effectiveRawCosine && effectiveRawCosine >= 0.50)) {
+            badgeClass = "bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/25"
+            labelText = "Khá liên quan"
+        } else if (effectiveRelevance === "LOW") {
+            badgeClass = "bg-stone-500/10 text-stone-500 border-stone-500/20"
+            labelText = "Tương đồng thấp"
+        }
+
+        const scorePercent = effectiveRawCosine !== undefined && effectiveRawCosine !== null
+            ? Math.round(effectiveRawCosine * 100)
+            : null
+
+        return (
+            <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold border shadow-xs ${badgeClass}`}>
+                <Sparkles size={10} className="text-amber-400" />
+                <span>{labelText}</span>
+                {scorePercent !== null && <span className="opacity-80">({scorePercent}%)</span>}
+            </span>
+        )
+    }
+
     const handleImageClick = useCallback((i) => {
         setActiveImageIndex(i)
         setShowModal(true)
@@ -387,6 +425,7 @@ const PostCard = memo(function PostCard({
                                 {currentPost.isAd && (
                                     <span className="px-1.5 py-0.5 rounded text-[9px] font-black bg-blue-500/10 text-blue-500 uppercase tracking-wider">Ad</span>
                                 )}
+                                {renderRelevanceBadge()}
                             </div>
                             <p className="text-xs">
                                 {currentPost.isAd ? "Được tài trợ" : dayjs(currentPost.createdAt).fromNow()} {!currentPost.isAd && renderPrivacyIcon(currentPost.privacy)}
@@ -498,6 +537,10 @@ const PostCard = memo(function PostCard({
                             isActive={!isModalOpen}
                             priority={isPriority}
                             onImageClick={handleImageClick}
+                            highlightedFileId={highlightedFileId || currentPost.highlightedFileId || currentPost.matched_image?.file_id}
+                            onSimilarSearch={(fileUrl) => {
+                                router.push(`/search?tab=visual&file_url=${encodeURIComponent(fileUrl)}`)
+                            }}
                         />
                     </div>
                 )}

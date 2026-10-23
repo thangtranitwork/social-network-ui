@@ -580,7 +580,7 @@
   },
   "search": {
     "title": "Tìm kiếm",
-    "placeholder": "Tìm kiếm người dùng...",
+    "placeholder": "Tìm kiếm người dùng, bài viết hoặc mô tả ảnh...",
     "searching": "Đang tìm kiếm...",
     "noResults": "Không tìm thấy kết quả",
     "results": "Kết quả tìm kiếm",
@@ -589,7 +589,29 @@
     "suggestions": "Gợi ý",
     "noSuggestions": "Không có gợi ý nào",
     "addFriend": "Kết bạn",
-    "viewProfile": "Xem hồ sơ"
+    "viewProfile": "Xem hồ sơ",
+    "visualSearch": "Tìm kiếm hình ảnh",
+    "all": "Tất cả",
+    "searchByImage": "Tìm bằng hình ảnh",
+    "uploadImage": "Tải ảnh lên hoặc kéo thả vào đây",
+    "dropImageHere": "Thả ảnh vào đây...",
+    "changeImage": "Đổi ảnh",
+    "clearImage": "Xóa ảnh",
+    "imageSearchDesc": "Tìm kiếm bài viết chứa hình ảnh tương đồng bằng AI đa phương thức",
+    "similarPosts": "Bài viết có hình ảnh tương đồng",
+    "findSimilarImages": "Tìm ảnh tương tự",
+    "matchQuality": {
+      "veryHigh": "Rất giống",
+      "high": "Tương đồng cao",
+      "related": "Khá liên quan",
+      "low": "Tương đồng thấp"
+    },
+    "similarityScore": "Độ tương đồng: {score}%",
+    "matchedImage": "Ảnh khớp",
+    "searchingVisual": "Đang phân tích vector hình ảnh và tìm kiếm...",
+    "rateLimitImage": "Bạn đã vượt quá giới hạn tìm kiếm ảnh (tối đa 10 lần/phút). Vui lòng thử lại sau.",
+    "rateLimitText": "Bạn đã vượt quá giới hạn tìm kiếm qua mô tả ảnh (tối đa 30 lần/phút). Vui lòng thử lại sau.",
+    "invalidImage": "Vui lòng chọn file hình ảnh hợp lệ (JPEG, PNG, WebP dưới 10MB)"
   },
   "settings": {
     "title": "Cài đặt người dùng",
@@ -834,6 +856,34 @@
       "section2Desc": "Mọi tin nhắn, cuộc gọi và bài viết được đồng bộ thời gian thực giúp bạn không bỏ lỡ bất kỳ khoảnh khắc nào.",
       "section3Title": "Quyền riêng tư hàng đầu",
       "section3Desc": "Chúng tôi tôn trọng và bảo vệ dữ liệu cá nhân của bạn, cho phép tùy chỉnh chia sẻ với người bạn muốn."
+    },
+    "manifesto": {
+      "quote": "Chúng tôi tạo nên PocPoc vì sự hiện diện chân thực giữa con người, không phải để thao túng sự chú ý.",
+      "p1Title": "Giao thoa chân thực",
+      "p1Desc": "Không thuật toán thao túng, không bảng tin giật gân. Chỉ là những khoảnh khắc theo dòng thời gian từ người bạn thực sự quan tâm.",
+      "p2Title": "Bảo mật tuyệt đối",
+      "p2Desc": "Kênh liên lạc mã hóa đầu cuối, xác thực hai lớp (2FA) và cam kết không bán dữ liệu cá nhân.",
+      "p3Title": "Không gian tinh tế",
+      "p3Desc": "Được kiến tạo như một góc văn hóa độc lập: tĩnh lặng, tập trung và trân trọng từng phút giây của bạn."
+    },
+    "showcase": {
+      "tab1": "Đối thoại",
+      "tab2": "Khoảnh khắc",
+      "tab3": "Bảo mật",
+      "listenVoice": "Tin nhắn thoại · 0:24",
+      "encryptedBadge": "Mã hóa đầu cuối",
+      "activeCall": "Kết nối trực tiếp 60fps HD",
+      "liveStatus": "Cuộc gọi thoại · độ trễ 18ms",
+      "postAuthor": "Mai Lan",
+      "postRole": "Nghệ sĩ thị giác, Hà Nội",
+      "postContent": "Một sáng êm ả tại xưởng in những tấm ảnh 35mm mới chụp. Ánh nắng rọi qua ban công thật đẹp và bình yên.",
+      "friend1": "Minh Khang",
+      "friend1Msg": "Mai nhớ mang vài bức in đến buổi tối nhé!",
+      "friend2": "Hạ Linh",
+      "friend2Msg": "Màu sắc trên tấm thứ hai trông ấm áp quá!",
+      "chatUser": "Linh Nguyễn",
+      "chatMsg1": "Chào bạn! Bạn đã xem qua danh sách bài hát cho album mới chưa?",
+      "chatMsg2": "Mình vừa nghe đoạn ghi âm của bạn rồi — đoạn guitar mở đầu rất cảm xúc!"
     },
     "footer": {
       "ctaText": "Sẵn sàng kết nối cùng PocPoc?",

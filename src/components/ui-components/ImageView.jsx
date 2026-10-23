@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import { useState, useRef, useEffect, memo } from "react";
-import { Volume2, VolumeX } from "lucide-react";
+import { Volume2, VolumeX, Sparkles } from "lucide-react";
 
 /* =========================
    Utils
@@ -59,6 +59,8 @@ const ImageView = memo(function ImageView({
                                             onImageClick = () => {},
                                             isActive = true,
                                             isPriority = false,
+                                            highlightedFileId = null,
+                                            onSimilarSearch = null,
                                           }) {
   const [mutedVideos, setMutedVideos] = useState({});
   const [mediaErrors, setMediaErrors] = useState({});
@@ -151,19 +153,55 @@ const ImageView = memo(function ImageView({
     const hasError = mediaErrors[index];
     const isVid = isVideo(src);
 
+    const isHighlighted = Boolean(
+      highlightedFileId &&
+      typeof src === "string" &&
+      (src === highlightedFileId ||
+       src.includes(highlightedFileId) ||
+       (highlightedFileId.length > 8 && src.includes(highlightedFileId.split("/").pop().split("?")[0])))
+    );
+
+    const currentWrapperClass = `${imageWrapperClass} ${
+      isHighlighted ? "ring-4 ring-indigo-500 ring-offset-2 ring-offset-background shadow-lg shadow-indigo-500/25" : ""
+    }`;
+
     // Case: src null / undefined
-      if (!src) {
-          return (
-              <div key={index} className={imageWrapperClass}>
-                  <MediaFallback onClick={() => onImageClick()} />
-              </div>
-          );
-      }
+    if (!src) {
+        return (
+            <div key={index} className={currentWrapperClass}>
+                <MediaFallback onClick={() => onImageClick()} />
+            </div>
+        );
+    }
 
     return (
-        <div key={index} className={imageWrapperClass}>
+        <div key={index} className={currentWrapperClass}>
           {/* Skeleton */}
           {loadingStates[index] !== false && !hasError && <Skeleton />}
+
+          {/* Highlight Badge */}
+          {isHighlighted && (
+            <div className="absolute top-2 left-2 z-10 bg-indigo-600/95 backdrop-blur-md text-white text-[10px] font-bold px-2 py-0.5 rounded-full shadow-md flex items-center gap-1 border border-white/20">
+              <Sparkles size={11} className="text-amber-300" />
+              <span>Ảnh khớp</span>
+            </div>
+          )}
+
+          {/* 1-Click Similar Search Button */}
+          {onSimilarSearch && !isVid && (
+            <button
+              type="button"
+              title="Tìm ảnh tương tự"
+              onClick={(e) => {
+                e.stopPropagation();
+                onSimilarSearch(src);
+              }}
+              className={`absolute ${isHighlighted ? "top-2 right-2" : "top-2 right-2"} z-10 flex items-center gap-1 px-2.5 py-1 rounded-full bg-black/60 hover:bg-black/85 backdrop-blur-md text-white text-[11px] font-medium transition-all shadow-md hover:scale-105 active:scale-95`}
+            >
+              <Sparkles size={12} className="text-amber-400" />
+              <span className="hidden sm:inline">Tìm tương tự</span>
+            </button>
+          )}
 
           {isVid ? (
               hasError ? (

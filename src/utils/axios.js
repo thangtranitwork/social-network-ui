@@ -195,9 +195,11 @@ async function handleTokenRefresh(originalRequest) {
     return api(originalRequest);
   } catch (refreshErr) {
     console.error("Token refresh failed:", refreshErr);
+    refreshSubscribers.forEach(cb => cb(null));
+    refreshSubscribers = [];
     clearSession();
-    if (isClient) {
-      setTimeout(() => window.location.href = "/register", 1000);
+    if (isClient && !window.location.pathname.startsWith("/login") && !window.location.pathname.startsWith("/register")) {
+      setTimeout(() => window.location.href = "/login", 500);
     }
     return Promise.reject(refreshErr);
   } finally {
@@ -254,6 +256,11 @@ api.interceptors.response.use(
           !originalRequest.skipAuth &&
           originalRequest.url !== "/v1/auth/refresh"
       ) {
+        const hasToken = cookieUtils.get('accessToken') || (typeof window !== "undefined" && localStorage.getItem("accessToken"));
+        if (!hasToken) {
+          clearSession();
+          return Promise.reject(error);
+        }
         originalRequest._retry = true;
         return handleTokenRefresh(originalRequest);
       }

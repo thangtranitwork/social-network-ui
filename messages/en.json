@@ -580,7 +580,7 @@
   },
   "search": {
     "title": "Search",
-    "placeholder": "Search users...",
+    "placeholder": "Search users, posts or image descriptions...",
     "searching": "Searching...",
     "noResults": "No results found",
     "results": "Search results",
@@ -589,7 +589,29 @@
     "suggestions": "Suggestions",
     "noSuggestions": "No suggestions found",
     "addFriend": "Add friend",
-    "viewProfile": "View profile"
+    "viewProfile": "View profile",
+    "visualSearch": "Visual Search",
+    "all": "All",
+    "searchByImage": "Search by Image",
+    "uploadImage": "Upload or drag & drop an image here",
+    "dropImageHere": "Drop image here...",
+    "changeImage": "Change image",
+    "clearImage": "Clear image",
+    "imageSearchDesc": "Search posts with similar images using Multimodal AI",
+    "similarPosts": "Posts with similar images",
+    "findSimilarImages": "Find similar images",
+    "matchQuality": {
+      "veryHigh": "Very High Match",
+      "high": "High Similarity",
+      "related": "Related",
+      "low": "Low Similarity"
+    },
+    "similarityScore": "Similarity: {score}%",
+    "matchedImage": "Matched Image",
+    "searchingVisual": "Analyzing visual features and searching...",
+    "rateLimitImage": "Rate limit exceeded (10 visual searches/min). Please try again later.",
+    "rateLimitText": "Rate limit exceeded (30 visual searches/min). Please try again later.",
+    "invalidImage": "Please select a valid image file (JPEG, PNG, WebP under 10MB)"
   },
   "settings": {
     "title": "User settings",
@@ -834,6 +856,34 @@
       "section2Desc": "Every message, call, and post is synced in real-time so you never miss a single moment.",
       "section3Title": "Privacy First",
       "section3Desc": "We respect and protect your personal data, giving you full control over who you share with."
+    },
+    "manifesto": {
+      "quote": "We built PocPoc for genuine human presence, not algorithmic attention harvesting.",
+      "p1Title": "Unfiltered Resonance",
+      "p1Desc": "No manipulative algorithms, no rage-bait ranking. Just chronologically ordered moments from people you care about.",
+      "p2Title": "Absolute Privacy",
+      "p2Desc": "End-to-end encrypted channels, multi-factor protection, and zero telemetry data brokers.",
+      "p3Title": "Crafted For Intimacy",
+      "p3Desc": "Designed like an independent cultural space: quiet, focused, and deeply respectful of your time."
+    },
+    "showcase": {
+      "tab1": "Conversations",
+      "tab2": "Moments",
+      "tab3": "Sanctuary",
+      "listenVoice": "Voice note · 0:24",
+      "encryptedBadge": "End-to-End Encrypted",
+      "activeCall": "Peer-to-Peer 60fps HD",
+      "liveStatus": "Active Call · 18ms latency",
+      "postAuthor": "Mai Lan",
+      "postRole": "Visual Artist, Hanoi",
+      "postContent": "Quiet morning at the studio printing 35mm contact sheets. The light through the balcony felt just right.",
+      "friend1": "Minh Khang",
+      "friend1Msg": "Can you bring a couple prints to dinner tomorrow?",
+      "friend2": "Ha Linh",
+      "friend2Msg": "The tones on that second frame are stunning!",
+      "chatUser": "Linh Nguyen",
+      "chatMsg1": "Morning! Did you get a chance to review the album sequencing?",
+      "chatMsg2": "Just listened to your voice memo — loved the acoustic intro. Let's lock it in!"
     },
     "footer": {
       "ctaText": "Ready to connect with PocPoc?",
