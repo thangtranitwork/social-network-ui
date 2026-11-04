@@ -10,6 +10,7 @@ import { Comment } from "./Comment";
 import { useRouter } from "next/navigation";
 import { useForm } from "@/hooks/useComment";
 import { uploadFile } from "@/utils/fileUpload";
+import { formatFullName } from "@/utils/formatName";
 import {renderTextWithLinks} from "@/hooks/renderTextWithLinks";
 import SharePostModal from "@/components/social-app-component/SharePostModal";
 import useCommentsQuery from "@/hooks/useCommentsQuery";
@@ -41,40 +42,15 @@ export default function PostModal({
   const tCommon = useTranslations("common");
   const format = useFormatter();
 
-  // Add error handling for missing or invalid post
-  if (!post || !post.id) {
-    return (
-        <Modal isOpen={true} onClose={onClose} size="small">
-          <div className="flex flex-col items-center justify-center h-[400px] bg-[var(--card)] text-[var(--card-foreground)] rounded-xl p-8">
-            <div className="text-center space-y-4">
-              <div className="w-16 h-16 mx-auto bg-[var(--muted)] rounded-full flex items-center justify-center">
-                <MessageCircle className="h-8 w-8 text-[var(--muted-foreground)]" />
-              </div>
-              <h3 className="text-lg font-semibold">{t("unavailable")}</h3>
-              <p className="text-sm text-[var(--muted-foreground)] max-w-sm">
-                {t("originalDeleted")}
-              </p>
-              <button
-                  onClick={onClose}
-                  className="px-4 py-2 bg-[var(--primary)] text-[var(--primary-foreground)] rounded-lg text-sm hover:opacity-90 transition-opacity"
-              >
-                {tCommon("close")}
-              </button>
-            </div>
-          </div>
-        </Modal>
-    );
-  }
-
   // Determine what content and media to display
   const isSharedPost = post?.sharedPost;
-  const displayPost = isSharedPost ? post.originalPost : post;
+  const displayPost = isSharedPost ? post?.originalPost : post;
   const router = useRouter();
   const inputRef = useRef(null);
 
   // Handle media from both regular posts and shared posts
   let media = [];
-  if (isSharedPost && post.originalPost) {
+  if (isSharedPost && post?.originalPost) {
     media = post.originalPost.files || post.originalPost.images || [];
   } else if (!isSharedPost) {
     media = post?.files || post?.images || [];
@@ -91,10 +67,10 @@ export default function PostModal({
   const [showFilterDropdown, setShowFilterDropdown] = useState(false); // New state for dropdown visibility
 
   // TanStack Query for comments
-  const { data: comments = [], isLoading: loadingComments } = useCommentsQuery(post.id, commentFilter, isAdmin);
+  const { data: comments = [], isLoading: loadingComments } = useCommentsQuery(post?.id, commentFilter, isAdmin);
   
   // Comment Mutations
-  const mutations = useCommentMutation(post.id, commentFilter);
+  const mutations = useCommentMutation(post?.id, commentFilter);
 
   const handleProfileClick = (e, post) => {
     e.stopPropagation();
@@ -164,7 +140,7 @@ export default function PostModal({
                 />
                 <div>
                   <p className="font-semibold text-sm">
-                    {post.author?.givenName} {post.author?.familyName}
+                    {formatFullName(post.author)}
                   </p>
                   <p className="text-xs text-[var(--muted-foreground)]">
                     {t("shared")} • {format.dateTime(new Date(post.createdAt), 'short')}
@@ -231,7 +207,7 @@ export default function PostModal({
                   />
                   <div>
                     <p className="font-semibold text-sm">
-                      {displayPost?.author?.givenName} {displayPost?.author?.familyName}
+                      {formatFullName(displayPost?.author)}
                     </p>
                     <p className="text-xs text-[var(--muted-foreground)]">
                       {displayPost?.createdAt ? format.dateTime(new Date(displayPost.createdAt), 'short') : ''}
@@ -395,9 +371,10 @@ export default function PostModal({
               placeholder={tComment("placeholder")}
               value={mainCommentForm.content}
               onChange={(e) => mainCommentForm.setContent(e.target.value)}
+              onPaste={mainCommentForm.handlePaste}
               className="flex-1 bg-transparent outline-none text-sm p-2"
           />
-          <label className="text-sm text-blue-500 cursor-pointer hover:underline">
+          <label className="text-sm text-[var(--primary)] cursor-pointer hover:underline font-medium">
             {tComment("addPhoto")}
             <input
                 type="file"
@@ -412,13 +389,37 @@ export default function PostModal({
                   mainCommentForm.isSubmitting ||
                   (!mainCommentForm.content.trim() && !mainCommentForm.file)
               }
-              className="text-blue-500 text-sm font-semibold hover:opacity-80 disabled:opacity-50"
+              className="text-[var(--primary)] text-sm font-semibold hover:opacity-80 disabled:opacity-50"
           >
             {mainCommentForm.isSubmitting ? tComment("sending") : tComment("send")}
           </button>
         </form>
       </div>
   ), [mainCommentForm, isAdmin, tComment]);
+
+  if (!post || !post.id) {
+    return (
+      <Modal isOpen={true} onClose={onClose} size="small">
+        <div className="flex flex-col items-center justify-center h-[400px] bg-[var(--card)] text-[var(--card-foreground)] rounded-xl p-8">
+          <div className="text-center space-y-4">
+            <div className="w-16 h-16 mx-auto bg-[var(--muted)] rounded-full flex items-center justify-center">
+              <MessageCircle className="h-8 w-8 text-[var(--muted-foreground)]" />
+            </div>
+            <h3 className="text-lg font-semibold">{t("unavailable")}</h3>
+            <p className="text-sm text-[var(--muted-foreground)] max-w-sm">
+              {t("originalDeleted")}
+            </p>
+            <button
+              onClick={onClose}
+              className="px-4 py-2 bg-[var(--primary)] text-[var(--primary-foreground)] rounded-lg text-sm hover:opacity-90 transition-opacity"
+            >
+              {tCommon("close")}
+            </button>
+          </div>
+        </div>
+      </Modal>
+    );
+  }
 
   return (
       <Modal

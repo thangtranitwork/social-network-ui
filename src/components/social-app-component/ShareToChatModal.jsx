@@ -1,13 +1,14 @@
 "use client"
 
 import { useShallow } from 'zustand/react/shallow';
-import { memo, useCallback, useMemo, useState } from "react"
+import { memo, useCallback, useMemo, useState, useEffect } from "react"
 import toast from "react-hot-toast"
 import { Search, Send, X } from "lucide-react"
 import Avatar from "../ui-components/Avatar"
 import useAppStore, { selectSortedChatList } from "@/store/ZustandStore"
 import api from "@/utils/axios"
 import { useTranslations } from "next-intl"
+import { formatFullName } from "@/utils/formatName"
 
 function ShareToChatModal({ isOpen, onClose, post }) {
     const t = useTranslations("chat")
@@ -21,12 +22,21 @@ function ShareToChatModal({ isOpen, onClose, post }) {
     const [sending, setSending] = useState(null) // chatId đang gửi
     const [sentChats, setSentChats] = useState(new Set()) // các chatId đã gửi thành công
 
+    useEffect(() => {
+        if (isOpen) {
+            fetchChatList?.();
+        }
+    }, [isOpen, fetchChatList]);
+
     // Lọc danh sách chat theo tên
     const filteredChats = useMemo(() => {
         if (!searchQuery.trim()) return chatList
         const q = searchQuery.toLowerCase()
         return chatList.filter((chat) => {
-            const name = `${chat.target?.givenName || ""} ${chat.target?.familyName || ""}`.toLowerCase()
+            if (chat.isGroup) {
+                return (chat.name || "").toLowerCase().includes(q)
+            }
+            const name = formatFullName(chat.target).toLowerCase()
             const username = (chat.target?.username || "").toLowerCase()
             return name.includes(q) || username.includes(q)
         })
@@ -36,20 +46,22 @@ function ShareToChatModal({ isOpen, onClose, post }) {
     const handleSendToChat = useCallback(async (chat) => {
         if (sending || sentChats.has(chat.chatId)) return
 
+        const isGroup = chat.isGroup
         const username = chat.target?.username
-        if (!username) {
-            toast.error(t("noMatches")); // Or a more specific error
+        if (!isGroup && !username) {
+            toast.error(t("noMatches"));
             return
         }
 
         const postUrl = `${window.location.origin}/post/${post.id}`
         const authorName = `${post.author?.familyName || ""} ${post.author?.givenName || ""}`.trim()
-        const shareText = `📌 ${t("sharePostText", { name: authorName, url: postUrl })}`; // Added sharePostText key
+        const shareText = `📌 ${t("sharePostText", { name: authorName, url: postUrl })}`;
 
         setSending(chat.chatId)
         try {
             await api.post("/v1/chat/send", {
-                username: username,
+                chatId: chat.chatId,
+                username: username || "",
                 text: shareText,
             })
             setSentChats((prev) => new Set(prev).add(chat.chatId))
@@ -128,8 +140,10 @@ function ShareToChatModal({ isOpen, onClose, post }) {
                         </div>
                     ) : (
                         filteredChats.map((chat) => {
-                            const displayName = `${chat.target?.givenName || ""} ${chat.target?.familyName || ""}`.trim() || chat.target?.username || t("unknownUser")
-                            const isOnline = chat.target?.isOnline || false
+                            const isGroup = chat.isGroup
+                            const displayName = isGroup ? (chat.name || t("groupChat")) : (formatFullName(chat.target) || t("unknownUser"))
+                            const avatarSrc = isGroup ? chat.avatar : chat.target?.profilePictureUrl
+                            const isOnline = isGroup ? false : (chat.target?.isOnline || false)
                             const isSending = sending === chat.chatId
                             const isSent = sentChats.has(chat.chatId)
 
@@ -142,11 +156,14 @@ function ShareToChatModal({ isOpen, onClose, post }) {
                                     {/* Avatar with online indicator */}
                                     <div className="relative shrink-0">
                                         <Avatar
-                                            src={chat.target?.profilePictureUrl}
+                                            src={avatarSrc}
                                             alt={displayName}
+                                            isGroup={isGroup}
                                             size={44}
                                         />
-                                        <div className={`absolute bottom-0 right-0 w-3 h-3 rounded-full border-2 border-[var(--card)] ${isOnline ? "bg-green-500" : "bg-gray-400"}`} />
+                                        {!isGroup && (
+                                            <div className={`absolute bottom-0 right-0 w-3 h-3 rounded-full border-2 border-[var(--card)] ${isOnline ? "bg-green-500" : "bg-gray-400"}`} />
+                                        )}
                                     </div>
 
                                     {/* Name */}
@@ -154,11 +171,9 @@ function ShareToChatModal({ isOpen, onClose, post }) {
                                         <p className="text-sm font-medium text-[var(--card-foreground)] truncate">
                                             {displayName}
                                         </p>
-                                        {chat.target?.username && (
-                                            <p className="text-xs text-[var(--muted-foreground)] truncate">
-                                                @{chat.target.username}
-                                            </p>
-                                        )}
+                                        <p className="text-xs text-[var(--muted-foreground)] truncate">
+                                            {isGroup ? (t("groupChat") || "Trò chuyện nhóm") : (chat.target?.username ? `@${chat.target.username}` : "")}
+                                        </p>
                                     </div>
 
                                     {/* Send button */}

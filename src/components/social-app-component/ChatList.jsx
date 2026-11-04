@@ -325,18 +325,18 @@ export default function ChatList({ onSelectChat, selectedChatId }) {
       <div className="px-3 py-2 border-b border-[var(--border)] shrink-0">
         <div className="flex items-center gap-2">
           <div className="relative flex-1">
-            <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[var(--muted-foreground)]" />
             <input
               type="text"
               placeholder={t("searchPlaceholder")}
-              className="w-full pl-9 pr-4 py-2 text-sm bg-[var(--accent)] border border-transparent focus:border-[var(--border)] rounded-xl outline-none text-[var(--foreground)] placeholder-muted-foreground transition-colors"
+              className="w-full pl-9 pr-4 py-2 text-sm bg-[var(--muted)] border border-[var(--border)] focus:border-[var(--primary)] rounded-xl outline-none text-[var(--foreground)] placeholder:text-[var(--muted-foreground)] transition-colors"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
           </div>
           <button
             onClick={() => setIsCreateGroupOpen(true)}
-            className="p-2 bg-[var(--accent)] hover:bg-blue-500 hover:text-white text-foreground rounded-xl transition-colors border border-[var(--border)]"
+            className="p-2 bg-[var(--muted)] hover:bg-[var(--muted)]/80 text-[var(--foreground)] rounded-xl transition-colors border border-[var(--border)]"
             title={t("createGroup")}
           >
             <Users className="h-4 w-4" />
@@ -350,7 +350,7 @@ export default function ChatList({ onSelectChat, selectedChatId }) {
         className="flex-1 overflow-y-auto"
       >
         {filteredChats.length > 0 ? (
-          [...filteredChats].reverse().map((chat) => (
+          filteredChats.map((chat) => (
             <div key={chat.chatId}>
               <ChatItem
                 chat={chat}

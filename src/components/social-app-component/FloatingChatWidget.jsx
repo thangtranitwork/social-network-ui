@@ -13,6 +13,7 @@ import api from "@/utils/axios";
 import useAppStore, { selectSortedChatList } from "@/store/ZustandStore";
 import { useShallow } from "zustand/react/shallow";
 import { useTranslations } from "next-intl";
+import { formatFullName } from "@/utils/formatName";
 
 // ── constants ──────────────────────────────────────────────
 const DEFAULT_W = 440;
@@ -284,7 +285,7 @@ export default function FloatingChatWidget({ beToken }) {
               {activeChatId && activeTargetUser
                 ? (activeTargetUser.isGroup
                     ? activeTargetUser.name
-                    : `${activeTargetUser.givenName || ""} ${activeTargetUser.familyName || ""}`.trim() || activeTargetUser.username)
+                    : formatFullName(activeTargetUser))
                 : t("messages")}
             </h3>
             {!activeChatId && onlineCount > 0 && (
@@ -349,7 +350,7 @@ export default function FloatingChatWidget({ beToken }) {
                   <input
                     type="text"
                     placeholder={t("searchPlaceholder")}
-                    className="w-full pl-8 pr-3 py-1.5 text-xs bg-[var(--accent)] border border-transparent focus:border-[var(--border)] rounded-full outline-none text-[var(--foreground)] placeholder-muted-foreground transition-colors"
+                    className="w-full pl-8 pr-3 py-1.5 text-xs bg-[var(--muted)] border border-[var(--border)] focus:border-[var(--primary)] rounded-full outline-none text-[var(--foreground)] placeholder:text-[var(--muted-foreground)] transition-colors"
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
                   />
@@ -372,7 +373,7 @@ export default function FloatingChatWidget({ beToken }) {
                     </button>
                   </div>
                 ) : filteredChats.length > 0 ? (
-                  [...filteredChats].reverse().map((chat) => (
+                  filteredChats.map((chat) => (
                     <ChatItem
                       key={chat.chatId}
                       chat={chat}

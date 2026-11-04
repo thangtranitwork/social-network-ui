@@ -145,7 +145,8 @@ export default function FriendPage() {
       setLoading(true);
       try {
         const response = await api.get(tabConfig[activeTab].endpoint);
-        setUsers(response.data.body || []);
+        const list = response.data?.body || response.data?.data || [];
+        setUsers(Array.isArray(list) ? list : []);
         console.log(response.data.body)
       } catch (error) {
         console.error("Lỗi khi tải dữ liệu:", error);

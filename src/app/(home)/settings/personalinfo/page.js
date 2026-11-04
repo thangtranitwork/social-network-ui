@@ -4,7 +4,20 @@ import { useState, useEffect } from "react";
 import Input from "@/components/ui-components/Input";
 import Avatar from "@/components/ui-components/Avatar";
 import api from "@/utils/axios";
+import { uploadFile } from "@/utils/fileUpload";
 import { useTranslations } from "next-intl";
+
+const formatDateForInput = (dateVal) => {
+  if (!dateVal) return "";
+  if (typeof dateVal === "string") return dateVal.slice(0, 10);
+  try {
+    const d = new Date(dateVal);
+    if (!isNaN(d.getTime())) return d.toISOString().slice(0, 10);
+  } catch {
+    // fallback
+  }
+  return "";
+};
 
 export default function PersonalInfoPage() {
   const t = useTranslations('settings');
@@ -31,8 +44,12 @@ export default function PersonalInfoPage() {
         });
 
         if (res.data.code === 200) {
-          setUser(res.data.body);
-          setOriginalUser(res.data.body);
+          const profileData = {
+            ...res.data.body,
+            birthdate: formatDateForInput(res.data.body.birthdate),
+          };
+          setUser(profileData);
+          setOriginalUser(profileData);
         } else {
           setErrors((prev) => ({ ...prev, fetch: res.data.message }));
         }
@@ -69,56 +86,55 @@ export default function PersonalInfoPage() {
     setErrors({});
     setSuccessMessages([]);
 
+    let uploadedAvatarUrl = null;
+
     const updates = [
       {
-        label: t('givenName'),
+        label: t('givenName') || "Họ và tên",
         check: user.givenName !== originalUser.givenName || user.familyName !== originalUser.familyName,
         request: () =>
-            api.patch(
-                `/v1/users/update-name?givenName=${encodeURIComponent(user.givenName)}&familyName=${encodeURIComponent(
-                    user.familyName
-                )}`,
-                {},
-                { headers: { Authorization: `Bearer ${token}` } }
-            ),
+          api.patch("/v1/users/update-name", {
+            givenName: user.givenName,
+            familyName: user.familyName,
+          }),
         errorKey: "name",
       },
       {
-        label: t('username'),
+        label: t('username') || "Tên người dùng",
         check: user.username !== originalUser.username,
         request: () =>
-            api.patch(`/v1/users/update-username?username=${encodeURIComponent(user.username)}`, {}, { headers: { Authorization: `Bearer ${token}` } }),
+          api.patch("/v1/users/update-username", {
+            username: user.username,
+          }),
         errorKey: "username",
       },
       {
-        label: t('birthdate'),
+        label: t('birthdate') || "Ngày sinh",
         check: user.birthdate !== originalUser.birthdate,
         request: () =>
-            api.patch(`/v1/users/update-birthday?birthdate=${encodeURIComponent(user.birthdate)}`, {}, { headers: { Authorization: `Bearer ${token}` } }),
+          api.patch("/v1/users/update-birthdate", {
+            birthdate: user.birthdate,
+          }),
         errorKey: "birthday",
       },
       {
-        label: t('bio'),
+        label: t('bio') || "Tiểu sử",
         check: user.bio !== originalUser.bio,
         request: () =>
-            fetch(`${process.env.NEXT_PUBLIC_API_URL}/v1/users/update-bio?bio=${encodeURIComponent(user.bio)}`, {
-              method: "PATCH",
-              headers: { Authorization: `Bearer ${token}` },
-            }).then((res) => {
-              if (!res.ok) return res.json().then((err) => Promise.reject(err));
-              return res.json();
-            }),
+          api.patch("/v1/users/update-bio", {
+            bio: user.bio,
+          }),
         errorKey: "bio",
       },
       {
         label: "Avatar",
         check: !!avatarFile,
-        request: () => {
-          const form = new FormData();
-          form.append("file", avatarFile);
-          return api.patch("/v1/users/update-profile-picture", form, {
-            headers: { "Content-Type": "multipart/form-data", Authorization: `Bearer ${token}` },
-          });
+        request: async () => {
+          const fileId = await uploadFile(avatarFile);
+          await api.patch("/v1/users/update-profile-picture", { fileId });
+          const apiBase = process.env.NEXT_PUBLIC_API_URL || "http://localhost:11111";
+          uploadedAvatarUrl = `${apiBase}/v1/files/${fileId}`;
+          return fileId;
         },
         errorKey: "avatar",
       },
@@ -143,7 +159,12 @@ export default function PersonalInfoPage() {
 
     setLoading(false);
     if (successCount > 0) {
-      setOriginalUser({ ...user }); // đồng bộ bản gốc
+      const finalUser = {
+        ...user,
+        profilePictureUrl: uploadedAvatarUrl || user.profilePictureUrl,
+      };
+      setUser(finalUser);
+      setOriginalUser(finalUser); // đồng bộ bản gốc
     }
   };
 
@@ -262,6 +283,7 @@ export default function PersonalInfoPage() {
                 value={user.birthdate || ""}
                 onChange={handleInputChange}
                 type="date"
+                max={new Date().toISOString().slice(0, 10)}
             />
 
             <div>

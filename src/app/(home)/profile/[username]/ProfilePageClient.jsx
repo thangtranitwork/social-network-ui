@@ -37,13 +37,13 @@ export default function ProfilePageClient({ initialProfile, routeUsername }) {
     }
   }, [initialProfile]);
 
-  // Fallback client-side fetch if initialProfile is missing
+  // Fetch fresh profile data client-side on mount or routeUsername change
   useEffect(() => {
-    if (!profileData && routeUsername) {
+    if (routeUsername) {
       const fetchProfile = async () => {
         try {
           const res = await api.get(`/v1/users/${routeUsername}`);
-          if (res.data.code === 200) {
+          if (res.data?.code === 200 && res.data?.body) {
             setProfileData(res.data.body);
           }
         } catch (error) {
@@ -52,7 +52,7 @@ export default function ProfilePageClient({ initialProfile, routeUsername }) {
       };
       fetchProfile();
     }
-  }, [profileData, routeUsername]);
+  }, [routeUsername]);
 
   // TanStack Query for user posts
   const {

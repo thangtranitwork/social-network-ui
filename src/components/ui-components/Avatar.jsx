@@ -16,20 +16,29 @@ export default function Avatar({
   const [isLoading, setIsLoading] = useState(false);
   const [imageLoaded, setImageLoaded] = useState(false);
   const previousSrcRef = useRef(src);
+  const imgRef = useRef(null);
 
   const defaultSrc = "/defaultAvatar.png";
 
-  // A src is only usable if it is an absolute URL, a relative path, or a data URL.
-  // Raw storage IDs (e.g. "abc-123.jpg") are NOT valid and must be rejected.
-  const isValidSrc = (s) =>
-    !!s &&
-    (s.startsWith("http://") ||
-      s.startsWith("https://") ||
-      s.startsWith("data:") ||
-      s.startsWith("/"));
+  // Normalize src: Handle absolute URL, relative path, data URL, or raw storage/file ID
+  const normalizeSrc = (s) => {
+    if (!s || typeof s !== "string" || !s.trim()) return null;
+    const trimmed = s.trim();
+    if (
+      trimmed.startsWith("http://") ||
+      trimmed.startsWith("https://") ||
+      trimmed.startsWith("data:") ||
+      trimmed.startsWith("/")
+    ) {
+      return trimmed;
+    }
+    // If raw file ID or storage filename, resolve via API Gateway files route
+    const apiBase = process.env.NEXT_PUBLIC_API_URL || "http://localhost:11111";
+    return `${apiBase}/v1/files/${trimmed}`;
+  };
 
-  const validSrc = isValidSrc(src) ? src : null;
-  const imageSrc = validSrc || defaultSrc;
+  const validSrc = normalizeSrc(src);
+  const imageSrc = hasError || !validSrc ? defaultSrc : validSrc;
   const isExternalUrl =
     imageSrc.startsWith("http://") ||
     imageSrc.startsWith("https://") ||
@@ -71,7 +80,6 @@ export default function Avatar({
       setHasError(false);
       setImageLoaded(false);
 
-      // Only show loading spinner for valid, non-default srcs
       if (validSrc && validSrc !== defaultSrc) {
         setIsLoading(true);
       } else {
@@ -82,6 +90,14 @@ export default function Avatar({
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [src]);
+
+  // Check if browser already loaded the image from cache
+  useEffect(() => {
+    if (imgRef.current && imgRef.current.complete && imgRef.current.naturalWidth > 0) {
+      setImageLoaded(true);
+      setIsLoading(false);
+    }
+  }, [imageSrc]);
 
   const handleError = useCallback(() => {
     setHasError(true);
@@ -122,31 +138,31 @@ export default function Avatar({
     );
   }
 
+  const isDefault = imageSrc === defaultSrc;
+
   return (
     <div
       className={clsx(
-        "relative inline-block rounded-full overflow-hidden bg-gray-100",
+        "relative inline-block rounded-full overflow-hidden bg-gray-100 dark:bg-gray-800",
         shouldApplyDefaultSize && "w-12 h-12",
         className
       )}
       style={hasExplicitSize ? { width: finalWidth, height: finalHeight } : undefined}
       {...props}
     >
-      {isLoading && (
-        <div className="absolute inset-0 flex items-center justify-center bg-[var(--background)] rounded-full">
+      {isLoading && !isDefault && (
+        <div className="absolute inset-0 flex items-center justify-center bg-[var(--background)] rounded-full z-10">
           <div className="spinner" style={{ width: '16px', height: '16px', borderWidth: '2px' }} />
         </div>
       )}
 
       <Image
+        ref={imgRef}
         src={imageSrc}
         alt={alt}
         width={finalWidth}
         height={finalHeight}
-        className={clsx(
-          "object-cover object-center transition-opacity duration-200",
-          imageLoaded ? "opacity-100" : "opacity-0"
-        )}
+        className="object-cover object-center w-full h-full"
         style={{
           width: "100%",
           height: "100%",
@@ -158,22 +174,6 @@ export default function Avatar({
         unoptimized={isExternalUrl}
         priority={finalWidth > 100}
       />
-
-      {!imageLoaded && !isLoading && (
-        <div className="absolute inset-0 flex items-center justify-center skeleton rounded-full">
-          <svg
-            className="w-1/2 h-1/2 text-gray-400"
-            fill="currentColor"
-            viewBox="0 0 20 20"
-          >
-            <path
-              fillRule="evenodd"
-              d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z"
-              clipRule="evenodd"
-            />
-          </svg>
-        </div>
-      )}
     </div>
   );
 }

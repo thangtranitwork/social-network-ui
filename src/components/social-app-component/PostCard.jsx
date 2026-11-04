@@ -1,6 +1,7 @@
 "use client"
 
 import { renderTextWithLinks } from "@/hooks/renderTextWithLinks"
+import { formatFullName } from "@/utils/formatName"
 import adminApi from "@/utils/adminInterception"
 import api, { getUserId } from "@/utils/axios"
 import dayjs from "dayjs"
@@ -9,11 +10,10 @@ import { Globe, Heart, Lock, MessageCircle, MoreVertical, SendHorizonal, Share2,
 import { useRouter } from "next/navigation"
 import { lazy, memo, Suspense, useCallback, useEffect, useState, useMemo } from "react"
 import toast from "react-hot-toast"
-import { useShallow } from 'zustand/react/shallow';
 import Avatar from "../ui-components/Avatar";
 import Card from "../ui-components/Card";
 import ImageView from "../ui-components/ImageView";
-import useAppStore, { selectSortedChatList } from "@/store/ZustandStore";
+import useIsMobile from "@/hooks/useIsMobile";
 import { useTranslations } from "next-intl";
 import ConfirmModal from "../ui-components/ConfirmModal"
 
@@ -38,7 +38,7 @@ const PostCard = memo(function PostCard({
     relevanceLabel = null,
     rawCosine = null
 }) {
-    const [isMobile, setIsMobile] = useState(undefined)
+    const isMobile = useIsMobile()
     const [activeImageIndex, setActiveImageIndex] = useState(null)
     const [showModal, setShowModal] = useState(false)
     const [showOptions, setShowOptions] = useState(false)
@@ -62,8 +62,6 @@ const PostCard = memo(function PostCard({
     const [optimisticLikeCount, setOptimisticLikeCount] = useState(post.likeCount || 0)
     const [isLiking, setIsLiking] = useState(false)
     
-    const chatMap = useAppStore(state => state.chatMap);
-    const chatList = useMemo(() => selectSortedChatList({ chatMap }), [chatMap]);
     const router = useRouter()
     const isModalOpen = activeImageIndex !== null || showModal
 
@@ -73,13 +71,6 @@ const PostCard = memo(function PostCard({
 
     // Show more options if it's user's own post OR if user is admin
     const showMoreOptions = isOwnPost
-
-    useEffect(() => {
-        const checkScreenSize = () => setIsMobile(window.innerWidth < 640)
-        checkScreenSize()
-        window.addEventListener("resize", checkScreenSize)
-        return () => window.removeEventListener("resize", checkScreenSize)
-    }, [])
 
     // Update optimistic state when props change
     useEffect(() => {
@@ -100,12 +91,24 @@ const PostCard = memo(function PostCard({
 
     // Memoized functions to prevent unnecessary re-renders
     const shouldTruncateContent = (content, maxLength = 200) => {
-        return content && content.length > maxLength
+        if (!content) return false;
+        const plainText = content.replace(/<mark[^>]*>|<\/mark>/gi, '');
+        return plainText.length > maxLength;
     }
 
     const getTruncatedContent = (content, maxLength = 200) => {
-        if (!content) return ''
-        return content.length > maxLength ? content.substring(0, maxLength) + '...' : content
+        if (!content) return '';
+        const plainText = content.replace(/<mark[^>]*>|<\/mark>/gi, '');
+        if (plainText.length <= maxLength) return content;
+
+        let truncated = content.substring(0, maxLength);
+        truncated = truncated.replace(/<[^>]*$/, '');
+        const openMarks = (truncated.match(/<mark[^>]*>/gi) || []).length;
+        const closeMarks = (truncated.match(/<\/mark>/gi) || []).length;
+        if (openMarks > closeMarks) {
+            truncated += '</mark>';
+        }
+        return truncated + '...';
     }
 
     // Handler for comment submission
@@ -329,7 +332,7 @@ const PostCard = memo(function PostCard({
                     />
                     <div>
                         <p className="font-semibold text-sm text-[var(--card-foreground)]">
-                            {currentPost.originalPost.author?.familyName + " " + currentPost.originalPost.author?.givenName}
+                            {formatFullName(currentPost.originalPost.author)}
                         </p>
                         <p className="text-xs text-[var(--muted-foreground)]">
                             {dayjs(currentPost.originalPost.createdAt).fromNow()} {renderPrivacyIcon(currentPost.originalPost.privacy)}
@@ -387,8 +390,6 @@ const PostCard = memo(function PostCard({
         )
     }, [currentPost, isOriginalContentExpanded, handleOriginalProfileClick, renderPrivacyIcon, shouldTruncateContent, getTruncatedContent, isModalOpen, isPriority, handleImageClick])
 
-    if (isMobile === undefined) return null
-
     return (
         <>
             <Card
@@ -412,9 +413,7 @@ const PostCard = memo(function PostCard({
                             <div className="flex items-center gap-1.5">
                                 <p className={`font-semibold 
                                     ${size === "compact" ? "text-sm" : size === "large" ? "text-base" : "text-sm"}`}>
-                                    {currentPost.author?.familyName || currentPost.author?.givenName 
-                                        ? `${currentPost.author?.familyName || ""} ${currentPost.author?.givenName || ""}`.trim() 
-                                        : (currentPost.isAd ? "PocPoc Sponsored Partner" : "")}
+                                    {formatFullName(currentPost.author) || (currentPost.isAd ? "PocPoc Sponsored Partner" : "")}
                                     {currentPost.sharedPost && !currentPost.isAd && (
                                         <>
                                             {" " + t('shared')}

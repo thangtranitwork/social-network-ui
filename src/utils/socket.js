@@ -106,12 +106,28 @@ class CustomSocketSingleton {
           console.log("✅ WebSocket connected:", wsUrl);
           this.isConnecting = false;
           this.reconnectAttempts = 0;
+
+          // Start 25s heartbeat ping
+          if (ws._pingInterval) clearInterval(ws._pingInterval);
+          ws._pingInterval = setInterval(() => {
+            if (ws.readyState === WebSocket.OPEN) {
+              try {
+                ws.send(JSON.stringify({ command: "PING" }));
+              } catch (e) {
+                // Ignore send errors on ping
+              }
+            }
+          }, 25000);
+
           resolve(ws);
         };
 
         ws.onmessage = (event) => {
           try {
             const data = JSON.parse(event.data);
+            if (data.command === "PONG") {
+              return; // Internal heartbeat response, discard
+            }
             const isError = data.command === "ERROR" || (data.code !== undefined && data.message !== undefined);
             
             // Check for authentication errors specifically
@@ -150,6 +166,7 @@ class CustomSocketSingleton {
         };
 
         ws.onclose = (event) => {
+          if (ws._pingInterval) clearInterval(ws._pingInterval);
           console.log(`🔌 WebSocket closed (${event.code}):`, wsUrl);
           this.connections.delete(wsUrl);
           this.isConnecting = false;

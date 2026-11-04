@@ -1,11 +1,12 @@
 "use client";
 
-import { useState, useMemo } from "react";
-import { Edit, MessageCircle, UserPlus, UserMinus, UserCheck, UserX, Shield, MoreVertical, FileText, FileImage } from "lucide-react";
+import { useState, useMemo, useRef } from "react";
+import { Edit, MessageCircle, UserPlus, UserMinus, UserCheck, UserX, Shield, MoreVertical, FileText, FileImage, Eye, Camera, X } from "lucide-react";
 import Avatar from "../ui-components/Avatar";
 import Modal from "../ui-components/Modal";
 import EditProfileModal from "./EditProfile";
 import api from "@/utils/axios";
+import { uploadFile } from "@/utils/fileUpload";
 import toast from "react-hot-toast";
 import { useParams, useRouter } from "next/navigation";
 import useAppStore, { selectSortedChatList } from "@/store/ZustandStore";
@@ -15,6 +16,7 @@ import { useTranslations } from "next-intl";
 import FriendsListModal from "./FriendsListModal";
 import useIsMobile from "@/hooks/useIsMobile";
 import ConfirmModal from "../ui-components/ConfirmModal";
+import { formatFullName } from "@/utils/formatName";
 
 export default function ProfileHeader({ 
   profileData, 
@@ -33,12 +35,45 @@ export default function ProfileHeader({
   const [initialModalTab, setInitialModalTab] = useState("friends");
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [isBlockConfirmOpen, setIsBlockConfirmOpen] = useState(false);
+  const [isAvatarMenuOpen, setIsAvatarMenuOpen] = useState(false);
+  const [isViewFullAvatarOpen, setIsViewFullAvatarOpen] = useState(false);
+  const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
+  const avatarFileInputRef = useRef(null);
+
+  const handleQuickAvatarChange = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const toastId = toast.loading("Đang cập nhật ảnh đại diện...");
+    try {
+      setIsUploadingAvatar(true);
+      const fileId = await uploadFile(file);
+      await api.patch("/v1/users/update-profile-picture", { fileId });
+      
+      const apiBase = process.env.NEXT_PUBLIC_API_URL || "http://localhost:11111";
+      const fullUrl = `${apiBase}/v1/files/${fileId}`;
+
+      if (onProfileUpdate) {
+        onProfileUpdate({
+          ...profileData,
+          profilePictureUrl: fullUrl,
+        });
+      }
+      toast.success(t('editModal.avatarUpdateSuccess') || "Cập nhật ảnh đại diện thành công!", { id: toastId });
+    } catch (err) {
+      console.error("Lỗi cập nhật ảnh đại diện:", err);
+      toast.error(t('editModal.avatarUpdateError') || "Cập nhật ảnh đại diện thất bại!", { id: toastId });
+    } finally {
+      setIsUploadingAvatar(false);
+      if (e.target) e.target.value = "";
+    }
+  };
   
-  const avatar = profileData.profilePictureUrl;
+  const avatar = profileData?.profilePictureUrl;
   const { username: routeUsername } = useParams();
   const router = useRouter();
 
-  const username = profileData.username;
+  const username = profileData?.username;
   console.log(profileData)
   const chatMap = useAppStore((state) => state.chatMap);
   const { selectChat, showVirtualChat } = useAppStore(useShallow((state) => ({
@@ -263,52 +298,53 @@ export default function ProfileHeader({
   };
 
   const renderActionButtons = () => {
-    // FIX: Updated condition to check for both null and "NONE"
-    if (profileData.request) {
-      if (profileData.request === "OUT") {
-        return (
-          <button
-            onClick={cancelFriendRequest}
-            className="flex items-center gap-2 px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded-full text-sm font-medium shadow-md hover:shadow-lg transition-all duration-200"
-          >
-            <UserMinus size={16} />
-            <span>{t('cancelRequest')}</span>
-          </button>
-        );
-      } else if (profileData.request === "IN") {
-        return (
-          <div className="flex gap-2">
-            <button
-              onClick={acceptFriendRequest}
-              className="flex items-center gap-2 px-4 py-2 bg-green-500 hover:bg-green-600 text-white rounded-full text-sm font-medium shadow-md hover:shadow-lg transition-all duration-200"
-            >
-              <UserCheck size={16} />
-              <span>{t('accept')}</span>
-            </button>
-            <button
-              onClick={declineFriendRequest}
-              className="flex items-center gap-2 px-4 py-2 bg-gray-500 hover:bg-gray-600 text-white rounded-full text-sm font-medium shadow-md hover:shadow-lg transition-all duration-200"
-            >
-              <UserX size={16} />
-              <span>{t('decline')}</span>
-            </button>
-          </div>
-        );
-      }
+    const reqStatus = profileData?.request;
+    const isSent = reqStatus === "OUT" || reqStatus === "SENT";
+    const isReceived = reqStatus === "IN" || reqStatus === "RECEIVED";
+    const isNone = !reqStatus || reqStatus === "NONE" || reqStatus === "";
+
+    if (isSent) {
+      return (
+        <button
+          onClick={cancelFriendRequest}
+          className="h-[38px] flex items-center gap-2 px-4 py-2 border border-red-200 dark:border-red-900/50 bg-red-50 dark:bg-red-950/30 text-red-600 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-900/50 rounded-full text-sm font-semibold transition-all shadow-sm active:scale-95"
+        >
+          <UserMinus size={16} />
+          <span>{t('cancelRequest')}</span>
+        </button>
+      );
     }
 
-    // FIX: Check for both null and "NONE" values
-    if (!profileData.isFriend && (profileData.request === "NONE" || profileData.request === null)) {
+    if (isReceived) {
       return (
-        <div className="flex gap-2">
+        <>
           <button
-            onClick={sendFriendRequest}
-            className="flex items-center gap-2 px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-full text-sm font-medium shadow-md hover:shadow-lg transition-all duration-200"
+            onClick={acceptFriendRequest}
+            className="btn-primary h-[38px] inline-flex items-center justify-center"
           >
-            <UserPlus size={16} />
-            <span>{t('addFriend')}</span>
+            <UserCheck size={16} />
+            <span>{t('accept')}</span>
           </button>
-        </div>
+          <button
+            onClick={declineFriendRequest}
+            className="h-[38px] flex items-center gap-2 px-4 py-2 border border-[var(--border)] bg-[var(--card)] hover:bg-[var(--muted)] text-[var(--muted-foreground)] hover:text-[var(--foreground)] rounded-full text-sm font-semibold transition-all shadow-sm active:scale-95"
+          >
+            <UserX size={16} />
+            <span>{t('decline')}</span>
+          </button>
+        </>
+      );
+    }
+
+    if (!profileData?.isFriend && isNone) {
+      return (
+        <button
+          onClick={sendFriendRequest}
+          className="btn-primary h-[38px] inline-flex items-center justify-center"
+        >
+          <UserPlus size={16} />
+          <span>{t('addFriend')}</span>
+        </button>
       );
     }
     
@@ -319,11 +355,11 @@ export default function ProfileHeader({
     if (!isDropdownOpen) return null;
 
     return (
-      <div className="absolute right-0 top-full mt-2 w-48 bg-[var(--card)] rounded-lg shadow-lg border border-[var(--border)] z-[100]">
-        {profileData.isFriend && (
+      <div className="absolute left-1/2 -translate-x-1/2 sm:translate-x-0 sm:left-0 top-full mt-2 w-48 bg-[var(--card)] rounded-xl shadow-xl border border-[var(--border)] py-1.5 z-[100] animate-in fade-in zoom-in-95 duration-150">
+        {profileData?.isFriend && (
           <button
             onClick={unfriend}
-            className="w-full px-4 py-2 text-left text-sm text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 flex items-center gap-2 rounded-t-lg"
+            className="w-full px-4 py-2.5 text-left text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/30 flex items-center gap-2.5 transition-colors font-medium"
           >
             <UserMinus size={16} />
             <span>{t('unfriend')}</span>
@@ -331,7 +367,7 @@ export default function ProfileHeader({
         )}
         <button
           onClick={handleBlockUser}
-          className="w-full px-4 py-2 text-left text-sm text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 flex items-center gap-2 rounded-b-lg"
+          className="w-full px-4 py-2.5 text-left text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/30 flex items-center gap-2.5 transition-colors font-medium"
         >
           <Shield size={16} />
           <span>{t('block')}</span>
@@ -350,56 +386,124 @@ export default function ProfileHeader({
   return (
     <div className="w-full">
       <div className="flex flex-col sm:flex-row items-center gap-4 sm:gap-6 p-4 sm:p-6">
-        <div className="avatar-wrapper">
-          <Avatar
-            src={avatar}
-            alt="Avatar"
-            size={isMobile ? 96 : 128}
-            className="rounded-full object-cover shadow-md"
+        {/* Avatar với Menu click tương tác */}
+        <div className="relative">
+          <div
+            onClick={() => {
+              if (isOwnProfile) {
+                setIsAvatarMenuOpen((prev) => !prev);
+              } else {
+                setIsViewFullAvatarOpen(true);
+              }
+            }}
+            className="avatar-wrapper relative cursor-pointer group"
+            title={isOwnProfile ? "Tùy chọn ảnh đại diện" : "Xem ảnh đại diện"}
+          >
+            <Avatar
+              src={avatar}
+              alt="Avatar"
+              size={isMobile ? 96 : 128}
+              className="rounded-full object-cover shadow-md transition-transform duration-200 group-hover:scale-[1.02]"
+            />
+            {profileData.online && <div className="online-ring" />}
+
+            {/* Icon Camera nhỏ ở góc avatar cho chính chủ */}
+            {isOwnProfile && (
+              <div className="absolute bottom-1 right-1 w-8 h-8 rounded-full bg-[var(--card)] text-[var(--foreground)] border-2 border-[var(--border)] shadow-md flex items-center justify-center transition-transform group-hover:scale-110">
+                <Camera size={14} className="text-[var(--primary)]" />
+              </div>
+            )}
+          </div>
+
+          {/* Menu Dropdown 2 lựa chọn khi click avatar của chính mình */}
+          {isOwnProfile && isAvatarMenuOpen && (
+            <>
+              <div
+                className="fixed inset-0 z-40"
+                onClick={() => setIsAvatarMenuOpen(false)}
+              />
+              <div className="absolute left-1/2 -translate-x-1/2 top-full mt-2 w-48 bg-[var(--card)] rounded-xl shadow-xl border border-[var(--border)] py-1.5 z-50 animate-in fade-in zoom-in-95 duration-150">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsAvatarMenuOpen(false);
+                    setIsViewFullAvatarOpen(true);
+                  }}
+                  className="w-full px-3.5 py-2.5 text-left text-xs font-semibold text-[var(--foreground)] hover:bg-[var(--muted)] flex items-center gap-2.5 transition-colors"
+                >
+                  <Eye size={15} className="text-blue-500" />
+                  <span>{t('editModal.viewAvatar') || "Xem ảnh đại diện"}</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsAvatarMenuOpen(false);
+                    avatarFileInputRef.current?.click();
+                  }}
+                  disabled={isUploadingAvatar}
+                  className="w-full px-3.5 py-2.5 text-left text-xs font-semibold text-[var(--foreground)] hover:bg-[var(--muted)] flex items-center gap-2.5 transition-colors disabled:opacity-50"
+                >
+                  <Camera size={15} className="text-emerald-500" />
+                  <span>{t('editModal.updateAvatar') || "Cập nhật ảnh đại diện"}</span>
+                </button>
+              </div>
+            </>
+          )}
+
+          {/* Input file ẩn phục vụ cập nhật nhanh */}
+          <input
+            ref={avatarFileInputRef}
+            type="file"
+            accept="image/*"
+            onChange={handleQuickAvatarChange}
+            className="hidden"
           />
-          {profileData.online && <div className="online-ring" />}
         </div>
         
-        <div className="flex-1 text-center sm:text-left">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-            <div>
-              <h2 className="text-2xl font-bold text-[var(--foreground)]">
-                {profileData?.givenName || ""} {profileData?.familyName || ""}
-              </h2>
-              <p className="text-[var(--muted-foreground)] font-medium text-sm mt-0.5">@{profileData?.username}</p>
-            </div>
-            
-            <div className="flex flex-wrap justify-center sm:justify-end gap-2">
-              {isOwnProfile ? (
+        <div className="flex-1 text-center sm:text-left min-w-0">
+          <div>
+            <h2 className="text-2xl font-bold text-[var(--foreground)] tracking-tight">
+              {formatFullName(profileData)}
+            </h2>
+            <p className="text-[var(--muted-foreground)] font-medium text-sm mt-0.5">@{profileData?.username}</p>
+          </div>
+          
+          {/* Hàng nút hành động: Đặt ngay dưới tên/username, cùng hàng, không bị wrap xấu */}
+          <div className="mt-3.5 flex items-center justify-center sm:justify-start gap-2.5 flex-wrap">
+            {isOwnProfile ? (
+              <button
+                onClick={() => setIsEditModalOpen(true)}
+                className="btn-primary h-[38px] inline-flex items-center justify-center"
+              >
+                <Edit size={16} />
+                <span>{t('editProfile')}</span>
+              </button>
+            ) : (
+              <>
+                {renderActionButtons()}
                 <button
-                  onClick={() => setIsEditModalOpen(true)}
-                  className="btn-primary"
+                  onClick={handleChatClick}
+                  className={
+                    profileData?.isFriend
+                      ? "btn-primary h-[38px] inline-flex items-center justify-center"
+                      : "h-[38px] flex items-center gap-2 px-4 py-2 border border-[var(--border)] bg-[var(--card)] hover:bg-[var(--muted)] text-[var(--foreground)] rounded-full text-sm font-semibold transition-all shadow-sm active:scale-95"
+                  }
                 >
-                  <Edit size={16} />
-                  <span>{t('editProfile')}</span>
+                  <MessageCircle size={16} />
+                  <span>{t('sendMessage')}</span>
                 </button>
-              ) : (
-                <>
-                  {renderActionButtons()}
+                <div className="relative">
                   <button
-                    onClick={handleChatClick}
-                    className="btn-primary"
+                    onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+                    className="h-[38px] w-[38px] rounded-full border border-[var(--border)] bg-[var(--card)] hover:bg-[var(--muted)] text-[var(--foreground)] flex items-center justify-center transition-all shadow-sm active:scale-95 shrink-0"
+                    title={t('moreOptions') || "Khác"}
                   >
-                    <MessageCircle size={16} />
-                    <span>{t('sendMessage')}</span>
+                    <MoreVertical size={16} />
                   </button>
-                  <div className="relative">
-                    <button
-                      onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-                      className="nav-item bg-[var(--muted)]"
-                    >
-                      <MoreVertical size={18} />
-                    </button>
-                    {renderDropdownMenu()}
-                  </div>
-                </>
-              )}
-            </div>
+                  {renderDropdownMenu()}
+                </div>
+              </>
+            )}
           </div>
 
           <div className="profile-stats mt-6 justify-center sm:justify-start">
@@ -479,6 +583,40 @@ export default function ProfileHeader({
         title={t('block')}
         message={t('blockConfirm', { username: routeUsername })}
       />
-      </div>
-      );
-      }
+
+      {/* Modal xem ảnh đại diện kích thước lớn */}
+      {isViewFullAvatarOpen && (
+        <Modal
+          isOpen={isViewFullAvatarOpen}
+          onClose={() => setIsViewFullAvatarOpen(false)}
+          size="medium"
+          hideCloseButton={true}
+        >
+          <div className="relative w-full max-h-[85vh] flex flex-col items-center justify-center p-6 bg-black/95 rounded-2xl overflow-hidden">
+            <button
+              type="button"
+              onClick={() => setIsViewFullAvatarOpen(false)}
+              className="absolute top-4 right-4 w-9 h-9 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center transition-colors z-20"
+              aria-label="Đóng"
+            >
+              <X className="w-5 h-5" />
+            </button>
+            <div className="relative max-w-full max-h-[70vh] flex items-center justify-center p-2">
+              <img
+                src={avatar || "/defaultAvatar.png"}
+                alt={profileData?.username || "Avatar"}
+                className="max-h-[65vh] max-w-full object-contain rounded-xl shadow-2xl"
+              />
+            </div>
+            <div className="mt-3 text-center">
+              <p className="text-white font-bold text-base">
+                {formatFullName(profileData)}
+              </p>
+              <p className="text-zinc-400 text-xs mt-0.5">@{profileData?.username}</p>
+            </div>
+          </div>
+        </Modal>
+      )}
+    </div>
+  );
+}

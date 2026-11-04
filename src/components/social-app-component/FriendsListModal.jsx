@@ -6,6 +6,7 @@ import Avatar from "../ui-components/Avatar";
 import api from "@/utils/axios";
 import toast from "react-hot-toast";
 import { useTranslations } from "next-intl";
+import { formatFullName } from "@/utils/formatName";
 
 export default function FriendsListModal({ 
   username, 
@@ -96,7 +97,7 @@ export default function FriendsListModal({
             />
             <div className="flex-1 min-w-0">
               <p className="font-medium truncate">
-                {user.givenName} {user.familyName}
+                {formatFullName(user)}
               </p>
               <p className="text-sm text-gray-500 truncate">@{user.username}</p>
             </div>

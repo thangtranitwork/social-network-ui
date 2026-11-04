@@ -1,7 +1,7 @@
 "use client";
 
 import { uploadFile } from "@/utils/fileUpload";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import toast from "react-hot-toast";
 
 import useChat from "@/hooks/useChat";
@@ -14,18 +14,20 @@ import useTypingNotification from "@/hooks/useTypingNotification";
 import { useTranslations } from "next-intl";
 
 // Components
-import FilePreviewInChat from "../ui-components/FilePreviewInChat";
 import TypingIndicator from "../ui-components/TypingIndicator";
+import MediaLightbox from "../ui-components/MediaLightbox";
 import ChatHeader from "./ChatHeader";
 import ChatInput from "./ChatInput";
 import MessageItem from "./MessageItem";
 import ChatDetailsSidebar from "./ChatDetailsSidebar";
+import { CHAT_WALLPAPERS, getChatWallpaper } from "@/utils/chatWallpapers";
 
 export default function ChatBox({ chatId, targetUser, onBack, onChatCreated, onChatUpdated, hideHeader = false, beToken }) {
   const t = useTranslations('chat');
   // State management
   const [input, setInput] = useState("");
   const [showDetails, setShowDetails] = useState(false);
+  const [previewMedia, setPreviewMedia] = useState(null);
 
   useEffect(() => {
     setShowDetails(false);
@@ -40,6 +42,24 @@ export default function ChatBox({ chatId, targetUser, onBack, onChatCreated, onC
   const [isNewChat, setIsNewChat] = useState(!chatId);
   const [isCreatingChat, setIsCreatingChat] = useState(false);
   const [isSendingMessage, setIsSendingMessage] = useState(false);
+
+  const [wallpaperId, setWallpaperId] = useState(() => getChatWallpaper(chatId));
+
+  useEffect(() => {
+    setWallpaperId(getChatWallpaper(currentChatId));
+
+    const handleWallpaperChange = (e) => {
+      if (e.detail?.chatId === currentChatId) {
+        setWallpaperId(e.detail.wallpaperId || "default");
+      }
+    };
+    window.addEventListener("chat_wallpaper_changed", handleWallpaperChange);
+    return () => window.removeEventListener("chat_wallpaper_changed", handleWallpaperChange);
+  }, [currentChatId]);
+
+  const activeWallpaper = useMemo(() => {
+    return CHAT_WALLPAPERS.find((wp) => wp.id === wallpaperId) || CHAT_WALLPAPERS[0];
+  }, [wallpaperId]);
 
   // Refs
   const abortControllerRef = useRef(null);
@@ -275,8 +295,14 @@ export default function ChatBox({ chatId, targetUser, onBack, onChatCreated, onC
   };
 
   // File handlers
-  const handleFileSelect = async (e) => {
-    const file = e.target.files?.[0];
+  const handleFileSelect = async (eOrFile) => {
+    let file = null;
+    if (eOrFile instanceof File) {
+      file = eOrFile;
+    } else if (eOrFile?.target?.files?.[0]) {
+      file = eOrFile.target.files[0];
+      eOrFile.target.value = null;
+    }
     if (!file) return;
 
     if (!canSendMessage) return toast.error(t("cantSendFile"));
@@ -285,24 +311,30 @@ export default function ChatBox({ chatId, targetUser, onBack, onChatCreated, onC
 
     setSelectedFile(file);
     setFilePreview(file.type.startsWith("image/") ? URL.createObjectURL(file) : null);
-    e.target.value = null;
   };
 
   const handleSendFile = async () => {
-    if (!selectedFile || !currentChatId || !targetUser?.username || !canSendMessage) {
+    if (!selectedFile || !currentChatId || !canSendMessage) {
       if (!canSendMessage) toast.error(t('cantSendFile'));
       return;
     }
 
     try {
       setUploading(true);
+      const originalFileName = selectedFile.name;
+      const fileCaption = input.trim();
       const fileId = await uploadFile(selectedFile);
-      await api.post(`/v1/chat/send-file`, {
-        username: targetUser.username,
-        fileId: fileId,
-      });
+      const payload = {
+        fileId,
+        fileName: originalFileName,
+        text: fileCaption,
+        chatId: currentChatId,
+      };
+      if (targetUser?.username) payload.username = targetUser.username;
+      await api.post(`/v1/chat/send-file`, payload);
       toast.success(t('fileSentSuccess'));
       handleCancelFile();
+      setInput("");
     } catch {
       toast.error(t('fileError'));
     } finally {
@@ -311,7 +343,7 @@ export default function ChatBox({ chatId, targetUser, onBack, onChatCreated, onC
   };
 
   const handleSendVoice = async (blob) => {
-    if (!blob || !currentChatId || !targetUser?.username || !canSendMessage) {
+    if (!blob || !currentChatId || !canSendMessage) {
       if (!canSendMessage) toast.error(t('cantSendVoice'));
       return;
     }
@@ -319,10 +351,9 @@ export default function ChatBox({ chatId, targetUser, onBack, onChatCreated, onC
     try {
       setUploading(true);
       const fileId = await uploadFile(new File([blob], "voice.mp3", { type: "audio/mpeg" }));
-      await api.post(`/v1/chat/send-voice`, {
-        username: targetUser.username,
-        fileId: fileId,
-      });
+      const payload = { fileId, chatId: currentChatId };
+      if (targetUser?.username) payload.username = targetUser.username;
+      await api.post(`/v1/chat/send-voice`, payload);
       handleCancelFile();
     } catch {
       toast.error(t('sendError'));
@@ -332,17 +363,16 @@ export default function ChatBox({ chatId, targetUser, onBack, onChatCreated, onC
   };
 
   const handleSendGif = async (url) => {
-    if (!targetUser?.username || !canSendMessage) {
+    if (!currentChatId || !canSendMessage) {
       if (!canSendMessage) toast.error(t('cantSendGif'));
       return;
     }
 
     try {
       setUploading(true);
-      await api.post("/v1/chat/send-gif", {
-        url,
-        username: targetUser?.username,
-      });
+      const payload = { url, chatId: currentChatId };
+      if (targetUser?.username) payload.username = targetUser.username;
+      await api.post("/v1/chat/send-gif", payload);
     } catch (err) {
       console.error("Error sending GIF:", err);
       toast.error(t('sendError'));
@@ -501,6 +531,7 @@ export default function ChatBox({ chatId, targetUser, onBack, onChatCreated, onC
               showAvatar={!isOwn}
               onEdit={handleEditMessage}
               onDelete={handleDeleteMessage}
+              onImageClick={(url, type = 'image') => setPreviewMedia({ url, type })}
             />
           );
         })}
@@ -539,7 +570,10 @@ export default function ChatBox({ chatId, targetUser, onBack, onChatCreated, onC
       )}
 
       <div className="flex flex-1 overflow-hidden relative">
-        <div className="flex-1 flex flex-col min-w-0 h-full relative">
+        <div 
+          className="flex-1 flex flex-col min-w-0 h-full relative transition-colors duration-300"
+          style={activeWallpaper.style}
+        >
           <div
             ref={messagesContainerRef}
             className="flex-1 px-4 py-3 overflow-y-auto space-y-2 bg-transparent flex flex-col-reverse"
@@ -554,19 +588,12 @@ export default function ChatBox({ chatId, targetUser, onBack, onChatCreated, onC
           {renderBlockedStatus()}
 
           {canSendMessage && (
-            <FilePreviewInChat
-              selectedFile={selectedFile}
-              filePreview={filePreview}
-              onCancel={handleCancelFile}
-            />
-          )}
-
-          {canSendMessage && (
             <ChatInput
               input={input}
               setInput={setInput}
               isConnected={!isInputDisabled}
               selectedFile={selectedFile}
+              filePreview={filePreview}
               editingMessage={editingMessage}
               uploading={uploading}
               disabled={isInputDisabled}
@@ -596,6 +623,14 @@ export default function ChatBox({ chatId, targetUser, onBack, onChatCreated, onC
           />
         )}
       </div>
+
+      {/* Enlarged Media Lightbox */}
+      <MediaLightbox
+        isOpen={!!previewMedia}
+        onClose={() => setPreviewMedia(null)}
+        src={previewMedia?.url}
+        type={previewMedia?.type}
+      />
     </div>
   );
 }

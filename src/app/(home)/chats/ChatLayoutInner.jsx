@@ -29,6 +29,7 @@ export default function ChatLayoutInner() {
   const fetchChatList = useAppStore((state) => state.fetchChatList);
   const clearChatSelection = useAppStore((state) => state.clearChatSelection);
   const virtualChatUser = useAppStore((state) => state.virtualChatUser);
+  const updateChat = useAppStore((state) => state.updateChat);
 
   usePageMetadata(pageMetadata.chats());
 
@@ -94,6 +95,21 @@ export default function ChatLayoutInner() {
     }
   }, [chatIdFromUrl, chatList, virtualChatUser, chatsLoaded]);
 
+  useEffect(() => {
+    const handleGroupUpdated = (e) => {
+      const data = e.detail;
+      if (data?.chatId === selectedChatId) {
+        setTargetUser((prev) => ({
+          ...prev,
+          ...(data.name ? { name: data.name } : {}),
+          ...(data.avatar ? { avatar: data.avatar } : {}),
+        }));
+      }
+    };
+    window.addEventListener("group_chat_updated", handleGroupUpdated);
+    return () => window.removeEventListener("group_chat_updated", handleGroupUpdated);
+  }, [selectedChatId]);
+
   const handleSelectChat = (chatId, user, chat) => {
     const params = new URLSearchParams(window.location.search);
     params.set("chatId", chatId);
@@ -127,35 +143,34 @@ export default function ChatLayoutInner() {
 
   const handleChatUpdated = async (updatedChatId, updatedData) => {
     try {
+      if (updatedData) {
+        // Optimistically update Zustand chatMap immediately
+        updateChat(updatedChatId, updatedData);
+        if (selectedChatId === updatedChatId) {
+          setTargetUser((prev) => ({ ...prev, ...updatedData }));
+        }
+      }
+
       const isOptimisticAvatarPreview =
         updatedData?.avatar && updatedData.avatar.startsWith("data:");
 
       if (isOptimisticAvatarPreview) {
-        // Just apply the local base64 preview immediately – skip server fetch
-        if (selectedChatId === updatedChatId) {
-          setTargetUser((prev) => ({ ...prev, avatar: updatedData.avatar }));
-        }
         return;
       }
 
       // Server-sync call: refresh chat list, then derive resolved avatar from server data
       const freshChats = await fetchChatList();
-      if (selectedChatId === updatedChatId) {
-        // Apply non-avatar fields from updatedData (e.g. name)
-        const safeUpdate = { ...updatedData };
-        delete safeUpdate.avatar; // don't use raw fileId from optimistic call
-
-        // Pull the server-resolved avatar from the refreshed list
-        if (freshChats && Array.isArray(freshChats)) {
-          const refreshedChat = freshChats.find(
-            (c) => (c.chatId || c.id) === updatedChatId
-          );
-          if (refreshedChat?.avatar) {
-            safeUpdate.avatar = refreshedChat.avatar;
-          }
+      if (selectedChatId === updatedChatId && freshChats && Array.isArray(freshChats)) {
+        const refreshedChat = freshChats.find(
+          (c) => (c.chatId || c.id) === updatedChatId
+        );
+        if (refreshedChat) {
+          setTargetUser((prev) => ({
+            ...prev,
+            name: refreshedChat.name || prev?.name,
+            avatar: refreshedChat.avatar || prev?.avatar,
+          }));
         }
-
-        setTargetUser((prev) => ({ ...prev, ...safeUpdate }));
       }
       setChatListKey((prev) => prev + 1);
     } catch (error) {

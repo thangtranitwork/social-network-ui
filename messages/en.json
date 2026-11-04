@@ -282,7 +282,17 @@
       "uploading": "Uploading...",
       "deleteMedia": "Delete image/video",
       "addMedia": "Add image or video",
-      "add": "Add"
+      "add": "Add",
+      "addToPost": "Add to your post",
+      "addMediaShort": "Add photos/videos",
+      "addPhotosVideos": "Add photos or videos",
+      "preparing": "Preparing upload...",
+      "uploadingCount": "Uploading file {completedCount}/{totalCount} ({percent}%)...",
+      "publishing": "Publishing post...",
+      "completed": "Completed!",
+      "posting": "Posting...",
+      "userFallback": "User",
+      "close": "Close"
     },
     "filter": {
       "relevant": "Most relevant",
@@ -384,6 +394,11 @@
       "bioPlaceholder": "Introduce yourself ❤️",
       "saveChanges": "Save changes",
       "saving": "Saving...",
+      "changeAvatar": "Change profile picture",
+      "viewAvatar": "View profile picture",
+      "updateAvatar": "Update profile picture",
+      "avatarUpdateSuccess": "Profile picture updated successfully!",
+      "avatarUpdateError": "Failed to update profile picture",
       "success": "{label} updated successfully",
       "error": "Failed to update {label}"
     },
@@ -448,7 +463,7 @@
     "allLoaded": "All messages loaded",
     "attachment": "[Attachment]",
     "deletedMessage": "Message deleted",
-    "you": "You: ",
+    "you": "You",
     "edit": "Edit",
     "delete": "Delete",
     "reply": "Reply",
@@ -508,12 +523,14 @@
       "viewProfile": "View profile",
       "add": "Add",
       "close": "Close",
-      "addFriendsToGroup": "Add friends to group"
+      "addFriendsToGroup": "Add friends to group",
+      "wallpaper": "Chat wallpaper"
     },
     "input": {
       "editing": "Editing message",
       "attachFile": "Attach file",
-      "filePlaceholder": "Add a caption for the file (optional)..."
+      "filePlaceholder": "Add a caption for the file (optional)...",
+      "send": "Send"
     },
     "createGroupModal": {
       "title": "Create new group chat",
@@ -527,7 +544,9 @@
       "nameRequired": "Please enter a group name!",
       "memberRequired": "Please select at least 1 member!",
       "friendsList": "Friends list",
-      "searchResults": "Search results"
+      "searchResults": "Search results",
+      "create": "Create",
+      "cancel": "Cancel"
     }
   },
   "call": {
@@ -611,7 +630,28 @@
     "searchingVisual": "Analyzing visual features and searching...",
     "rateLimitImage": "Rate limit exceeded (10 visual searches/min). Please try again later.",
     "rateLimitText": "Rate limit exceeded (30 visual searches/min). Please try again later.",
-    "invalidImage": "Please select a valid image file (JPEG, PNG, WebP under 10MB)"
+    "invalidImage": "Please select a valid image file (JPEG, PNG, WebP under 10MB)",
+    "tabs": {
+      "all": "All",
+      "users": "People",
+      "posts": "Posts",
+      "visual": "Images"
+    },
+    "subtitleVisual": "Discover posts via images or visual descriptions",
+    "subtitleGeneral": "Search friends, posts, and content on PocPoc",
+    "placeholderVisual": "Enter image description (e.g. kitten, motorcycle, beach)...",
+    "imageBtn": "Image",
+    "selectedImage": "Selected image",
+    "searchingSimilar": "Searching similar posts",
+    "searchByOriginImage": "Search by original image",
+    "uploadHint": "Supports JPEG, PNG, WebP (Max 10MB) • Or type image description in search bar",
+    "seeAll": "See all",
+    "mutualFriends": "{count} mutual friends",
+    "tryDifferentKeywords": "Try searching with different keywords",
+    "noVisualMatchDesc": "No posts found with matching visual features meeting accuracy criteria.",
+    "loading": "Loading search page...",
+    "errorImagePermissions": "Image not found or you do not have permission to view the post containing this image",
+    "similarSearchFailed": "Similar image search failed"
   },
   "settings": {
     "title": "User settings",
@@ -719,6 +759,7 @@
     "notFoundPage": "uh-oh! Nothing here..."
   },
   "common": {
+    "create": "Create",
     "loading": "Loading...",
     "error": "Error",
     "success": "Success",

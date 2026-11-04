@@ -30,6 +30,9 @@ const formatDuration = (seconds) => {
 const getFilenameFromUrl = (url, t) => {
   if (!url) return t('chat.unknownFile');
   try {
+    const parsed = new URL(url, 'http://localhost');
+    const queryFilename = parsed.searchParams.get('filename') || parsed.searchParams.get('name');
+    if (queryFilename) return decodeURIComponent(queryFilename);
     const decodedUrl = decodeURIComponent(url);
     const parts = decodedUrl.split('/');
     const lastPart = parts[parts.length - 1];
@@ -74,17 +77,17 @@ const MessageItem = ({
     if (type === 'image') {
       return (
         <div 
-          className="relative rounded-lg overflow-hidden cursor-pointer hover:opacity-95 transition-opacity max-w-[240px]"
-          onClick={() => onImageClick?.(url)}
+          className="relative cursor-pointer hover:opacity-95 transition-opacity"
+          onClick={() => onImageClick?.(url, 'image')}
         >
-          <img src={url} alt={filename} className="w-full h-auto object-cover max-h-[300px]" />
+          <img src={url} alt={filename} className="w-full h-auto object-cover max-h-[320px] rounded-2xl" />
         </div>
       );
     }
     if (type === 'video') {
       return (
-        <div className="relative rounded-lg overflow-hidden max-w-[240px] bg-black/5">
-          <video src={url} className="w-full h-auto max-h-[300px]" />
+        <div className="relative bg-black/5">
+          <video src={url} className="w-full h-auto max-h-[320px] rounded-2xl" />
           <div 
             className="absolute inset-0 flex items-center justify-center bg-black/20 hover:bg-black/30 transition-colors cursor-pointer"
             onClick={() => onImageClick?.(url, 'video')}
@@ -118,7 +121,7 @@ const MessageItem = ({
             </div>
             {size && <div className="text-[10px] text-muted-foreground">{dayjs().format('HH:mm')}</div>}
           </div>
-          <a href={url} download target="_blank" rel="noopener noreferrer" className="p-1.5 rounded-full hover:bg-black/5 text-muted-foreground transition-colors" onClick={(e) => e.stopPropagation()}>
+          <a href={url} download={filename} target="_blank" rel="noopener noreferrer" className="p-1.5 rounded-full hover:bg-black/5 text-muted-foreground transition-colors" onClick={(e) => e.stopPropagation()}>
             <Download className="w-4 h-4" />
           </a>
         </div>
@@ -182,11 +185,30 @@ const MessageItem = ({
 
     if (msg.attachment && msg.type === "FILE") {
       const filename = msg.attachmentName || getFilenameFromUrl(msg.attachment, t);
-      return renderFileInfo(
+      const filePreview = renderFileInfo(
         msg.attachment,
         getFileTypeFromUrl(msg.attachment),
         filename
       );
+
+      const hasContent = msg.content && msg.content.trim().length > 0 && msg.content !== msg.attachment;
+      if (hasContent) {
+        return (
+          <div className="flex flex-col gap-2">
+            {filePreview}
+            <p className="whitespace-pre-wrap break-words leading-relaxed px-1 text-sm">
+              {msg.content}
+            </p>
+            {isEdited && !isDeleted && (
+              <span className="text-[10px] opacity-50 italic self-end">
+                {t('edited')}
+              </span>
+            )}
+          </div>
+        );
+      }
+
+      return filePreview;
     }
 
     // Voice message: attachment có thể nằm trong attachment hoặc content (tuỳ backend)
@@ -200,11 +222,13 @@ const MessageItem = ({
     if (msg.type === "GIF" && gifUrl) {
         return (
             <div 
-                className="relative rounded-lg overflow-hidden cursor-pointer hover:opacity-95 transition-opacity max-w-[240px]"
-                onClick={() => onImageClick?.(gifUrl)}
+                className="relative cursor-pointer hover:opacity-95 transition-opacity"
+                onClick={() => onImageClick?.(gifUrl, 'image')}
             >
-                <img src={gifUrl} alt="GIF" className="w-full h-auto object-cover max-h-[300px]" />
-                <div className="absolute bottom-1 right-1 px-1 bg-black/50 text-[10px] text-white rounded font-bold uppercase tracking-wider">GIF</div>
+                <img src={gifUrl} alt="GIF" className="w-full h-auto object-cover max-h-[320px] rounded-2xl" />
+                <div className="absolute top-2 left-2 px-1.5 py-0.5 bg-black/60 backdrop-blur-sm text-[10px] text-white rounded font-bold uppercase tracking-wider">
+                  GIF
+                </div>
             </div>
         );
     }
@@ -228,16 +252,32 @@ const MessageItem = ({
     return dayjs(msg.sentAt || msg.timestamp || msg.createdAt).format("HH:mm");
   }, [msg.sentAt, msg.timestamp, msg.createdAt]);
 
+  const fileType = msg.type === "FILE" ? getFileTypeFromUrl(msg.attachment) : null;
+  const isImageOrVideoFile = msg.type === "FILE" && (fileType === "image" || fileType === "video");
+  const isGif = msg.type === "GIF";
+  const hasTextContent = Boolean(msg.content && msg.content.trim().length > 0 && msg.content !== msg.attachment);
+  const isMediaMessage = !isDeleted && (isGif || isImageOrVideoFile) && !hasTextContent;
+
   const renderStatus = () => {
     if (!isOwn) return null;
     
     // Status icons
-    if (msg.status === "SENDING") return <Clock size={10} className="text-muted-foreground animate-pulse" />;
+    if (msg.status === "SENDING") return <Clock size={10} className="opacity-75 animate-pulse" />;
     if (msg.status === "ERROR") return <div className="w-2 h-2 rounded-full bg-red-500" title="Error sending" />;
     
-    if (msg.isRead || msg.status === "READ") return <CheckCheck size={14} className="text-blue-500" />;
-    return <Check size={14} className="text-muted-foreground" />;
+    if (msg.isRead || msg.status === "READ") return <CheckCheck size={13} className={isMediaMessage ? "text-white" : "text-[var(--primary-foreground)]"} />;
+    return <Check size={13} className={isMediaMessage ? "text-white/70" : "opacity-75"} />;
   };
+
+  if (msg.type === "SYSTEM") {
+    return (
+      <div className="flex justify-center items-center my-3 px-4 w-full select-none">
+        <span className="text-xs text-[var(--muted-foreground)] bg-[var(--muted)]/50 dark:bg-[var(--muted)]/20 px-3.5 py-1 rounded-full text-center max-w-[85%] font-medium border border-[var(--border)]/40 shadow-xs">
+          {msg.content}
+        </span>
+      </div>
+    );
+  }
 
   return (
     <div className={`flex w-full mb-4 px-4 group ${isOwn ? "justify-end" : "justify-start"}`}>
@@ -307,22 +347,38 @@ const MessageItem = ({
                </div>
             )}
 
-            <div 
-              className={`
-                relative px-3 py-2 rounded-2xl shadow-sm text-sm
-                ${isOwn 
-                  ? "bg-blue-600 text-white rounded-tr-none" 
-                  : "bg-[var(--card)] border border-[var(--border)] text-[var(--foreground)] rounded-tl-none"}
-                ${isDeleted ? "opacity-60 grayscale-[0.5]" : ""}
-              `}
-            >
-              {messageContent}
-              
-              <div className={`flex items-center gap-1 mt-1 justify-end ${isOwn ? "text-blue-100/70" : "text-muted-foreground/70"}`}>
-                <span className="text-[10px]">{messageTime}</span>
-                {renderStatus()}
+            {isMediaMessage ? (
+              <div 
+                className={`
+                  relative rounded-2xl overflow-hidden group/media shadow-sm border border-[var(--border)]/40 max-w-[280px]
+                  ${isDeleted ? "opacity-60 grayscale-[0.5]" : ""}
+                `}
+              >
+                {messageContent}
+                
+                <div className="absolute bottom-1.5 right-1.5 flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-black/60 backdrop-blur-md text-white text-[10px] font-medium shadow-sm pointer-events-none">
+                  <span>{messageTime}</span>
+                  {renderStatus()}
+                </div>
               </div>
-            </div>
+            ) : (
+              <div 
+                className={`
+                  relative px-3.5 py-2 rounded-2xl shadow-sm text-sm
+                  ${isOwn 
+                    ? "bg-[var(--primary)] text-[var(--primary-foreground)] rounded-tr-none" 
+                    : "bg-[var(--card)] border border-[var(--border)] text-[var(--foreground)] rounded-tl-none"}
+                  ${isDeleted ? "opacity-60 grayscale-[0.5]" : ""}
+                `}
+              >
+                {messageContent}
+                
+                <div className={`flex items-center gap-1 mt-1 justify-end ${isOwn ? "text-[var(--primary-foreground)]/80" : "text-muted-foreground/80"}`}>
+                  <span className="text-[10px]">{messageTime}</span>
+                  {renderStatus()}
+                </div>
+              </div>
+            )}
 
             {/* Tin nhắn người khác: nút nằm bên PHẢI bubble */}
             {!isOwn && (

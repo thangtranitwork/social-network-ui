@@ -5,11 +5,13 @@ import Avatar from "../ui-components/Avatar";
 import api from "@/utils/axios";
 import toast from "react-hot-toast";
 import useAppStore from "@/store/ZustandStore";
-import { X, Edit2, Check, UserPlus, Trash2, LogOut, Users, User, Loader2, Shield, Camera } from "lucide-react";
+import { X, Edit2, Check, UserPlus, Trash2, LogOut, Users, User, Loader2, Shield, Camera, Palette } from "lucide-react";
 import Link from "next/link";
 import { uploadFile } from "@/utils/fileUpload";
 import { useTranslations } from "next-intl";
 import ConfirmModal from "../ui-components/ConfirmModal";
+import { formatFullName } from "@/utils/formatName";
+import { CHAT_WALLPAPERS, getChatWallpaper, setChatWallpaper } from "@/utils/chatWallpapers";
 
 export default function ChatDetailsSidebar({ chatId, targetUser, onClose, onChatUpdated }) {
   const t = useTranslations("chat.details");
@@ -23,6 +25,16 @@ export default function ChatDetailsSidebar({ chatId, targetUser, onClose, onChat
   const [loadingFriends, setLoadingFriends] = useState(false);
   const [friendSearchQuery, setFriendSearchQuery] = useState("");
   const [updatingAvatar, setUpdatingAvatar] = useState(false);
+  const [currentWallpaper, setCurrentWallpaper] = useState(() => getChatWallpaper(chatId));
+
+  useEffect(() => {
+    setCurrentWallpaper(getChatWallpaper(chatId));
+  }, [chatId]);
+
+  const handleSelectWallpaper = (wpId) => {
+    setCurrentWallpaper(wpId);
+    setChatWallpaper(chatId, wpId);
+  };
 
   // Confirm modal state
   const [confirmConfig, setConfirmConfig] = useState({
@@ -94,7 +106,7 @@ export default function ChatDetailsSidebar({ chatId, targetUser, onClose, onChat
     try {
       await api.put(`/v1/chat/groups/${chatId}`, {
         name: groupName.trim(),
-        avatar: targetUser?.avatar || "",
+        avatar: "",
       });
       toast.success(t("updateNameSuccess"));
       setIsEditingName(false);
@@ -111,40 +123,38 @@ export default function ChatDetailsSidebar({ chatId, targetUser, onClose, onChat
     const file = e.target.files?.[0];
     if (!file) return;
 
-    const reader = new FileReader();
-    reader.onload = async (event) => {
-      const localDataUrl = event.target.result;
-      
-      // 1. Optimistic update with local base64 data URL
-      if (onChatUpdated) {
-        onChatUpdated(chatId, { avatar: localDataUrl });
-      }
+    // 1. Optimistic update with instant object URL
+    const previewUrl = URL.createObjectURL(file);
+    if (onChatUpdated) {
+      onChatUpdated(chatId, { avatar: previewUrl });
+    }
 
-      setUpdatingAvatar(true);
-      try {
-        // 2. Upload file to storage
-        const fileId = await uploadFile(file);
-        
-        // 3. Update group metadata in DB
-        await api.put(`/v1/chat/groups/${chatId}`, {
-          name: groupName.trim() || targetUser?.name || t("groupChat"),
-          avatar: fileId,
-        });
-        
-        toast.success(t("updateAvatarSuccess"));
-        
-        // 4. Trigger server sync to get resolved/presigned URLs
-        if (onChatUpdated) {
-          onChatUpdated(chatId, {});
-        }
-      } catch (err) {
-        console.error("Failed to update group avatar:", err);
-        toast.error(t("updateAvatarError"));
-      } finally {
-        setUpdatingAvatar(false);
+    setUpdatingAvatar(true);
+    try {
+      // 2. Upload file to storage
+      const fileId = await uploadFile(file);
+
+      const apiBase = process.env.NEXT_PUBLIC_API_URL || "http://localhost:11111";
+      const resolvedAvatarUrl = `${apiBase}/v1/files/${fileId}`;
+
+      // 3. Update group metadata in DB
+      await api.put(`/v1/chat/groups/${chatId}`, {
+        name: groupName.trim() || targetUser?.name || t("groupChat"),
+        avatar: fileId,
+      });
+
+      toast.success(t("updateAvatarSuccess"));
+
+      // 4. Update with persistent resolved URL
+      if (onChatUpdated) {
+        onChatUpdated(chatId, { avatar: resolvedAvatarUrl });
       }
-    };
-    reader.readAsDataURL(file);
+    } catch (err) {
+      console.error("Failed to update group avatar:", err);
+      toast.error(t("updateAvatarError"));
+    } finally {
+      setUpdatingAvatar(false);
+    }
   };
 
   const handleKickMember = async (userId, userFullName) => {
@@ -212,7 +222,7 @@ export default function ChatDetailsSidebar({ chatId, targetUser, onClose, onChat
   );
 
   const filteredFriends = nonMemberFriends.filter((friend) => {
-    const fullName = `${friend.givenName || ""} ${friend.familyName || ""}`.toLowerCase();
+    const fullName = formatFullName(friend).toLowerCase();
     const username = (friend.username || "").toLowerCase();
     const query = friendSearchQuery.toLowerCase().trim();
     return fullName.includes(query) || username.includes(query);
@@ -301,7 +311,7 @@ export default function ChatDetailsSidebar({ chatId, targetUser, onClose, onChat
                 <h4 className="font-bold text-lg line-clamp-1 text-[var(--foreground)]">
                   {isGroup
                     ? targetUser?.name || t("groupChat")
-                    : `${targetUser?.givenName || ""} ${targetUser?.familyName || ""}`.trim() || targetUser?.username}
+                    : formatFullName(targetUser)}
                 </h4>
                 {isAdmin && (
                   <button
@@ -337,6 +347,37 @@ export default function ChatDetailsSidebar({ chatId, targetUser, onClose, onChat
             )}
           </div>
         )}
+
+        {/* Chat Wallpaper Section */}
+        <div className="space-y-3 pt-3 border-t border-[var(--border)]">
+          <div className="flex items-center justify-between">
+            <h5 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-1.5">
+              <Palette className="w-3.5 h-3.5" />
+              <span>{t("wallpaper") || "Hình nền"}</span>
+            </h5>
+          </div>
+          <div className="grid grid-cols-4 gap-2">
+            {CHAT_WALLPAPERS.map((wp) => (
+              <button
+                key={wp.id}
+                onClick={() => handleSelectWallpaper(wp.id)}
+                title={wp.name}
+                className={`h-11 rounded-xl border flex items-center justify-center transition-all relative overflow-hidden group ${
+                  currentWallpaper === wp.id
+                    ? "ring-2 ring-primary border-primary shadow-sm scale-105"
+                    : "border-[var(--border)] hover:border-primary/50"
+                }`}
+                style={wp.previewStyle || wp.style}
+              >
+                {currentWallpaper === wp.id && (
+                  <div className="w-4 h-4 rounded-full bg-primary text-primary-foreground flex items-center justify-center shadow-xs">
+                    <Check className="w-2.5 h-2.5 stroke-[3]" />
+                  </div>
+                )}
+              </button>
+            ))}
+          </div>
+        </div>
 
         {/* Group Members Section */}
         {isGroup && (
@@ -393,7 +434,7 @@ export default function ChatDetailsSidebar({ chatId, targetUser, onClose, onChat
                           />
                           <div className="text-xs">
                             <p className="font-semibold line-clamp-1">
-                              {friend.givenName} {friend.familyName}
+                              {formatFullName(friend)}
                             </p>
                           </div>
                         </div>
@@ -420,7 +461,7 @@ export default function ChatDetailsSidebar({ chatId, targetUser, onClose, onChat
                 {members.map((member) => {
                   const isMemberAdmin = member.id === targetUser?.adminId;
                   const isSelf = member.id === currentUserId;
-                  const fullName = `${member.givenName || ""} ${member.familyName || ""}`.trim() || member.username;
+                  const fullName = formatFullName(member);
 
                   return (
                     <div

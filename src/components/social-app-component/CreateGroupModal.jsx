@@ -7,6 +7,7 @@ import api from "@/utils/axios";
 import toast from "react-hot-toast";
 import { X, Search, Users } from "lucide-react";
 import { useTranslations } from "next-intl";
+import { formatFullName } from "@/utils/formatName";
 
 export default function CreateGroupModal({ onClose, onChatCreated }) {
   const t = useTranslations("chat.createGroupModal");
@@ -161,7 +162,7 @@ export default function CreateGroupModal({ onClose, onChatCreated }) {
                   className="flex items-center gap-1 bg-[var(--background)] border border-[var(--border)] text-xs rounded-full px-2.5 py-1"
                 >
                   <span>
-                    {user.givenName} {user.familyName}
+                    {formatFullName(user)}
                   </span>
                   <button
                     onClick={() => handleRemoveUser(user.id)}
@@ -217,7 +218,7 @@ export default function CreateGroupModal({ onClose, onChatCreated }) {
                       />
                       <div>
                         <p className="font-medium text-sm">
-                          {user.givenName} {user.familyName}
+                          {formatFullName(user)}
                         </p>
                         <p className="text-xs text-muted-foreground">@{user.username}</p>
                       </div>
@@ -243,7 +244,7 @@ export default function CreateGroupModal({ onClose, onChatCreated }) {
           onClick={onClose}
           className="px-4 py-2 text-sm font-medium bg-[var(--background)] hover:bg-[var(--accent)] border border-[var(--border)] rounded-lg transition"
         >
-          {tCommon("cancel")}
+          {t("cancel") || tCommon("cancel")}
         </button>
         <button
           onClick={handleCreate}
@@ -256,7 +257,7 @@ export default function CreateGroupModal({ onClose, onChatCreated }) {
               <span>{tCommon("loading")}</span>
             </>
           ) : (
-            <span>{tCommon("create")}</span>
+            <span>{t("create") || tCommon("create")}</span>
           )}
         </button>
       </div>

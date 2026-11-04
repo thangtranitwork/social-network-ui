@@ -41,6 +41,18 @@ export default function HomePage() {
     refetch
   } = useNewsfeed(filterType)
 
+  // Listen for newly created post to scroll to top and refresh
+  useEffect(() => {
+    const handlePostCreated = () => {
+      refetch();
+      if (typeof window !== "undefined") {
+        window.scrollTo({ top: 0, behavior: "smooth" });
+      }
+    };
+    window.addEventListener("post-created", handlePostCreated);
+    return () => window.removeEventListener("post-created", handlePostCreated);
+  }, [refetch]);
+
   // Infinite Scroll Hook
   const { loadMoreRef } = useInfiniteScroll(
     fetchNextPage,

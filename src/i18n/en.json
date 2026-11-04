@@ -90,6 +90,7 @@
     }
   },
   "common": {
+    "create": "Create",
     "loading": "Loading...",
     "error": "Error",
     "success": "Success",

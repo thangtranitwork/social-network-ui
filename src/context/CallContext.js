@@ -16,6 +16,30 @@ export const CallProvider = ({ children }) => {
   
   // A ref to store the subscription cleanup function
   const subscriptionRef = useRef(null);
+  const broadcastRef = useRef(null);
+
+  // Cross-tab synchronization via BroadcastChannel
+  useEffect(() => {
+    if (typeof window === "undefined" || !("BroadcastChannel" in window)) return;
+    const channel = new BroadcastChannel("social_call_sync");
+    broadcastRef.current = channel;
+
+    channel.onmessage = (event) => {
+      const data = event.data;
+      if (!data) return;
+      if (data.type === "CALL_ANSWERED_ELSEWHERE" || data.type === "CALL_DISMISSED_ELSEWHERE") {
+        console.log("[CallContext] Received cross-tab signal:", data.type, "chatId:", data.chatId);
+        setCallState("idle");
+        setCallInfo(null);
+        setCurrentChatId(null);
+      }
+    };
+
+    return () => {
+      channel.close();
+      broadcastRef.current = null;
+    };
+  }, []);
 
   // Global listener for incoming calls
   useEffect(() => {
@@ -83,15 +107,27 @@ export const CallProvider = ({ children }) => {
   }, []);
 
   const handleClose = useCallback(() => {
+    if (broadcastRef.current && currentChatId) {
+      broadcastRef.current.postMessage({
+        type: "CALL_DISMISSED_ELSEWHERE",
+        chatId: currentChatId,
+      });
+    }
     setCallState("idle");
     setCallInfo(null);
     setCurrentChatId(null);
-  }, []);
+  }, [currentChatId]);
 
   // Sync callState for CallModal (it might set in-call itself when answer is received)
   const handleCallConnected = useCallback(() => {
-      setCallState("in-call");
-  }, []);
+    setCallState("in-call");
+    if (broadcastRef.current && currentChatId) {
+      broadcastRef.current.postMessage({
+        type: "CALL_ANSWERED_ELSEWHERE",
+        chatId: currentChatId,
+      });
+    }
+  }, [currentChatId]);
 
   return (
     <CallContext.Provider

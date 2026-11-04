@@ -2,6 +2,7 @@
 
 import Avatar from "../ui-components/Avatar";
 import { useTranslations } from "next-intl";
+import { formatFullName } from "@/utils/formatName";
 
 export default function UserHeader({
   user = {},
@@ -31,7 +32,7 @@ export default function UserHeader({
       {/* User Info */}
       <div className="ml-3 flex-grow min-w-0">
         <h4 className="text-sm font-medium text-[var(--foreground)] truncate">
-          {familyName} {givenName}
+          {formatFullName(user)}
         </h4>
 
         {/* {showLastOnline && (

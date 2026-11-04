@@ -282,8 +282,18 @@
       "uploading": "Đang tải lên...",
       "deleteMedia": "Xóa ảnh/video",
       "addMedia": "Thêm ảnh hoặc video",
-      "add": "Thêm"
-      },
+      "add": "Thêm",
+      "addToPost": "Thêm vào bài viết",
+      "addMediaShort": "Thêm ảnh/video",
+      "addPhotosVideos": "Thêm ảnh hoặc video",
+      "preparing": "Đang chuẩn bị tải lên...",
+      "uploadingCount": "Đang tải tệp {completedCount}/{totalCount} ({percent}%)...",
+      "publishing": "Đang xuất bản bài viết...",
+      "completed": "Hoàn tất!",
+      "posting": "Đang đăng...",
+      "userFallback": "Người dùng",
+      "close": "Đóng"
+    },
     "filter": {
       "relevant": "Liên quan nhất",
       "friends": "Chỉ bạn bè",
@@ -384,6 +394,11 @@
       "bioPlaceholder": "Giới thiệu về bạn ❤️",
       "saveChanges": "Lưu thay đổi",
       "saving": "Đang lưu...",
+      "changeAvatar": "Thay đổi ảnh đại diện",
+      "viewAvatar": "Xem ảnh đại diện",
+      "updateAvatar": "Cập nhật ảnh đại diện",
+      "avatarUpdateSuccess": "Cập nhật ảnh đại diện thành công!",
+      "avatarUpdateError": "Lỗi khi cập nhật ảnh đại diện",
       "success": "Cập nhật {label} thành công",
       "error": "Lỗi khi cập nhật {label}"
     },
@@ -448,7 +463,7 @@
     "allLoaded": "Đã hiển thị tất cả tin nhắn",
     "attachment": "[File đính kèm]",
     "deletedMessage": "Tin nhắn đã xóa",
-    "you": "Bạn: ",
+    "you": "Bạn",
     "edit": "Chỉnh sửa",
     "delete": "Xóa",
     "reply": "Trả lời",
@@ -508,12 +523,14 @@
       "viewProfile": "Xem trang cá nhân",
       "add": "Thêm",
       "close": "Đóng",
-      "addFriendsToGroup": "Thêm bạn bè vào nhóm"
+      "addFriendsToGroup": "Thêm bạn bè vào nhóm",
+      "wallpaper": "Hình nền đoạn chat"
     },
     "input": {
       "editing": "Đang sửa tin nhắn",
       "attachFile": "Đính kèm file",
-      "filePlaceholder": "Thêm mô tả cho file (tùy chọn)..."
+      "filePlaceholder": "Thêm mô tả cho file (tùy chọn)...",
+      "send": "Gửi"
     },
     "createGroupModal": {
       "title": "Tạo nhóm trò chuyện mới",
@@ -527,7 +544,9 @@
       "nameRequired": "Vui lòng nhập tên nhóm!",
       "memberRequired": "Vui lòng chọn ít nhất 1 thành viên!",
       "friendsList": "Danh sách bạn bè",
-      "searchResults": "Kết quả tìm kiếm"
+      "searchResults": "Kết quả tìm kiếm",
+      "create": "Tạo",
+      "cancel": "Hủy"
     }
   },
   "call": {
@@ -611,7 +630,28 @@
     "searchingVisual": "Đang phân tích vector hình ảnh và tìm kiếm...",
     "rateLimitImage": "Bạn đã vượt quá giới hạn tìm kiếm ảnh (tối đa 10 lần/phút). Vui lòng thử lại sau.",
     "rateLimitText": "Bạn đã vượt quá giới hạn tìm kiếm qua mô tả ảnh (tối đa 30 lần/phút). Vui lòng thử lại sau.",
-    "invalidImage": "Vui lòng chọn file hình ảnh hợp lệ (JPEG, PNG, WebP dưới 10MB)"
+    "invalidImage": "Vui lòng chọn file hình ảnh hợp lệ (JPEG, PNG, WebP dưới 10MB)",
+    "tabs": {
+      "all": "Tất cả",
+      "users": "Mọi người",
+      "posts": "Bài viết",
+      "visual": "Hình ảnh"
+    },
+    "subtitleVisual": "Khám phá bài viết qua hình ảnh hoặc mô tả nội dung ảnh",
+    "subtitleGeneral": "Tìm kiếm bạn bè, bài viết và nội dung trên PocPoc",
+    "placeholderVisual": "Nhập mô tả hình ảnh cần tìm (VD: mèo con, xe máy, bãi biển)...",
+    "imageBtn": "Ảnh",
+    "selectedImage": "Hình ảnh đã chọn",
+    "searchingSimilar": "Đang tìm bài viết tương đồng",
+    "searchByOriginImage": "Tìm theo ảnh gốc",
+    "uploadHint": "Hỗ trợ JPEG, PNG, WebP (Tối đa 10MB) • Hoặc nhập mô tả ảnh ở thanh tìm kiếm",
+    "seeAll": "Xem tất cả",
+    "mutualFriends": "{count} bạn chung",
+    "tryDifferentKeywords": "Thử tìm kiếm với từ khóa khác",
+    "noVisualMatchDesc": "Không tìm thấy bài viết nào có hình ảnh tương đồng vượt qua ngưỡng chính xác yêu cầu.",
+    "loading": "Đang tải trang tìm kiếm...",
+    "errorImagePermissions": "Không tìm thấy ảnh hoặc bạn không có quyền xem bài viết chứa ảnh này",
+    "similarSearchFailed": "Tìm kiếm ảnh tương tự thất bại"
   },
   "settings": {
     "title": "Cài đặt người dùng",
@@ -719,6 +759,7 @@
     "notFoundPage": "uh-oh! Không tìm thấy trang..."
   },
   "common": {
+    "create": "Tạo",
     "loading": "Đang tải...",
     "error": "Lỗi",
     "success": "Thành công",

@@ -10,6 +10,7 @@ import toast from "react-hot-toast";
 import Modal from "@/components/ui-components/Modal";
 import ConfirmModal from "@/components/ui-components/ConfirmModal";
 import { useTranslations } from 'next-intl';
+import { formatFullName } from "@/utils/formatName";
 
 const UsersPage = () => {
   const t = useTranslations('admin.users');
@@ -281,13 +282,13 @@ const UsersPage = () => {
             {user.profilePictureUrl ? (
               <img 
                 src={user.profilePictureUrl} 
-                alt={`${user.givenName} ${user.familyName}`}
+                alt={formatFullName(user)}
                 className="w-14 h-14 rounded-full object-cover border-2 border-[var(--border)]"
               />
             ) : (
               <div className="w-14 h-14 bg-gradient-to-br from-[#6366F1] to-[#8B5CF6] rounded-full flex items-center justify-center text-white font-bold text-lg shadow-sm">
                 <span>
-                  {user.givenName?.charAt(0)}{user.familyName?.charAt(0)}
+                  {user.familyName?.charAt(0)}{user.givenName?.charAt(0)}
                 </span>
               </div>
             )}
@@ -300,7 +301,7 @@ const UsersPage = () => {
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-1.5 mb-0.5">
               <h3 className="font-bold text-sm text-[var(--foreground)] truncate">
-                {user.givenName} {user.familyName}
+                {formatFullName(user)}
               </h3>
               {user.verified && (
                 <ShieldCheck className="w-4 h-4 text-blue-500 flex-shrink-0" />

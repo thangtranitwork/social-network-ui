@@ -116,6 +116,17 @@ export default function useChat(chatId) {
         } else if (data.command === "READING") {
           console.log("👁️ READING received:", data);
           handleReadingNotification(data);
+        } else if (data.command === "GROUP_UPDATED") {
+          const store = useAppStore.getState();
+          if (store.updateChat) {
+            store.updateChat(data.chatId, {
+              ...(data.name ? { name: data.name } : {}),
+              ...(data.avatar ? { avatar: data.avatar } : {}),
+            });
+          }
+          if (typeof window !== "undefined") {
+            window.dispatchEvent(new CustomEvent("group_chat_updated", { detail: data }));
+          }
         }
         return;
       }

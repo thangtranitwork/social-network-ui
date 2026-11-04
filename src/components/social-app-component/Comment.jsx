@@ -3,6 +3,7 @@ import { useCallback, useState, memo } from "react";
 import { Heart, MessageCircle, ChevronDown, ChevronUp, Edit, Check, X } from "lucide-react";
 import Avatar from "../ui-components/Avatar";
 import FilePreviewInChat from "../ui-components/FilePreviewInChat";
+import MediaLightbox from "../ui-components/MediaLightbox";
 import dayjs from "dayjs";
 import relativeTime from "dayjs/plugin/relativeTime";
 import toast from "react-hot-toast";
@@ -12,13 +13,14 @@ import { useTranslations } from "next-intl";
 import ConfirmModal from "../ui-components/ConfirmModal";
 import useRepliesQuery from "@/hooks/useRepliesQuery";
 import { uploadFile } from "@/utils/fileUpload";
+import { formatFullName } from "@/utils/formatName";
 
 dayjs.extend(relativeTime);
 
 const isVideo = (url = "") => /\.(mp4|webm|ogg)$/i.test(url);
 
 // Optimized Media Display Component
-export const MediaDisplay = memo(({ url, alt, className = "" }) =>
+export const MediaDisplay = memo(({ url, alt = "media", className = "", onClick }) =>
     isVideo(url) ? (
         <video
             controls
@@ -26,12 +28,12 @@ export const MediaDisplay = memo(({ url, alt, className = "" }) =>
             src={url}
         />
     ) : (
-        <Image
+        <img
             src={url}
             alt={alt}
-            width={300}
-            height={200}
-            className={`rounded-lg max-h-60 w-auto object-contain ${className}`}
+            onClick={onClick}
+            className={`rounded-lg max-h-60 w-auto object-contain cursor-pointer hover:opacity-90 transition-opacity ${className}`}
+            loading="lazy"
         />
     )
 );
@@ -180,10 +182,11 @@ export const ReplyForm = memo(({ commentId, authorName, onSubmit, onCancel, useF
                         placeholder={t("replyPlaceholder", { name: authorName })}
                         value={replyForm.content}
                         onChange={(e) => replyForm.setContent(e.target.value)}
-                        className="flex-1 bg-[var(--background)] border border-[var(--border)] rounded-lg px-3 py-2 text-sm outline-none focus:border-blue-500"
+                        onPaste={replyForm.handlePaste}
+                        className="flex-1 bg-[var(--background)] border border-[var(--border)] rounded-lg px-3 py-2 text-sm outline-none focus:border-[var(--primary)]"
                         autoFocus
                     />
-                    <label className="text-xs text-blue-500 cursor-pointer hover:underline">
+                    <label className="text-xs text-[var(--primary)] cursor-pointer hover:underline font-medium">
                         {t("addFile")}
                         <input type="file" accept="image/*,video/*" hidden onChange={replyForm.handleFileChange} />
                     </label>
@@ -200,7 +203,7 @@ export const ReplyForm = memo(({ commentId, authorName, onSubmit, onCancel, useF
                     <button
                         type="submit"
                         disabled={replyForm.isSubmitting || (!replyForm.content.trim() && !replyForm.file)}
-                        className="text-xs text-blue-500 font-semibold hover:opacity-80 disabled:opacity-50"
+                        className="text-xs text-[var(--primary)] font-semibold hover:opacity-80 disabled:opacity-50"
                     >
                         {replyForm.isSubmitting ? t("replying") : t("reply")}
                     </button>
@@ -213,13 +216,14 @@ export const ReplyForm = memo(({ commentId, authorName, onSubmit, onCancel, useF
 // Optimized Comment Item Component
 const CommentItem = memo(({
                               comment, currentUserId, isOwnPost, onEdit, onDelete, onLike,
-                              editingId, isReply = false, onSaveEdit, onCancelEdit
+                              editingId, isReply = false, onSaveEdit, onCancelEdit, onMediaClick
                           }) => {
     const isOwnComment = comment.author?.id === currentUserId;
     const canDelete = isOwnComment || isOwnPost;
     const canEdit = isOwnComment;
     const iconSize = isReply ? 24 : 32;
     const textSize = isReply ? 'text-xs' : 'text-sm';
+    const mediaUrl = comment.fileUrl || comment.files?.[0];
 
     return (
         <div className="flex gap-2 text-sm">
@@ -231,7 +235,7 @@ const CommentItem = memo(({
             <div className="flex-1 min-w-0">
                 <div className="flex justify-between">
                     <p className={`font-semibold ${textSize}`}>
-                        {comment.author?.givenName} {comment.author?.familyName}
+                        {formatFullName(comment.author)}
                     </p>
                     <span className="text-xs text-[var(--muted-foreground)]">
             {dayjs(comment.createdAt).fromNow()}
@@ -251,12 +255,13 @@ const CommentItem = memo(({
                     </p>
                 )}
 
-                {comment.fileUrl && (
+                {mediaUrl && (
                     <div className="mb-1">
                         <MediaDisplay
-                            url={comment.fileUrl}
+                            url={mediaUrl}
                             alt="comment media"
                             className={isReply ? "max-h-40" : ""}
+                            onClick={() => onMediaClick?.(mediaUrl)}
                         />
                     </div>
                 )}
@@ -287,6 +292,8 @@ export const Comment = memo(({
     const [editingCommentId, setEditingCommentId] = useState(null);
     const [editingReplyId, setEditingReplyId] = useState(null);
     const [showReplies, setShowReplies] = useState(false);
+    const [zoomMedia, setZoomMedia] = useState(null);
+    const mainMediaUrl = comment.fileUrl || comment.files?.[0];
 
     // Confirm modal state
     const [confirmConfig, setConfirmConfig] = useState({
@@ -349,7 +356,7 @@ export const Comment = memo(({
             <div className="flex-1">
                 <div className="flex justify-between">
                     <p className="font-semibold">
-                        {comment.author?.givenName} {comment.author?.familyName}
+                        {formatFullName(comment.author)}
                     </p>
                     <span className="text-xs text-[var(--muted-foreground)]">
             {dayjs(comment.createdAt).fromNow()}
@@ -369,9 +376,13 @@ export const Comment = memo(({
                     </div>
                 )}
 
-                {comment.fileUrl && (
+                {mainMediaUrl && (
                     <div className="mb-1">
-                        <MediaDisplay url={comment.fileUrl} alt="comment media" />
+                        <MediaDisplay 
+                            url={mainMediaUrl} 
+                            alt="comment media" 
+                            onClick={() => setZoomMedia(mainMediaUrl)}
+                        />
                     </div>
                 )}
 
@@ -408,6 +419,7 @@ export const Comment = memo(({
                                         isReply={true}
                                         onSaveEdit={handlers.saveEdit}
                                         onCancelEdit={handlers.cancelEdit}
+                                        onMediaClick={setZoomMedia}
                                     />
                                 ))}
                             </div>
@@ -432,6 +444,13 @@ export const Comment = memo(({
                     onConfirm={executeDelete}
                     title={t("delete")}
                     message={t("deleteConfirm")}
+                />
+
+                {/* Zoom Media Lightbox */}
+                <MediaLightbox
+                    isOpen={!!zoomMedia}
+                    onClose={() => setZoomMedia(null)}
+                    src={zoomMedia}
                 />
                 </div>
                 </div>

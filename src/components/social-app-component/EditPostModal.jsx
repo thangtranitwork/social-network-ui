@@ -3,11 +3,13 @@
 import { useState, useRef, useEffect } from "react";
 import { uploadMultipleFiles } from "@/utils/fileUpload";
 import Modal from "../ui-components/Modal";
+import MediaLightbox from "../ui-components/MediaLightbox";
 import ImagePreview from "../ui-components/ImagePreview";
 import toast from "react-hot-toast";
 import api from "@/utils/axios";
 import { useTranslations } from "next-intl";
 import { Globe, Users, Lock, Save, FolderOpen, X, Loader2 } from "lucide-react";
+import { extractFilesFromClipboard } from "@/utils/clipboardUtils";
 
 export default function EditPostModal({ isOpen, onClose, post, onPostUpdated }) {
   const t = useTranslations("post.editModal");
@@ -98,6 +100,21 @@ export default function EditPostModal({ isOpen, onClose, post, onPostUpdated }) 
       type: file.type.startsWith("video/") ? "video" : "image",
     }));
     setNewFiles(prev => [...prev, ...files]);
+  };
+
+  const handlePaste = (e) => {
+    if (!canEditFiles) return;
+    const files = extractFilesFromClipboard(e);
+    if (files.length > 0) {
+      e.preventDefault();
+      e.stopPropagation();
+      const items = files.map((file) => ({
+        file,
+        preview: URL.createObjectURL(file),
+        type: file.type.startsWith("video/") ? "video" : "image",
+      }));
+      setNewFiles(prev => [...prev, ...items]);
+    }
   };
 
   const handleAddFiles = () => {
@@ -200,7 +217,7 @@ export default function EditPostModal({ isOpen, onClose, post, onPostUpdated }) 
   return (
     <>
       <Modal isOpen={isOpen} onClose={onClose}>
-        <div className="relative">
+        <div onPaste={handlePaste} className="relative">
           <div className="flex justify-between items-center mb-4 px-2">
             <h2 className="text-lg font-semibold">
               {isSharedPost ? t("sharedTitle") : t("title")}
@@ -234,7 +251,11 @@ export default function EditPostModal({ isOpen, onClose, post, onPostUpdated }) 
             <div className={`flex flex-col ${canEditFiles && displayMedia.length > 0 ? 'md:flex-row' : ''} gap-6 p-4`}>
               {/* Media preview - chỉ hiển thị nếu được phép edit files */}
               {canEditFiles && displayMedia.length > 0 && (
-                <div className="md:w-1/2 w-full">
+                <div 
+                  onDrop={handleDrop}
+                  onDragOver={(e) => { e.preventDefault(); e.stopPropagation(); }}
+                  className="md:w-1/2 w-full"
+                >
                   <ImagePreview
                     images={displayMedia}
                     onImageClick={(i) => setZoomIndex(i)}
@@ -417,27 +438,14 @@ export default function EditPostModal({ isOpen, onClose, post, onPostUpdated }) 
         </div>
       </Modal>
 
-      {/* Modal zoom preview */}
-      {zoomIndex !== null && canEditFiles && (
-        <Modal isOpen={zoomIndex !== null} onClose={() => setZoomIndex(null)}>
-          <div className="relative w-full h-[80vh] flex items-center justify-center bg-black">
-            {displayMedia[zoomIndex]?.type === "video" ? (
-              <video 
-                src={displayMedia[zoomIndex].preview} 
-                className="max-h-full max-w-full" 
-                controls 
-                autoPlay 
-              />
-            ) : (
-              <img
-                src={displayMedia[zoomIndex].preview}
-                className="max-h-full max-w-full object-contain"
-                alt={`Preview ${zoomIndex}`}
-              />
-            )}
-          </div>
-        </Modal>
-      )}
+      {/* Media Lightbox preview */}
+      <MediaLightbox
+        isOpen={zoomIndex !== null && canEditFiles}
+        onClose={() => setZoomIndex(null)}
+        src={displayMedia[zoomIndex]?.preview}
+        type={displayMedia[zoomIndex]?.type}
+        alt={`Preview ${zoomIndex}`}
+      />
     </>
   );
 }

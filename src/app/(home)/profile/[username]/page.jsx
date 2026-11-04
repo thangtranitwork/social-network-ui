@@ -1,9 +1,19 @@
+import { cookies } from "next/headers";
 import ProfilePageClient from "./ProfilePageClient";
+import { formatFullName } from "@/utils/formatName";
 
 async function getProfile(username) {
   try {
+    const cookieStore = await cookies();
+    const token = cookieStore.get("accessToken")?.value;
+    const headers = {};
+    if (token) {
+      headers["Authorization"] = `Bearer ${token}`;
+    }
+
     const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/v1/users/${username}`, {
-      next: { revalidate: 3600 } // Revalidate every hour
+      headers,
+      cache: "no-store",
     });
     if (!res.ok) return null;
     const data = await res.json();
@@ -24,7 +34,7 @@ export async function generateMetadata({ params }) {
     };
   }
 
-  const fullName = `${user.givenName || ''} ${user.familyName || ''}`.trim() || user.username;
+  const fullName = formatFullName(user);
   const title = `${fullName} (@${user.username}) | PocPoc`;
   const description = user.bio || `Kết nối với ${fullName} trên PocPoc - Mạng xã hội thế hệ mới.`;
   const image = user.profilePictureUrl || '/pocpoc.png';

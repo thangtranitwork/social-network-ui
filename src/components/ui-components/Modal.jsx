@@ -9,7 +9,8 @@ export default function Modal({
   isOpen,
   onClose,
   children,
-  size = "large" // "small", "medium", "large"
+  size = "large", // "small", "medium", "large"
+  hideCloseButton = false
 }) {
   const t = useTranslations('common');
   const [mounted, setMounted] = useState(false);
@@ -63,13 +64,15 @@ export default function Modal({
       />
 
       {/* Nút đóng */}
-      <button
-        onClick={onClose}
-        className="absolute top-5 right-5 text-muted-foreground hover:text-foreground z-20"
-        aria-label={t('close')}
-      >
-        <X className="w-6 h-6" />
-      </button>
+      {!hideCloseButton && (
+        <button
+          onClick={onClose}
+          className="absolute top-5 right-5 text-muted-foreground hover:text-foreground z-20"
+          aria-label={t('close')}
+        >
+          <X className="w-6 h-6" />
+        </button>
+      )}
 
       {/* Nội dung modal */}
       <div

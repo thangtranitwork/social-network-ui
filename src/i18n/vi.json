@@ -90,6 +90,7 @@
     }
   },
   "common": {
+    "create": "Tạo",
     "loading": "Đang tải...",
     "error": "Lỗi",
     "success": "Thành công",

@@ -247,6 +247,22 @@ const useAppStore = create(
         console.log(`📊 ${STORE_EVENTS.CHAT_CREATED} - ${id}`);
       },
 
+      // Handle chat update (e.g. name, avatar)
+      updateChat: (chatId, partialChat) => {
+        if (!chatId || !partialChat) return;
+        set(state => {
+          const existing = state.chatMap[chatId];
+          if (!existing) return state;
+          const updated = { ...existing, ...partialChat };
+          return {
+            chatMap: {
+              ...state.chatMap,
+              [chatId]: updated
+            }
+          };
+        });
+      },
+
       // ============ NOTIFICATIONS STATE ============
       notifications: [],
       isLoadingNotifications: false,
@@ -448,12 +464,17 @@ const useAppStore = create(
     })
 );
 
-// Derived selector for getting sorted chat list
+// Derived selector for getting sorted chat list (newest activity first)
 export const selectSortedChatList = (state) => {
   return Object.values(state.chatMap).sort((a, b) => {
-    const timeA = new Date(a.updatedAt || a.createdAt).getTime();
-    const timeB = new Date(b.updatedAt || b.createdAt).getTime();
-    return timeB - timeA;
+    const getTimestamp = (chat) => {
+      const msgTime = chat.latestMessage?.sentAt || chat.latestMessage?.timestamp || chat.latestMessage?.createdAt;
+      const chatTime = chat.updatedAt || chat.createdAt;
+      const t1 = msgTime ? new Date(msgTime).getTime() : 0;
+      const t2 = chatTime ? new Date(chatTime).getTime() : 0;
+      return Math.max(t1, t2);
+    };
+    return getTimestamp(b) - getTimestamp(a);
   });
 };
 

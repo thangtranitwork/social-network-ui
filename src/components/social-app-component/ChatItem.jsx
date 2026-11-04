@@ -8,6 +8,7 @@ import Avatar from "../ui-components/Avatar";
 import Badge from "../ui-components/Badge";
 import { useTranslations } from "next-intl";
 import { Phone, Video, Mic, Image as ImageIcon, FileText, Ban } from "lucide-react";
+import { formatFullName } from "@/utils/formatName";
 
 dayjs.extend(relativeTime);
 
@@ -19,8 +20,7 @@ function ChatItem({ chat, onClick, selected }) {
   const isUnread = notReadMessageCount > 0;
   const displayName = isGroup
     ? (name || t('groupChat'))
-    : `${target?.givenName || ""} ${target?.familyName || ""}`.trim() ||
-      target?.username ||
+    : formatFullName(target) ||
       t('unknownUser');
   const avatarUrl = isGroup ? avatar : target?.profilePictureUrl;
 
@@ -29,7 +29,12 @@ function ChatItem({ chat, onClick, selected }) {
 
   if (latestMessage) {
     const isSenderTarget = latestMessage.sender?.id === target?.id;
-    const senderPrefix = isSenderTarget ? "" : isGroup ? `${latestMessage.sender?.givenName || latestMessage.sender?.username || t('someone')}: ` : `${t('you')}: `;
+    const youLabel = (t('you') || 'Bạn').replace(/:\s*$/, "");
+    const senderPrefix = isSenderTarget
+      ? ""
+      : isGroup
+        ? `${latestMessage.sender?.givenName || latestMessage.sender?.username || t('someone')}: `
+        : `${youLabel}: `;
     const {
       type,
       callId,
@@ -82,10 +87,11 @@ function ChatItem({ chat, onClick, selected }) {
           </span>
         );
       } else if (attachment) {
+        const textPreview = msgContent && msgContent !== attachment ? msgContent.slice(0, 60) : t('attachment');
         content = (
-          <span className="flex items-center gap-1">
-            <FileText size={14} className="text-blue-500" />
-            {t('attachment')}
+          <span className="flex items-center gap-1 min-w-0">
+            <FileText size={14} className="text-blue-500 shrink-0" />
+            <span className="truncate">{textPreview}</span>
           </span>
         );
       } else if (type === "GIF") {

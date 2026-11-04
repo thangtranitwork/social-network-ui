@@ -6,6 +6,7 @@ import dayjs from "dayjs"
 import relativeTime from "dayjs/plugin/relativeTime"
 import { useRouter } from "next/navigation"
 import { useTranslations } from "next-intl"
+import { formatFullName } from "@/utils/formatName"
 
 // Enable plugin
 dayjs.extend(relativeTime)
@@ -48,7 +49,7 @@ export default function ChatHeader({
 
   const displayName = isGroup
     ? (targetUser?.name || t("details.groupChat"))
-    : `${targetUser?.givenName || ""} ${targetUser?.familyName || ""}`.trim() || targetUser?.username || "";
+    : formatFullName(targetUser);
 
   const avatarUrl = isGroup ? targetUser?.avatar : targetUser?.profilePictureUrl;
 

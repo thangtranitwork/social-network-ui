@@ -1,6 +1,7 @@
 import { useState, useCallback } from "react";
 import toast from "react-hot-toast";
 import { useTranslations } from "next-intl";
+import { extractFilesFromClipboard } from "@/utils/clipboardUtils";
 
 // Hook for form management
 export const useForm = (onSubmit) => {
@@ -13,6 +14,17 @@ export const useForm = (onSubmit) => {
   const handleFileChange = useCallback((e) => {
     const f = e.target.files[0];
     if (f) {
+      setFile(f);
+      setPreviewUrl(URL.createObjectURL(f));
+    }
+  }, []);
+
+  const handlePaste = useCallback((e) => {
+    const files = extractFilesFromClipboard(e, { imageOnly: true });
+    if (files.length > 0) {
+      e.preventDefault();
+      e.stopPropagation();
+      const f = files[0];
       setFile(f);
       setPreviewUrl(URL.createObjectURL(f));
     }
@@ -58,6 +70,7 @@ export const useForm = (onSubmit) => {
     previewUrl,
     isSubmitting,
     handleFileChange,
+    handlePaste,
     removeFile,
     submit,
     reset,

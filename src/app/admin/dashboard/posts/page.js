@@ -34,6 +34,7 @@ import {
 } from "lucide-react"
 import { useRouter } from "next/navigation"
 import adminApi from "@/utils/adminInterception"
+import { formatFullName } from "@/utils/formatName"
 
 const PIE_COLORS = ["#8B5CF6", "#6366F1", "#3B82F6"] // Amethyst, Electric Indigo, Cobalt Blue
 
@@ -226,7 +227,7 @@ export default function PostsPage() {
           </div>
           <div>
             <p className="font-bold text-sm text-[var(--foreground)]">
-              {post.author?.givenName} {post.author?.familyName}
+              {formatFullName(post.author)}
             </p>
             <p className="text-xs text-[var(--muted-foreground)]">
               @{post.author?.username}

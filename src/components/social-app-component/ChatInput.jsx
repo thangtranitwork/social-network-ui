@@ -4,13 +4,23 @@ import { useEffect, useRef } from "react";
 import GifPicker from "./GifPicker";
 import VoiceRecorder from "./VoiceRecorder";
 import { useTranslations } from "next-intl";
-import { Pencil, Paperclip } from "lucide-react";
+import { Pencil, Paperclip, X, FileText } from "lucide-react";
+import { extractFilesFromClipboard } from "@/utils/clipboardUtils";
+
+const formatFileSize = (bytes) => {
+  if (!bytes) return "";
+  const k = 1024;
+  const sizes = ["B", "KB", "MB", "GB"];
+  const i = Math.floor(Math.log(bytes) / Math.log(k));
+  return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + " " + sizes[i];
+};
 
 export default function ChatInput({
   input,
   setInput,
   isConnected,
   selectedFile,
+  filePreview,
   editingMessage,
   uploading,
   disabled = false,
@@ -105,6 +115,18 @@ export default function ChatInput({
     // console.log("📝 User is typing:", value.length > 0)
   }
 
+  // Handle paste image / files directly from clipboard
+  const handlePaste = (e) => {
+    const files = extractFilesFromClipboard(e);
+    if (files.length > 0) {
+      e.preventDefault();
+      e.stopPropagation();
+      if (onFileSelect) {
+        onFileSelect(files[0]);
+      }
+    }
+  };
+
   // Check if we can send - either has text content or has file
   const canSend = () => {
     if (disabled || loading) return false
@@ -122,31 +144,33 @@ export default function ChatInput({
       return (
         <button
           disabled
-          className="flex items-center justify-center w-9 h-9 bg-blue-600/50 text-white rounded-xl cursor-not-allowed opacity-50 flex-shrink-0"
+          aria-label={t("send") || "Send"}
+          className="flex items-center justify-center w-9 h-9 bg-blue-600 text-white rounded-xl cursor-not-allowed opacity-75 flex-shrink-0"
         >
           <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
         </button>
-      )
+      );
     }
 
-    const active = canSend()
+    const active = canSend();
     return (
       <button
         type="button"
         onClick={handleSendClick}
         disabled={!active}
+        aria-label={t("send") || "Send"}
         className={`flex items-center justify-center w-9 h-9 rounded-xl transition-all flex-shrink-0 ${
           !active
-            ? "bg-[var(--accent)] text-[var(--muted-foreground)] opacity-55 cursor-not-allowed"
-            : "bg-blue-600 hover:bg-blue-500 text-white shadow-sm shadow-blue-500/25 active:scale-[0.97]"
+            ? "bg-gray-100 dark:bg-zinc-800 text-gray-400 dark:text-zinc-500 cursor-not-allowed"
+            : "bg-blue-600 hover:bg-blue-700 text-white shadow-sm shadow-blue-500/25 active:scale-[0.97]"
         }`}
       >
-        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <svg className="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
         </svg>
       </button>
-    )
-  }
+    );
+  };
 
   return (
     <div className="px-4 py-3 border-t border-[var(--border)] bg-[var(--card)]">
@@ -168,21 +192,40 @@ export default function ChatInput({
         </div>
       )}
 
-      {/* File preview */}
+      {/* Sleek unified attachment preview card */}
       {selectedFile && (
-        <div className="flex items-center justify-between px-3 py-1.5 bg-blue-50 dark:bg-blue-900/20 rounded-xl mb-2">
-          <div className="flex items-center space-x-2 min-w-0 flex-1">
-            <Paperclip size={14} className="text-blue-600 dark:text-blue-400" />
-            <span className="text-xs font-medium text-blue-600 dark:text-blue-400 truncate">{selectedFile.name}</span>
+        <div className="mb-2.5 p-2 bg-[var(--background)] border border-[var(--border)] rounded-2xl flex items-center justify-between gap-3 shadow-xs animate-in fade-in slide-in-from-bottom-2 duration-150">
+          <div className="flex items-center gap-3 min-w-0 flex-1">
+            {filePreview ? (
+              <div className="relative w-14 h-14 rounded-xl overflow-hidden border border-[var(--border)] bg-[var(--muted)] shrink-0 shadow-xs">
+                <img
+                  src={filePreview}
+                  alt={selectedFile.name}
+                  className="w-full h-full object-cover"
+                />
+              </div>
+            ) : (
+              <div className="w-12 h-12 rounded-xl bg-blue-500/10 text-blue-600 dark:text-blue-400 flex items-center justify-center shrink-0 border border-blue-500/20">
+                <FileText className="w-6 h-6" />
+              </div>
+            )}
+            <div className="min-w-0 flex-1">
+              <p className="text-sm font-semibold truncate text-[var(--foreground)]">
+                {selectedFile.name}
+              </p>
+              <p className="text-xs text-[var(--muted-foreground)] mt-0.5">
+                {formatFileSize(selectedFile.size)}
+              </p>
+            </div>
           </div>
           <button
+            type="button"
             onClick={onCancelFile}
             disabled={uploading}
-            className="flex items-center justify-center w-5 h-5 text-gray-500 hover:text-gray-700 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-full transition-colors disabled:opacity-50 disabled:cursor-not-allowed ml-2"
+            className="p-1.5 rounded-full text-[var(--muted-foreground)] hover:text-red-500 hover:bg-red-500/10 transition-colors shrink-0 disabled:opacity-50"
+            title={t("cancel") || "Hủy"}
           >
-            <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-            </svg>
+            <X className="w-4 h-4" />
           </button>
         </div>
       )}
@@ -226,6 +269,7 @@ export default function ChatInput({
             ref={textareaRef}
             value={input}
             onChange={handleInputChange}
+            onPaste={handlePaste}
             onKeyDown={onKeyDown}
             onFocus={handleTextareaFocus}
             onBlur={handleTextareaBlur}
