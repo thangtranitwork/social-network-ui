@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import api from "@/utils/axios";
 import ChatList from "@/components/social-app-component/ChatList";
 import ChatBox from "@/components/social-app-component/ChatBox";
@@ -124,7 +124,7 @@ export default function ChatLayoutInner() {
     return () => window.removeEventListener("group_chat_updated", handleGroupUpdated);
   }, [selectedChatId]);
 
-  const handleSelectChat = (chatId, user, chat) => {
+  const handleSelectChat = useCallback((chatId, user, chat) => {
     const params = new URLSearchParams(window.location.search);
     params.set("chatId", chatId);
     router.push(`/chats?${params.toString()}`, { scroll: false });
@@ -139,7 +139,7 @@ export default function ChatLayoutInner() {
     } else {
       setTargetUser(user);
     }
-  };
+  }, [router]);
 
   const handleChatCreated = async (newChatId, user) => {
     try {
@@ -231,8 +231,9 @@ export default function ChatLayoutInner() {
       )}
 
       {shouldShowChatBox && (
-        <main className="w-full md:w-[60%] md:flex-1 rounded-2xl bg-[var(--card)] border border-[var(--border)] overflow-y-auto shadow-sm">
+        <main className="w-full md:w-[60%] md:flex-1 rounded-2xl bg-[var(--card)] border border-[var(--border)] overflow-hidden flex flex-col shadow-sm">
           <ChatBox
+            key={selectedChatId}
             chatId={selectedChatId}
             targetUser={targetUser}
             onBack={handleBackToList}

@@ -232,11 +232,15 @@ const layoutContent = (
 </aside>
 
         {/* Main Content - chiếm toàn bộ width vì floating chat */}
-        <main className={`flex-1 ${hasAnnouncement ? 'h-[calc(100vh-96px)]' : (showHeader ? 'h-[calc(100vh-64px)]' : 'h-screen')} overflow-y-auto`}>
+        <main className={`flex-1 ${hasAnnouncement ? 'h-[calc(100vh-96px)]' : (showHeader ? 'h-[calc(100vh-64px)]' : 'h-screen')} ${pathname.startsWith("/profile/") ? "overflow-hidden" : "overflow-y-auto"}`}>
           <div
-            className={`${
-              hideRightSidebar ? "max-w-7xl" : "max-w-3xl"
-            } w-full mx-auto space-y-6 pb-[calc(56px+env(safe-area-inset-bottom))] md:pb-6 px-4 sm:px-6`}
+            className={
+              pathname.startsWith("/profile/")
+                ? "w-full h-full"
+                : `${
+                    hideRightSidebar ? "max-w-7xl" : "max-w-3xl"
+                  } w-full mx-auto space-y-6 pb-[calc(56px+env(safe-area-inset-bottom))] md:pb-6 px-4 sm:px-6`
+            }
           >
             {children}
           </div>

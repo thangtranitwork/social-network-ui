@@ -5,13 +5,13 @@ import ChatItem from "./ChatItem";
 import Avatar from "../ui-components/Avatar";
 import Modal from "../ui-components/Modal";
 import CreateGroupModal from "./CreateGroupModal";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useCallback, memo } from "react";
 import api from "@/utils/axios";
 import useAppStore, { selectSortedChatList } from "@/store/ZustandStore";
 import { useShallow } from 'zustand/react/shallow';
 import { useTranslations } from "next-intl";
 
-export default function ChatList({ onSelectChat, selectedChatId }) {
+function ChatList({ onSelectChat, selectedChatId }) {
   const t = useTranslations('chat');
   const tCommon = useTranslations('common');
   const pathname = usePathname();
@@ -100,7 +100,7 @@ export default function ChatList({ onSelectChat, selectedChatId }) {
   };
 
   // Improved chat selection handler
-  const handleChatSelect = async (chat) => {
+  const handleChatSelect = useCallback(async (chat) => {
     if (typeof markChatAsRead !== 'function') {
       return;
     }
@@ -118,7 +118,7 @@ export default function ChatList({ onSelectChat, selectedChatId }) {
     } catch (error) {
       console.error("❌ Error selecting chat:", error);
     }
-  };
+  }, [markChatAsRead, onSelectChat]);
 
   // Manual refresh handler
   const handleRefresh = async () => {
@@ -375,3 +375,5 @@ export default function ChatList({ onSelectChat, selectedChatId }) {
     </div>
   );
 }
+
+export default memo(ChatList);

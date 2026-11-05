@@ -103,7 +103,13 @@ function ChatItem({ chat, onClick, selected }) {
         );
       }
       else {
-        content = msgContent?.slice(0, 60) || t('messageDeleted');
+        // Nếu tin nhắn mã hóa chưa giải mã xong trên danh sách chat, không hiển thị chuỗi ciphertext base64
+        const isEncryptedUndecrypted = latestMessage.isEncrypted && !latestMessage.isDecrypted;
+        if (isEncryptedUndecrypted) {
+          content = "🔒 Tin nhắn được mã hóa";
+        } else {
+          content = msgContent?.slice(0, 60) || t('messageDeleted');
+        }
       }
       
       if (typeof content === 'string') {

@@ -235,6 +235,18 @@ const MessageItem = ({
         );
     }
 
+    // Nếu là tin nhắn mã hóa nhưng chưa giải mã xong, hiển thị skeleton kín đáo thay vì lộ chuỗi ciphertext base64 thô
+    const isPendingDecryption = msg.isEncrypted && !msg.isDecrypted;
+
+    if (isPendingDecryption) {
+      return (
+        <div className="flex items-center gap-1.5 py-1 px-1">
+          <div className="w-16 h-3.5 bg-current opacity-20 rounded-md animate-pulse" />
+          <div className="w-8 h-3.5 bg-current opacity-20 rounded-md animate-pulse" />
+        </div>
+      );
+    }
+
     return (
       <div className="flex flex-col gap-1">
         <p className="whitespace-pre-wrap break-words leading-relaxed">

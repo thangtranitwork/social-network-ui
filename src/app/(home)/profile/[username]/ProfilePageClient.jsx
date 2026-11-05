@@ -3,6 +3,7 @@
 import { useEffect, useState, useCallback, useRef, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import ProfileHeader from "@/components/social-app-component/ProfileHeader";
+import SpatialProfileContainer from "@/components/spatial-profile/SpatialProfileContainer";
 import api from "@/utils/axios";
 import PostCard from "@/components/social-app-component/PostCard";
 import PostSkeleton from "@/components/social-app-component/PostCardSkeleton";
@@ -78,9 +79,9 @@ export default function ProfilePageClient({ initialProfile, routeUsername }) {
     return data?.pages?.flat() || [];
   }, [data]);
 
-  // Fetch files when on file tab
+  // Fetch user media files for gallery & media tab
   useEffect(() => {
-    if (!routeUsername || activeTab !== "file") return;
+    if (!routeUsername) return;
 
     const token = localStorage.getItem("accessToken");
     if (!token) return;
@@ -88,7 +89,7 @@ export default function ProfilePageClient({ initialProfile, routeUsername }) {
     const controller = new AbortController();
     api.get(`/v1/posts/files/${routeUsername}`, { signal: controller.signal })
         .then(res => {
-          if (res.data.code === 200) {
+          if (res.data?.code === 200 && Array.isArray(res.data.body)) {
             setFiles(res.data.body);
           }
         })
@@ -99,7 +100,7 @@ export default function ProfilePageClient({ initialProfile, routeUsername }) {
         });
 
     return () => controller.abort();
-  }, [routeUsername, activeTab]);
+  }, [routeUsername]);
 
   // Event handlers
   const handleUsernameChange = useCallback((oldUsername, newUsername) => {
@@ -203,7 +204,7 @@ export default function ProfilePageClient({ initialProfile, routeUsername }) {
       </div>
   );
 
-  return (
+  const classicFeedContent = (
       <main className="max-w-4xl mx-auto mt-4 flex-col justify-center items-center">
         {/* Profile Header */}
         {profileData ? (
@@ -269,5 +270,19 @@ export default function ProfilePageClient({ initialProfile, routeUsername }) {
           </section>
         </div>
       </main>
+  );
+
+  return (
+    <SpatialProfileContainer
+      routeUsername={routeUsername}
+      profileData={profileData}
+      isOwnProfile={isOwnProfile}
+      posts={posts}
+      files={files}
+      onProfileUpdate={(updatedData) => setProfileData(prev => ({ ...prev, ...updatedData }))}
+      onUsernameChange={handleUsernameChange}
+      onToggleLikePost={(post) => toggleLike({ postId: post.id, wasLiked: post.liked })}
+      classicFeedContent={classicFeedContent}
+    />
   );
 }

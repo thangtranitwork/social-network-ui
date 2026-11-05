@@ -340,6 +340,41 @@ input:-webkit-autofill:active {
   to { transform: rotate(360deg); }
 }
 
+@keyframes vinyl-spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.animate-vinyl-spin {
+  animation: vinyl-spin 4s linear infinite;
+}
+
+@keyframes vinyl-soundwave {
+  0%, 100% {
+    height: 3px;
+    opacity: 0.4;
+  }
+  50% {
+    height: 14px;
+    opacity: 1;
+  }
+}
+
+@keyframes vinyl-ripple {
+  0% {
+    transform: scale(0.95);
+    opacity: 0.7;
+  }
+  100% {
+    transform: scale(1.6);
+    opacity: 0;
+  }
+}
+
+.animate-vinyl-ripple {
+  animation: vinyl-ripple 2.2s cubic-bezier(0, 0.2, 0.8, 1) infinite;
+}
+
 /* =====================================================
    Admin Panel Utilities
    Solid backgrounds in light, glassmorphic in dark

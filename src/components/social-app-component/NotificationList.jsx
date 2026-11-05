@@ -12,9 +12,13 @@ import { useTranslations } from 'next-intl';
 dayjs.extend(relativeTime);
 
 function formatNotificationText(n, t, tCommon) {
-  const name = n.creator?.givenName || tCommon("you"); // Use "You" or a generic name
+  const name = n.creator?.givenName || tCommon("you");
   const typeKey = `types.${n.action}`;
-  return t(typeKey, { name });
+  try {
+    return t(typeKey, { name });
+  } catch {
+    return t("types.default", { name });
+  }
 }
 
 export default function NotificationList() {
@@ -60,7 +64,9 @@ export default function NotificationList() {
     console.log('Notification clicked:', notification);
 
     // Handle navigation based on notification type
-    if (notification.targetType === 'USER' || notification.targetType === "REQUEST" && notification.targetId) {
+    if (notification.targetType === 'CHAT' || notification.action === 'NEW_MESSAGE') {
+      router.push(`/chats?chatId=${notification.targetId}`);
+    } else if (notification.targetType === 'USER' || notification.targetType === "REQUEST" && notification.targetId) {
       // Navigate to user profile
       router.push(`/profile/${notification.creator.username}`);
     } else if ((notification.targetType === 'POST' && notification.targetId)) {

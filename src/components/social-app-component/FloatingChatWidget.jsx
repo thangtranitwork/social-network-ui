@@ -331,6 +331,7 @@ export default function FloatingChatWidget({ beToken }) {
           {activeChatId && activeTargetUser ? (
             // ── Chatbox ──
             <Chatbox
+              key={activeChatId}
               chatId={activeChatId}
               targetUser={activeTargetUser}
               onBack={handleBack}

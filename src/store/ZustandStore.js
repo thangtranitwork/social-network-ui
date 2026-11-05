@@ -79,10 +79,25 @@ const useAppStore = create(
           const data = res.data.body || res.data || [];
 
           // Convert to Map and asynchronously decrypt latest encrypted message preview
+          const existingMap = get().chatMap || {};
           const newChatMap = {};
           data.forEach(chat => {
             const id = chat.chatId || chat.id;
-            newChatMap[id] = chat;
+            const existing = existingMap[id];
+            let lm = chat.latestMessage;
+            if (lm && lm.isEncrypted) {
+              if (existing?.latestMessage?.id === lm.id && existing.latestMessage.isDecrypted) {
+                lm = { ...lm, content: existing.latestMessage.content, isDecrypted: true };
+              } else {
+                const cached = getCachedPlaintext(lm.content);
+                if (cached) {
+                  lm = { ...lm, content: cached, isDecrypted: true };
+                } else {
+                  lm = { ...lm, isDecrypted: false };
+                }
+              }
+            }
+            newChatMap[id] = { ...chat, latestMessage: lm };
           });
 
           // Decrypt previews in background
@@ -227,7 +242,7 @@ const useAppStore = create(
 
           set(state => {
             const chat = state.chatMap[chatId];
-            if (!chat) return state;
+            if (!chat || !chat.notReadMessageCount) return state;
 
             const newChatMap = {
               ...state.chatMap,
@@ -458,6 +473,7 @@ const useAppStore = create(
 
       // Select a chat
       selectChat: (chatId) => {
+        if (get().selectedChatId === chatId && get().virtualChatUser === null) return;
         set({
           selectedChatId: chatId,
           virtualChatUser: null

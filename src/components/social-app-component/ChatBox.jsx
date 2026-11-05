@@ -176,7 +176,7 @@ export default function ChatBox({ chatId, targetUser, onBack, onChatCreated, onC
       if (container) {
         const isNearBottom = container.scrollHeight - container.scrollTop - container.clientHeight < 100;
         if (isNearBottom || messages.length === 1) {
-          container.scrollTo({ top: 0, behavior: "smooth" });
+          container.scrollTop = 0;
         }
       }
     }
@@ -487,9 +487,22 @@ export default function ChatBox({ chatId, targetUser, onBack, onChatCreated, onC
   const renderMessages = () => {
     if (loading && currentChatId) {
       return (
-        <div className="flex flex-col items-center justify-center py-8">
-          <div className="spinner"></div>
-          <p className="text-sm text-[var(--muted-foreground)] mt-4">{t("loading")}</p>
+        <div className="space-y-3 p-2 w-full animate-pulse flex flex-col justify-end select-none">
+          <div className="flex justify-start">
+            <div className="h-9 w-44 bg-current opacity-10 rounded-2xl rounded-bl-sm" />
+          </div>
+          <div className="flex justify-end">
+            <div className="h-9 w-32 bg-current opacity-15 rounded-2xl rounded-br-sm" />
+          </div>
+          <div className="flex justify-start">
+            <div className="h-12 w-60 bg-current opacity-10 rounded-2xl rounded-bl-sm" />
+          </div>
+          <div className="flex justify-end">
+            <div className="h-9 w-48 bg-current opacity-15 rounded-2xl rounded-br-sm" />
+          </div>
+          <div className="flex justify-start">
+            <div className="h-9 w-36 bg-current opacity-10 rounded-2xl rounded-bl-sm" />
+          </div>
         </div>
       );
     }
@@ -587,7 +600,6 @@ export default function ChatBox({ chatId, targetUser, onBack, onChatCreated, onC
             ref={messagesContainerRef}
             className="flex-1 px-4 py-3 overflow-y-auto space-y-2 bg-transparent flex flex-col-reverse"
             style={{
-              scrollBehavior: 'smooth',
               overscrollBehavior: 'contain'
             }}
           >

@@ -201,7 +201,6 @@ export default function useChat(chatId) {
           newMessage.content = cached;
           newMessage.isDecrypted = true;
         } else {
-          newMessage.content = "🔒 Đang giải mã...";
           newMessage.isDecrypted = false;
           (async () => {
             try {
@@ -335,6 +334,8 @@ export default function useChat(chatId) {
   useEffect(() => {
     if (!chatId) return;
 
+    let isSubscribed = true;
+
     const fetchInitialMessages = async () => {
       try {
         setLoading(true);
@@ -342,7 +343,7 @@ export default function useChat(chatId) {
         setHasMore(true);
         setTotalMessages(0);
         
-        // ✅ Reset typing state khi chuyển chat
+        // Reset typing state khi chuyển chat
         setIsTyping(false);
         setTypingUsersMap({});
         
@@ -350,27 +351,35 @@ export default function useChat(chatId) {
         const skip = 0;
         
         const res = await api.get(`/v1/chat/messages/${chatId}?skip=${skip}&limit=${limit}`);
+        if (!isSubscribed) return;
         const fetchedMessages = res.data.body || [];
 
-        // Decrypt batch
+        // Decrypt batch hoàn chỉnh trước khi cập nhật state messages
         const decryptedMessages = await decryptMessageBatch(fetchedMessages);
+        if (!isSubscribed) return;
         
         setMessages(decryptedMessages);
         setTotalMessages(decryptedMessages.length);
         setHasMore(decryptedMessages.length === limit);
-        useAppStore.getState().fetchChatList().catch(() => {});
         
         console.log(`📨 Loaded initial messages: ${decryptedMessages.length}, hasMore=${decryptedMessages.length === limit}`);
       } catch (err) {
+        if (!isSubscribed) return;
         console.error("❌ Lỗi tải tin nhắn:", err);
         setMessages([]);
         setHasMore(false);
       } finally {
-        setLoading(false);
+        if (isSubscribed) {
+          setLoading(false);
+        }
       }
     };
 
     fetchInitialMessages();
+
+    return () => {
+      isSubscribed = false;
+    };
   }, [chatId, currentUserId, decryptMessageBatch]);
 
   // Load more messages (infinity scroll)
