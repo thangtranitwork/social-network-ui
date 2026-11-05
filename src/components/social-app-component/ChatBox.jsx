@@ -79,10 +79,13 @@ export default function ChatBox({ chatId, targetUser, onBack, onChatCreated, onC
   const isBlockedByOther = blockStatus === "HAS_BEEN_BLOCKED";
   const hasBlockedOther = blockStatus === "BLOCKED";
 
-  const { messages, loading, loadingMore, hasMore, totalMessages, loadMoreMessages, isTyping, currentUserId } = useChat(currentChatId);
+  const { messages, loading, loadingMore, hasMore, totalMessages, loadMoreMessages, isTyping, typingUser, currentUserId } = useChat(currentChatId);
   const { sendMessage, isConnected } = useSendMessage({
     chatId: currentChatId,
     receiverUsername: targetUser?.username,
+    isGroup: targetUser?.isGroup || false,
+    peerUserId: targetUser?.id,
+    memberIds: targetUser?.memberIds || [],
   });
   const { initializeCall, makeCall } = useCall();
   // Subscribe WebSocket để nhận typing events từ người kia
@@ -118,13 +121,17 @@ export default function ChatBox({ chatId, targetUser, onBack, onChatCreated, onC
       setIsNewChat(!chatId);
       setIsCreatingChat(false);
       setIsSendingMessage(false);
+      if (chatId) {
+        selectChat(chatId);
+        useAppStore.getState().markChatAsRead(chatId);
+      }
       if (abortControllerRef.current) {
         abortControllerRef.current.abort();
         abortControllerRef.current = null;
       }
       createChatPromiseRef.current = null;
     }
-  }, [chatId, currentChatId]);
+  }, [chatId, currentChatId, selectChat]);
 
   // Cleanup on unmount
   useEffect(() => () => {
@@ -505,7 +512,7 @@ export default function ChatBox({ chatId, targetUser, onBack, onChatCreated, onC
 
     return (
       <>
-        <TypingIndicator isTyping={isTyping} />
+        <TypingIndicator isTyping={isTyping} typingUser={typingUser} />
 
         {loadingMore && (
           <div className="flex flex-col items-center justify-center py-4">
@@ -529,6 +536,8 @@ export default function ChatBox({ chatId, targetUser, onBack, onChatCreated, onC
               targetUser={targetUser}
               isOwn={isOwn}
               showAvatar={!isOwn}
+              isSelected={selectedMessage === msg.id}
+              onSelect={(msgId) => setSelectedMessage((prev) => (prev === msgId ? null : msgId))}
               onEdit={handleEditMessage}
               onDelete={handleDeleteMessage}
               onImageClick={(url, type = 'image') => setPreviewMedia({ url, type })}

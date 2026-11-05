@@ -56,6 +56,8 @@ const MessageItem = ({
   isOwn, 
   showAvatar, 
   targetUser, 
+  isSelected,
+  onSelect,
   onReply, 
   onDelete, 
   onEdit,
@@ -258,6 +260,18 @@ const MessageItem = ({
   const hasTextContent = Boolean(msg.content && msg.content.trim().length > 0 && msg.content !== msg.attachment);
   const isMediaMessage = !isDeleted && (isGif || isImageOrVideoFile) && !hasTextContent;
 
+  const readers = useMemo(() => {
+    const raw = Array.isArray(msg.readBy) ? msg.readBy : [];
+    const senderId = msg.sender?.id;
+    const seen = new Set();
+    return raw.filter((r) => {
+      if (!r || !r.id || r.id === senderId) return false;
+      if (seen.has(r.id)) return false;
+      seen.add(r.id);
+      return true;
+    });
+  }, [msg.readBy, msg.sender?.id]);
+
   const renderStatus = () => {
     if (!isOwn) return null;
     
@@ -265,7 +279,7 @@ const MessageItem = ({
     if (msg.status === "SENDING") return <Clock size={10} className="opacity-75 animate-pulse" />;
     if (msg.status === "ERROR") return <div className="w-2 h-2 rounded-full bg-red-500" title="Error sending" />;
     
-    if (msg.isRead || msg.status === "READ") return <CheckCheck size={13} className={isMediaMessage ? "text-white" : "text-[var(--primary-foreground)]"} />;
+    if (msg.isRead || msg.status === "READ" || readers.length > 0) return <CheckCheck size={13} className={isMediaMessage ? "text-white" : "text-[var(--primary-foreground)]"} />;
     return <Check size={13} className={isMediaMessage ? "text-white/70" : "opacity-75"} />;
   };
 
@@ -279,16 +293,23 @@ const MessageItem = ({
     );
   }
 
+  const senderUsername = msg.sender?.username || (!targetUser?.isGroup ? targetUser?.username : null);
+  const senderAvatar = msg.sender?.profilePictureUrl || (!targetUser?.isGroup ? targetUser?.profilePictureUrl : null);
+
   return (
     <div className={`flex w-full mb-4 px-4 group ${isOwn ? "justify-end" : "justify-start"}`}>
-      <div className={`flex max-w-[75%] md:max-w-[65%] gap-2 ${isOwn ? "flex-row-reverse" : "flex-row"}`}>
+      <div className={`message-container flex max-w-[75%] md:max-w-[65%] gap-2 ${isOwn ? "flex-row-reverse" : "flex-row"}`}>
         
         {/* Avatar */}
         <div className="flex-shrink-0 mt-auto mb-4">
           {!isOwn && showAvatar ? (
-            <Link href={`/profile/${targetUser?.username}`}>
-              <Avatar src={targetUser?.profilePictureUrl} size="sm" />
-            </Link>
+            senderUsername ? (
+              <Link href={`/profile/${senderUsername}`}>
+                <Avatar src={senderAvatar} size="sm" />
+              </Link>
+            ) : (
+              <Avatar src={senderAvatar} size="sm" />
+            )
           ) : (
             <div className="w-8" />
           )}
@@ -349,8 +370,9 @@ const MessageItem = ({
 
             {isMediaMessage ? (
               <div 
+                onClick={() => onSelect?.(msg.id)}
                 className={`
-                  relative rounded-2xl overflow-hidden group/media shadow-sm border border-[var(--border)]/40 max-w-[280px]
+                  relative rounded-2xl overflow-hidden group/media shadow-sm border border-[var(--border)]/40 max-w-[280px] cursor-pointer
                   ${isDeleted ? "opacity-60 grayscale-[0.5]" : ""}
                 `}
               >
@@ -363,8 +385,9 @@ const MessageItem = ({
               </div>
             ) : (
               <div 
+                onClick={() => onSelect?.(msg.id)}
                 className={`
-                  relative px-3.5 py-2 rounded-2xl shadow-sm text-sm
+                  relative px-3.5 py-2 rounded-2xl shadow-sm text-sm cursor-pointer
                   ${isOwn 
                     ? "bg-[var(--primary)] text-[var(--primary-foreground)] rounded-tr-none" 
                     : "bg-[var(--card)] border border-[var(--border)] text-[var(--foreground)] rounded-tl-none"}
@@ -393,6 +416,52 @@ const MessageItem = ({
                </div>
             )}
           </div>
+
+          {/* Hiển thị danh sách người đã xem bên dưới tin nhắn khi nhấn vào (kiểu Facebook Messenger) */}
+          {isSelected && (
+            <div className={`flex flex-col gap-1 mt-1.5 px-1 animate-in fade-in duration-150 ${isOwn ? "items-end" : "items-start"}`}>
+              {readers.length > 0 ? (
+                <div className={`flex items-center gap-1.5 flex-wrap ${isOwn ? "justify-end" : "justify-start"}`}>
+                  <div className="flex items-center -space-x-1">
+                    {readers.map((reader) => {
+                      const readerName =
+                        reader.familyName || reader.givenName
+                          ? `${reader.familyName || ""} ${reader.givenName || ""}`.trim()
+                          : reader.username || "Thành viên";
+                      return (
+                        <div
+                          key={reader.id}
+                          className="relative inline-flex items-center"
+                          title={readerName}
+                        >
+                          <Avatar
+                            src={reader.profilePictureUrl}
+                            alt={readerName}
+                            size={18}
+                            className="w-[18px] h-[18px] rounded-full ring-1 ring-[var(--background)]"
+                          />
+                        </div>
+                      );
+                    })}
+                  </div>
+                  <span className="text-[11px] text-[var(--muted-foreground)]">
+                    Đã xem bởi{" "}
+                    {readers
+                      .map((r) =>
+                        r.familyName || r.givenName
+                          ? `${r.familyName || ""} ${r.givenName || ""}`.trim()
+                          : r.username || "Thành viên"
+                      )
+                      .join(", ")}
+                  </span>
+                </div>
+              ) : (
+                <span className="text-[11px] text-[var(--muted-foreground)]">
+                  {isOwn ? (msg.isRead || msg.status === "READ" ? "Đã xem" : "Đã gửi") : "Chưa có ai xem"}
+                </span>
+              )}
+            </div>
+          )}
         </div>
       </div>
     </div>
@@ -404,6 +473,7 @@ const areEqual = (prev, next) => {
   // Always update if any core props changed
   if (prev.isOwn !== next.isOwn) return false;
   if (prev.showAvatar !== next.showAvatar) return false;
+  if (prev.isSelected !== next.isSelected) return false;
   if (prev.targetUser?.id !== next.targetUser?.id) return false;
   if (prev.targetUser?.isGroup !== next.targetUser?.isGroup) return false;
   if (prev.targetUser?.isOnline !== next.targetUser?.isOnline) return false;
@@ -415,6 +485,7 @@ const areEqual = (prev, next) => {
   if (pMsg.id !== nMsg.id) return false;
   if (pMsg.status !== nMsg.status) return false;
   if (pMsg.isRead !== nMsg.isRead) return false;
+  if ((pMsg.readBy?.length || 0) !== (nMsg.readBy?.length || 0)) return false;
   // Backend dùng 'deleted' và 'updated'
   if ((pMsg.deleted || pMsg.isDeleted) !== (nMsg.deleted || nMsg.isDeleted)) return false;
   if ((pMsg.updated || pMsg.isEdited) !== (nMsg.updated || nMsg.isEdited)) return false;

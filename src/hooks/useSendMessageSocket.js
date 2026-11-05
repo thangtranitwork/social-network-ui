@@ -2,8 +2,12 @@
 
 import { useEffect, useState, useCallback } from "react";
 import { getStompClient, sendMessage as stompSendMessage, isConnected as stompIsConnected } from "@/utils/socket";
+import { encryptRatchetMessage } from "@/utils/e2ee/doubleRatchet";
+import { encryptGroupMessage } from "@/utils/e2ee/senderKeys";
+import { setCachedPlaintext } from "@/utils/e2ee/plaintextCache";
+import useAppStore from "@/store/ZustandStore";
 
-export default function useSendMessage({ chatId, receiverUsername }) {
+export default function useSendMessage({ chatId, receiverUsername, isGroup = false, peerUserId = null, memberIds = [] }) {
   const [isConnected, setIsConnected] = useState(false);
 
   useEffect(() => {
@@ -54,18 +58,39 @@ export default function useSendMessage({ chatId, receiverUsername }) {
         return false;
       }
 
-      const messageData = {
+      const trimmedText = text.trim();
+      let messageData = {
         chatId: chatId || null,
         username: receiverUsername ? receiverUsername.trim() : "",
-        text: text.trim(),
+        text: trimmedText,
+        isEncrypted: false,
       };
+
+      // 🔐 E2EE Encryption Layer
+      try {
+        if (isGroup && chatId) {
+          const { ciphertext, e2eHeader } = await encryptGroupMessage(chatId, trimmedText, memberIds);
+          messageData.text = ciphertext;
+          messageData.isEncrypted = true;
+          messageData.e2eHeader = e2eHeader;
+          setCachedPlaintext(ciphertext, trimmedText);
+        } else if (peerUserId) {
+          const { ciphertext, e2eHeader } = await encryptRatchetMessage(peerUserId, trimmedText);
+          messageData.text = ciphertext;
+          messageData.isEncrypted = true;
+          messageData.e2eHeader = e2eHeader;
+          setCachedPlaintext(ciphertext, trimmedText);
+        }
+      } catch (err) {
+        console.warn("⚠️ E2EE encryption failed or peer bundle not ready, falling back to standard plaintext:", err);
+      }
 
       try {
         // Use the singleton's sendMessage method
         const success = await stompSendMessage("/app/chat", messageData);
         
         if (success) {
-          console.log("✅ Message sent successfully:", messageData);
+          console.log("✅ Message sent successfully:", messageData.isEncrypted ? "[Encrypted]" : messageData);
           return true;
         } else {
           console.error("❌ Failed to send message");
@@ -76,7 +101,7 @@ export default function useSendMessage({ chatId, receiverUsername }) {
         return false;
       }
     },
-    [chatId, receiverUsername, isConnected]
+    [chatId, receiverUsername, isConnected, isGroup, peerUserId, memberIds]
   );
 
   return { 

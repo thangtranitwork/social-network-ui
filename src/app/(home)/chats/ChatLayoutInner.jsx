@@ -9,6 +9,7 @@ import useIsMobile from "@/hooks/useIsMobile";
 import { pageMetadata, usePageMetadata } from "@/utils/clientMetadata";
 import { useSearchParams, useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
+import E2EEPinModal from "@/components/social-app-component/E2EEPinModal";
 
 export default function ChatLayoutInner() {
   const t = useTranslations('chat');
@@ -28,6 +29,8 @@ export default function ChatLayoutInner() {
   const chatsLoaded = useAppStore((state) => state.chatsLoaded);
   const fetchChatList = useAppStore((state) => state.fetchChatList);
   const clearChatSelection = useAppStore((state) => state.clearChatSelection);
+  const selectChat = useAppStore((state) => state.selectChat);
+  const markChatAsRead = useAppStore((state) => state.markChatAsRead);
   const virtualChatUser = useAppStore((state) => state.virtualChatUser);
   const updateChat = useAppStore((state) => state.updateChat);
 
@@ -45,20 +48,31 @@ export default function ChatLayoutInner() {
         (chat) => chat.chatId === chatIdFromUrl || chat.id === chatIdFromUrl || chat.target?.id === chatIdFromUrl || chat.target?.username === chatIdFromUrl
       );
       if (selectedChat) {
-        setSelectedChatId(selectedChat.chatId);
-        if (selectedChat.isGroup) {
-          setTargetUser({
-            isGroup: true,
-            name: selectedChat.name,
-            avatar: selectedChat.avatar,
-            adminId: selectedChat.adminId,
-          });
-        } else {
-          setTargetUser(selectedChat.target);
+        const targetChatId = selectedChat.chatId;
+        if (selectedChatId !== targetChatId) {
+          setSelectedChatId(targetChatId);
+          selectChat(targetChatId);
+          markChatAsRead(targetChatId);
         }
+        const newTarget = selectedChat.isGroup
+          ? {
+              isGroup: true,
+              name: selectedChat.name,
+              avatar: selectedChat.avatar,
+              adminId: selectedChat.adminId,
+              memberIds: selectedChat.memberIds || [],
+            }
+          : selectedChat.target;
+
+        setTargetUser((prev) => {
+          if (prev?.id === newTarget?.id && prev?.name === newTarget?.name && prev?.avatar === newTarget?.avatar) {
+            return prev;
+          }
+          return newTarget;
+        });
       } else if (virtualChatUser && (virtualChatUser.id === chatIdFromUrl || virtualChatUser.username === chatIdFromUrl)) {
         // 2. If it matches the virtual chat in memory
-        setSelectedChatId(null);
+        if (selectedChatId !== null) setSelectedChatId(null);
         setTargetUser(virtualChatUser);
       } else if (chatsLoaded) {
         // 3. Fallback: dynamic fetch on refresh/direct load only if chats list has loaded
@@ -87,13 +101,13 @@ export default function ChatLayoutInner() {
         fetchAndSetVirtualUser();
       }
     } else if (virtualChatUser) {
-      setSelectedChatId(null);
+      if (selectedChatId !== null) setSelectedChatId(null);
       setTargetUser(virtualChatUser);
     } else {
-      setSelectedChatId(null);
+      if (selectedChatId !== null) setSelectedChatId(null);
       setTargetUser(null);
     }
-  }, [chatIdFromUrl, chatList, virtualChatUser, chatsLoaded]);
+  }, [chatIdFromUrl, chatList, virtualChatUser, chatsLoaded, selectedChatId, selectChat, markChatAsRead]);
 
   useEffect(() => {
     const handleGroupUpdated = (e) => {
@@ -257,6 +271,8 @@ export default function ChatLayoutInner() {
           </div>
         </main>
       )}
+
+      <E2EEPinModal />
     </div>
   );
 }

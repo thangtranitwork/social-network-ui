@@ -12,6 +12,9 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { useCall } from "@/context/CallContext";
 import useAppStore from "@/store/ZustandStore";
 import { playSound } from "@/utils/playSound";
+import { getCachedPlaintext, setCachedPlaintext } from "@/utils/e2ee/plaintextCache";
+import { decryptGroupMessage } from "@/utils/e2ee/senderKeys";
+import { decryptRatchetMessage } from "@/utils/e2ee/doubleRatchet";
 import { useRouter } from "next/navigation";
 import { toast } from "react-hot-toast";
 
@@ -210,11 +213,59 @@ export default function useMessageNotification(userId) {
         isOwnMessage: messageData.sender?.id === currentUserId,
       };
 
+      // Giải mã tin nhắn E2EE trước khi hiển thị toast & cập nhật danh sách chat
+      let resolvedContent = messageData.content ? messageData.content.trim() : "";
+      if (messageData.isEncrypted && resolvedContent) {
+        let plaintext = getCachedPlaintext(resolvedContent);
+        if (!plaintext && messageData.e2eHeader) {
+          try {
+            const senderId = messageData.sender?.id || messageData.senderId;
+            if (messageData.e2eHeader.algorithm === "SENDER_KEY_V1") {
+              plaintext = await decryptGroupMessage(
+                messageData.chatId,
+                senderId,
+                resolvedContent,
+                messageData.e2eHeader
+              );
+            } else {
+              plaintext = await decryptRatchetMessage(
+                senderId,
+                resolvedContent,
+                messageData.e2eHeader
+              );
+            }
+            if (
+              plaintext &&
+              plaintext !== "🔒 Tin nhắn không thể giải mã" &&
+              !plaintext.startsWith("🔒")
+            ) {
+              setCachedPlaintext(resolvedContent, plaintext);
+            }
+          } catch (decryptErr) {
+            console.warn("[E2EE-Toast] Failed to decrypt incoming message:", decryptErr);
+          }
+        }
+        resolvedContent =
+          plaintext && !plaintext.startsWith("🔒")
+            ? plaintext
+            : "🔒 Tin nhắn bảo mật";
+      }
 
+      const processedMessageData =
+        messageData.isEncrypted &&
+        resolvedContent &&
+        resolvedContent !== "🔒 Tin nhắn bảo mật"
+          ? { ...messageData, content: resolvedContent }
+          : messageData;
 
       // Toast thông báo kèm click handler và PWA notification
       if (messageData.sender && !newMessage.isOwnMessage) {
-        const senderName = messageData.sender.username || messageData.sender.givenName || "ai đó";
+        const senderName =
+          messageData.senderName ||
+          (messageData.sender.familyName || messageData.sender.givenName
+            ? `${messageData.sender.familyName || ""} ${messageData.sender.givenName || ""}`.trim()
+            : messageData.sender.username) ||
+          "Ai đó";
 
         // Phát âm thanh
         try {
@@ -236,17 +287,16 @@ export default function useMessageNotification(userId) {
           toastMessage = `📎 ${senderName} đã gửi một GIF`;
           notificationBody = `${senderName} đã gửi một GIF`;
         }
-        if (messageData.type === "VOICE") {
+        else if (messageData.type === "VOICE") {
           toastMessage = `📎 ${senderName} đã gửi một tin nhắn thoại`;
           notificationBody = `${senderName} đã gửi một tin nhắn thoại`;
         }
-        else if (messageData.content && messageData.content.trim()) {
-          // Tin nhắn có nội dung text - rút gọn nếu quá dài
-          const truncatedContent = truncateMessage(messageData.content.trim(), 30);
+        else if (resolvedContent) {
+          const truncatedContent = truncateMessage(resolvedContent, 30);
           toastMessage = `💬 ${senderName}: ${truncatedContent}`;
 
           // Cho PWA notification có thể dài hơn một chút
-          const truncatedNotificationContent = truncateMessage(messageData.content.trim(), 50);
+          const truncatedNotificationContent = truncateMessage(resolvedContent, 50);
           notificationBody = `${senderName}: ${truncatedNotificationContent}`;
         } else if (messageData.attachment || messageData.attachmentName && (messageData.type === "FILE")) {
           // Tin nhắn có file đính kèm
@@ -295,12 +345,12 @@ export default function useMessageNotification(userId) {
       }
 
       if (onMessageReceived) {
-        onMessageReceived(messageData);
+        onMessageReceived(processedMessageData);
       }
 
       window.dispatchEvent(
         new CustomEvent("newMessageReceived", {
-          detail: messageData,
+          detail: processedMessageData,
         })
       );
     } catch (error) {

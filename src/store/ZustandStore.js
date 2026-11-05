@@ -1,6 +1,10 @@
 import { create } from 'zustand';
 import { devtools } from 'zustand/middleware';
 import api from '@/utils/axios';
+import { sendMessage, isConnected } from '@/utils/socket';
+import { decryptRatchetMessage } from '@/utils/e2ee/doubleRatchet';
+import { decryptGroupMessage } from '@/utils/e2ee/senderKeys';
+import { getCachedPlaintext } from '@/utils/e2ee/plaintextCache';
 
 // Event constants
 export const STORE_EVENTS = {
@@ -74,12 +78,69 @@ const useAppStore = create(
 
           const data = res.data.body || res.data || [];
 
-          // Convert to Map
+          // Convert to Map and asynchronously decrypt latest encrypted message preview
           const newChatMap = {};
           data.forEach(chat => {
             const id = chat.chatId || chat.id;
             newChatMap[id] = chat;
           });
+
+          // Decrypt previews in background
+          setTimeout(async () => {
+            let updatedAny = false;
+            const updatedMap = { ...get().chatMap };
+
+            for (const id in updatedMap) {
+              const c = updatedMap[id];
+              const lm = c.latestMessage;
+              if (lm && lm.isEncrypted && lm.content && lm.e2eHeader && !lm.isDecrypted) {
+                const cached = getCachedPlaintext(lm.content);
+                if (cached) {
+                  updatedMap[id] = {
+                    ...c,
+                    latestMessage: {
+                      ...lm,
+                      content: cached,
+                      isDecrypted: true,
+                    }
+                  };
+                  updatedAny = true;
+                  continue;
+                }
+                try {
+                  let decrypted = lm.content;
+                  if (lm.e2eHeader.algorithm === "SENDER_KEY_V1") {
+                    decrypted = await decryptGroupMessage(id, lm.sender?.id, lm.content, lm.e2eHeader);
+                  } else {
+                    decrypted = await decryptRatchetMessage(lm.sender?.id, lm.content, lm.e2eHeader);
+                  }
+                  updatedMap[id] = {
+                    ...c,
+                    latestMessage: {
+                      ...lm,
+                      content: decrypted,
+                      isDecrypted: true,
+                    }
+                  };
+                  updatedAny = true;
+                } catch (e) {
+                  updatedMap[id] = {
+                    ...c,
+                    latestMessage: {
+                      ...lm,
+                      content: "🔒 Tin nhắn được mã hóa",
+                      isDecrypted: false,
+                    }
+                  };
+                  updatedAny = true;
+                }
+              }
+            }
+
+            if (updatedAny) {
+              set({ chatMap: updatedMap });
+            }
+          }, 50);
 
           // Calculate unread message count
           const unreadCount = get().calculateUnreadMessageCount(newChatMap);
@@ -160,6 +221,10 @@ const useAppStore = create(
       // Mark chat as read
       markChatAsRead: async (chatId) => {
         try {
+          if (chatId && isConnected()) {
+            sendMessage(`/chat/${chatId}`, { command: "READING", chatId });
+          }
+
           set(state => {
             const chat = state.chatMap[chatId];
             if (!chat) return state;
@@ -196,10 +261,21 @@ const useAppStore = create(
         if (!existingChat) return;
 
         set(state => {
+          const currentChat = state.chatMap[chatId] || existingChat;
+          const isDuplicateMessageId =
+            Boolean(message.id) &&
+            (currentChat.latestMessage?.id === message.id || currentChat.lastMessage?.id === message.id);
+
+          const nextUnreadCount = isCurrentChatOpen
+            ? 0
+            : isOwnMessage || isDuplicateMessageId
+              ? (currentChat.notReadMessageCount || 0)
+              : (currentChat.notReadMessageCount || 0) + 1;
+
           const newChatMap = {
             ...state.chatMap,
             [chatId]: {
-              ...existingChat,
+              ...currentChat,
               latestMessage: {
                 id: message.id,
                 content: message.content,
@@ -209,14 +285,13 @@ const useAppStore = create(
                 attachment: message.attachment,
                 attachments: message.attachments,
                 deleted: message.deleted || false,
+                isEncrypted: message.isEncrypted,
+                e2eHeader: message.e2eHeader,
+                isDecrypted: message.isDecrypted,
               },
               lastMessage: message,
               updatedAt: message.createdAt || message.sentAt,
-              notReadMessageCount: isCurrentChatOpen
-                  ? 0
-                  : isOwnMessage
-                      ? (existingChat.notReadMessageCount || 0)
-                      : (existingChat.notReadMessageCount || 0) + 1
+              notReadMessageCount: nextUnreadCount
             }
           };
 

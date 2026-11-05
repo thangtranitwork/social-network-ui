@@ -18,6 +18,7 @@ import {
 } from "lucide-react";
 import Badge from "@/components/ui-components/Badge";
 import api, {clearSession, getUserName} from "@/utils/axios";
+import { clearAllE2EEData } from "@/utils/e2ee/keyStore";
 import NotificationList from "../social-app-component/NotificationList";
 import useAppStore from "@/store/ZustandStore";
 import { useTranslations } from "next-intl";
@@ -148,6 +149,8 @@ export default function SidebarNavigation() {
     } catch (err) {
       console.error("Logout failed:", err.response?.data || err.message);
     } finally {
+      // ✅ Clear E2EE local keys
+      await clearAllE2EEData();
       // ✅ Clear session first
       clearSession();
       // ✅ Clear store data after session is cleared
