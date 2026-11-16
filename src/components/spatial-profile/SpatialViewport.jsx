@@ -2,6 +2,7 @@
 
 import { useRef, useState, useCallback, useEffect } from "react";
 import SpatialAtmosphere from "./SpatialAtmosphere";
+import SpatialFireflies from "./SpatialFireflies";
 
 export default function SpatialViewport({
   theme = "COSMIC_VOID",
@@ -9,12 +10,16 @@ export default function SpatialViewport({
   camera,
   onCameraChange,
   onCanvasBackgroundClick,
+  onCursorMove,
+  visitors = [],
   isBuilderMode = false,
+  is3DMode = false,
   children,
 }) {
   const containerRef = useRef(null);
   const [isPanning, setIsPanning] = useState(false);
   const panStartRef = useRef({ x: 0, y: 0, panX: 0, panY: 0, moved: false });
+  const lastCursorTimeRef = useRef(0);
 
   // Handle Mouse / Touch Panning on Canvas Background
   const handlePointerDown = useCallback(
@@ -39,6 +44,23 @@ export default function SpatialViewport({
 
   const handlePointerMove = useCallback(
     (e) => {
+      // Real-time Fireflies Cursor Tracking (throttled to 50ms)
+      if (onCursorMove) {
+        const now = performance.now();
+        if (now - lastCursorTimeRef.current > 50) {
+          lastCursorTimeRef.current = now;
+          const el = containerRef.current;
+          if (el) {
+            const rect = el.getBoundingClientRect();
+            const centerX = rect.left + rect.width / 2;
+            const centerY = rect.top + rect.height / 2;
+            const worldX = (e.clientX - centerX - camera.panX) / camera.zoom;
+            const worldY = (e.clientY - centerY - camera.panY) / camera.zoom;
+            onCursorMove(Math.round(worldX), Math.round(worldY));
+          }
+        }
+      }
+
       if (!isPanning) return;
       const dx = e.clientX - panStartRef.current.x;
       const dy = e.clientY - panStartRef.current.y;
@@ -54,7 +76,7 @@ export default function SpatialViewport({
         panY: nextPanY,
       }));
     },
-    [isPanning, onCameraChange]
+    [isPanning, onCameraChange, camera.panX, camera.panY, camera.zoom, onCursorMove]
   );
 
   const handlePointerUp = useCallback(() => {
@@ -114,6 +136,10 @@ export default function SpatialViewport({
       onPointerMove={handlePointerMove}
       onPointerUp={handlePointerUp}
       onPointerLeave={handlePointerUp}
+      style={{
+        perspective: is3DMode ? "1300px" : "none",
+        perspectiveOrigin: "50% 50%",
+      }}
       className={`relative w-full h-full overflow-hidden select-none ${
         isPanning ? "cursor-grabbing" : "cursor-grab"
       } ${isLightGallery ? "text-stone-900 dark:text-stone-100" : "text-white"}`}
@@ -131,7 +157,11 @@ export default function SpatialViewport({
       <div
         className="absolute left-1/2 top-1/2 w-0 h-0 will-change-transform"
         style={{
-          transform: `translate3d(${camera.panX}px, ${camera.panY}px, 0) scale(${camera.zoom})`,
+          transform: is3DMode
+            ? `translate3d(${camera.panX}px, ${camera.panY}px, 0) scale(${camera.zoom * 0.96}) rotateX(26deg) rotateZ(-12deg)`
+            : `translate3d(${camera.panX}px, ${camera.panY}px, 0) scale(${camera.zoom})`,
+          transformStyle: "preserve-3d",
+          transition: "transform 0.65s cubic-bezier(0.16, 1, 0.3, 1)",
         }}
       >
         {/* Subtle Origin Axis Marker when in Builder Mode or Blueprint Theme */}
@@ -142,6 +172,9 @@ export default function SpatialViewport({
             <div className="w-16 h-16 rounded-full border border-dashed border-current" />
           </div>
         )}
+
+        {/* Real-time Fireflies for Visitors */}
+        <SpatialFireflies visitors={visitors} />
 
         {children}
       </div>

@@ -8,6 +8,7 @@ import {
   Lock,
   Ban,
   Sun,
+  History,
 } from "lucide-react";
 import { useTranslations } from "next-intl";
 
@@ -27,6 +28,7 @@ export default function SettingsOverview() {
       title: t('interaction'),
       items: [
         { id: "blockedlist", icon: Ban, label: t('blockedList') },
+        { id: "history", icon: History, label: t('viewHistory') },
       ]
     },
     {

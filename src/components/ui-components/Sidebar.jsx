@@ -15,6 +15,7 @@ import {
   Menu,
   Bell,
   Megaphone,
+  MapPin,
 } from "lucide-react";
 import Badge from "@/components/ui-components/Badge";
 import api, {clearSession, getUserName} from "@/utils/axios";
@@ -337,6 +338,19 @@ export default function SidebarNavigation() {
             >
               <Users size={24} strokeWidth={pathname === "/friends" ? 2.5 : 2} />
               {pathname === "/friends" && <div className="hidden md:block nav-indicator" />}
+            </Link>
+          </div>
+
+          {/* People Nearby Button */}
+          <div className="relative order-4 md:order-4">
+            <Link
+              href="/nearby"
+              className={`nav-item ${pathname === "/nearby" ? "active" : ""}`}
+              aria-label="Người quanh đây"
+              title="Người quanh đây"
+            >
+              <MapPin size={24} strokeWidth={pathname === "/nearby" ? 2.5 : 2} />
+              {pathname === "/nearby" && <div className="hidden md:block nav-indicator" />}
             </Link>
           </div>
 

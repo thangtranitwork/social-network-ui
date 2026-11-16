@@ -67,7 +67,10 @@ export default function FloatingChatWidget({ beToken }) {
   useEffect(() => {
     if (!fetchAttempted && typeof fetchChatList === "function") {
       setFetchAttempted(true);
-      fetchChatList().catch(() => setFetchAttempted(false));
+      fetchChatList().catch(() => {
+        // Delay retry by 10s to prevent request storm
+        setTimeout(() => setFetchAttempted(false), 10000);
+      });
     }
   }, [fetchAttempted, fetchChatList]);
 

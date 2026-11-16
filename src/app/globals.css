@@ -375,6 +375,94 @@ input:-webkit-autofill:active {
   animation: vinyl-ripple 2.2s cubic-bezier(0, 0.2, 0.8, 1) infinite;
 }
 
+@keyframes float-reaction {
+  0% {
+    opacity: 0;
+    transform: translate3d(0, 0, 0) scale(0.4) rotate(0deg);
+  }
+  15% {
+    opacity: 1;
+    transform: translate3d(calc(var(--drift) * 0.25), -40px, 0) scale(1.35) rotate(var(--rot));
+  }
+  75% {
+    opacity: 0.95;
+  }
+  100% {
+    opacity: 0;
+    transform: translate3d(var(--drift), -280px, 0) scale(0.9) rotate(calc(var(--rot) * 2));
+  }
+}
+
+.animate-float-reaction {
+  animation: float-reaction 2.2s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+@keyframes float-reaction-side-left {
+  0% {
+    opacity: 0;
+    transform: translate3d(0, 0, 0) scale(0.4) rotate(0deg);
+  }
+  15% {
+    opacity: 1;
+    transform: translate3d(-35px, -45px, 0) scale(1.35) rotate(-14deg);
+  }
+  75% {
+    opacity: 0.95;
+  }
+  100% {
+    opacity: 0;
+    transform: translate3d(-80px, -280px, 0) scale(0.85) rotate(-28deg);
+  }
+}
+
+@keyframes float-reaction-side-right {
+  0% {
+    opacity: 0;
+    transform: translate3d(0, 0, 0) scale(0.4) rotate(0deg);
+  }
+  15% {
+    opacity: 1;
+    transform: translate3d(35px, -45px, 0) scale(1.35) rotate(14deg);
+  }
+  75% {
+    opacity: 0.95;
+  }
+  100% {
+    opacity: 0;
+    transform: translate3d(80px, -280px, 0) scale(0.85) rotate(28deg);
+  }
+}
+
+.animate-float-reaction-left {
+  animation: float-reaction-side-left 2.3s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+.animate-float-reaction-right {
+  animation: float-reaction-side-right 2.3s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+@keyframes float-reaction-side {
+  0% {
+    opacity: 0;
+    transform: translate3d(0, 0, 0) scale(0.35) rotate(0deg);
+  }
+  15% {
+    opacity: 1;
+    transform: translate3d(-30px, -45px, 0) scale(1.35) rotate(-12deg);
+  }
+  75% {
+    opacity: 0.95;
+  }
+  100% {
+    opacity: 0;
+    transform: translate3d(-70px, -280px, 0) scale(0.85) rotate(-24deg);
+  }
+}
+
+.animate-float-reaction-side {
+  animation: float-reaction-side 2.3s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
 /* =====================================================
    Admin Panel Utilities
    Solid backgrounds in light, glassmorphic in dark

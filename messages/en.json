@@ -49,7 +49,10 @@
       "resendPrompt": "Please enter email before resending",
       "or": "Or",
       "showPassword": "Show password",
-      "hidePassword": "Hide password"
+      "hidePassword": "Hide password",
+      "agreePrompt": "I have read and agree to the",
+      "privacyPolicyLink": "Privacy Policy & Data Collection Policy",
+      "policyRequired": "Please agree to the Privacy Policy to proceed."
     },
     "validation": {
       "fillAllFields": "Please fill in all fields",
@@ -438,6 +441,9 @@
       "nodeVinyl": "Vinyl player",
       "nodePortal": "Friend portal",
       "nodeGuestbook": "Guestbook wall",
+      "view3D": "2.5D View",
+      "sendReaction": "Send reaction",
+      "reactionSent": "Reaction sent!",
       "changeFrame": "Frame style",
       "bringFront": "Bring to front",
       "removeNode": "Remove",
@@ -726,6 +732,18 @@
     "interaction": "Interaction",
     "connections": "Friends & Connections",
     "blockedList": "Blocked list",
+    "viewHistory": "Post View History",
+    "history": {
+      "title": "Post View History",
+      "description": "Review posts you have viewed in the last 90 days.",
+      "viewedAt": "Viewed",
+      "empty": "No posts in your view history yet.",
+      "emptyDesc": "As you browse the newsfeed, your viewed posts will automatically appear here.",
+      "loadMore": "Load older history",
+      "loading": "Loading view history...",
+      "loadError": "Failed to load view history.",
+      "noMore": "You have reached the end of your 90-day history."
+    },
     "sentReports": "Sent reports",
     "content": "Content",
     "savedPosts": "Saved posts & comments",
@@ -803,6 +821,14 @@
       "DELETE_POST": "{name} deleted your post",
       "DELETE_COMMENT": "{name} deleted your comment",
       "NEW_MESSAGE": "{name} sent you a message",
+      "group_LIKE_POST_two": "{name1} and {name2} liked your post",
+      "group_LIKE_POST_many": "{name1}, {name2} and {count} others liked your post",
+      "group_COMMENT_two": "{name1} and {name2} commented on your post",
+      "group_COMMENT_many": "{name1}, {name2} and {count} others commented on your post",
+      "group_SHARE_two": "{name1} and {name2} shared your post",
+      "group_SHARE_many": "{name1}, {name2} and {count} others shared your post",
+      "group_LIKE_COMMENT_two": "{name1} and {name2} liked your comment",
+      "group_LIKE_COMMENT_many": "{name1}, {name2} and {count} others liked your comment",
       "default": "New notification from {name}"
     }
   },
@@ -937,63 +963,173 @@
   },
   "about": {
     "title": "About PocPoc",
+    "badge": "Next-Generation Social Commons",
+    "ticker": {
+      "status": "All Systems Operational",
+      "tech": "WebRTC Voice & Video · Real-Time Dispatch",
+      "platform": "PocPoc Social Platform",
+      "nodes": "Global Edge Nodes"
+    },
+    "nav": {
+      "tagline": "The Human Social Commons",
+      "features": "Features",
+      "philosophy": "Philosophy",
+      "showcase": "Showcase",
+      "privacy": "Privacy Policy",
+      "login": "Sign In",
+      "register": "Sign Up"
+    },
+    "stats": {
+      "latency": "Real-Time",
+      "latencyVal": "Ultra-Low Latency (< 20ms)",
+      "security": "Account Security",
+      "securityVal": "Two-Factor Auth (2FA)",
+      "feed": "Healthy Feed",
+      "feedVal": "Transparent View Telemetry"
+    },
     "hero": {
-      "headline": "Connect Infinitely",
-      "subhead": "A next-generation social network helping you share authentic moments and chat instantly with friends.",
+      "headline": "Authentic Connection & Uncompromising Privacy",
+      "subhead": "PocPoc is an independent social network designed for genuine human interaction: a clean feed without engagement traps, encrypted instant messaging, crisp WebRTC calls, and customizable spatial profiles.",
       "ctaStart": "Get Started",
-      "ctaLearn": "Explore Features"
+      "ctaLearn": "Explore Features",
+      "plateCaption": "Genuine Moments · Natural Connection Free of Rage-Bait"
     },
     "features": {
-      "title": "Stunning Experience",
-      "chatTitle": "Real-time Messaging",
-      "chatDesc": "Chat in real-time with ultra-low latency, file attachments, and smooth voice messages.",
-      "callTitle": "High-quality Calling",
-      "callDesc": "Connect via crisp voice and video calls powered by modern WebRTC without interruption.",
-      "shareTitle": "Share Moments",
-      "shareDesc": "Create posts, react, and discuss with friends on a vibrant, interactive feed.",
-      "secureTitle": "Account Security",
-      "secureDesc": "Secure your personal information with two-factor authentication (2FA) and absolute privacy controls."
+      "title": "Crafted For You",
+      "subtitle": "A cohesive ecosystem designed for real human interaction.",
+      "sectionTag": "Core Capabilities",
+      "chatTag": "Instant Dispatch",
+      "chatTitle": "Instant Messaging & Voice Memos",
+      "chatDesc": "Chat in real-time with ultra-low latency, file attachments, photos, and voice notes with robust message privacy.",
+      "callTag": "WebRTC Calling",
+      "callTitle": "High-Quality Audio & Video",
+      "callDesc": "Direct peer connections powered by WebRTC deliver crystal-clear audio and smooth video without interruptions.",
+      "shareTag": "Smart Curation",
+      "shareTitle": "Smart Curation & Transparent History",
+      "shareDesc": "Create posts, react with friends, and review your view history transparently stored for 90 days.",
+      "secureTag": "Multi-Layer Guard",
+      "secureTitle": "Account Security & 2FA Protection",
+      "secureDesc": "Protect your account with two-factor authentication (2FA), session safeguards, and a strict zero-data-broker policy."
     },
     "scroll": {
       "section1Title": "Simple & Refined",
-      "section1Desc": "Minimalist interface focusing on the core user experience, delivering smoothness on all devices.",
+      "section1Desc": "Minimalist interface focusing on meaningful content, delivering smoothness across all devices.",
       "section2Title": "Instant Sync",
-      "section2Desc": "Every message, call, and post is synced in real-time so you never miss a single moment.",
+      "section2Desc": "Messages, calls, and notifications sync seamlessly in real-time so you never miss a beat.",
       "section3Title": "Privacy First",
-      "section3Desc": "We respect and protect your personal data, giving you full control over who you share with."
+      "section3Desc": "You maintain full control over your personal data, view history, and privacy settings."
     },
     "manifesto": {
-      "quote": "We built PocPoc for genuine human presence, not algorithmic attention harvesting.",
-      "p1Title": "Unfiltered Resonance",
-      "p1Desc": "No manipulative algorithms, no rage-bait ranking. Just chronologically ordered moments from people you care about.",
-      "p2Title": "Absolute Privacy",
-      "p2Desc": "End-to-end encrypted channels, multi-factor protection, and zero telemetry data brokers.",
-      "p3Title": "Crafted For Intimacy",
-      "p3Desc": "Designed like an independent cultural space: quiet, focused, and deeply respectful of your time."
+      "tag": "Design Philosophy",
+      "heading": "Built for presence, not algorithmic attention harvesting.",
+      "quote": "We built PocPoc because we believe a social network should foster genuine human connection, rather than holding your attention hostage with toxic rage-bait.",
+      "p1Title": "Healthy & Clean Feed",
+      "p1Desc": "Prioritizing posts from real friends and topics you genuinely care about based on real dwell time, free from outrage algorithms.",
+      "p2Title": "Security & Transparency",
+      "p2Desc": "Secure messaging channels, two-factor authentication (2FA), and 100% transparency about view telemetry.",
+      "p3Title": "Expressive Spatial Profile",
+      "p3Desc": "Our unique Spatial Profile mode lets you freely curate posts, music, photos, and connect via an interactive guestbook."
     },
     "showcase": {
+      "tag": "Hands-On Preview",
       "tab1": "Conversations",
       "tab2": "Moments",
-      "tab3": "Sanctuary",
+      "tab3": "Security",
+      "point1Title": "Authentic feed:",
+      "point1Desc": "You always remain in control of updates from the connections you actively choose.",
+      "point2Title": "Absolute privacy:",
+      "point2Desc": "Your view history is transparently accessible under Settings and never shared with brokers.",
       "listenVoice": "Voice note · 0:24",
-      "encryptedBadge": "End-to-End Encrypted",
-      "activeCall": "Peer-to-Peer 60fps HD",
-      "liveStatus": "Active Call · 18ms latency",
+      "encryptedBadge": "Secure Messaging",
+      "activeCall": "Direct WebRTC Connection",
+      "liveStatus": "Voice Call · Low Latency",
       "postAuthor": "Mai Lan",
-      "postRole": "Visual Artist, Hanoi",
-      "postContent": "Quiet morning at the studio printing 35mm contact sheets. The light through the balcony felt just right.",
+      "postRole": "Independent Photographer",
+      "postContent": "Quiet morning at the studio printing 35mm contact sheets. The sunlight through the balcony felt warm and peaceful.",
       "friend1": "Minh Khang",
-      "friend1Msg": "Can you bring a couple prints to dinner tomorrow?",
+      "friend1Msg": "Remember to bring a few prints to dinner tonight!",
       "friend2": "Ha Linh",
-      "friend2Msg": "The tones on that second frame are stunning!",
+      "friend2Msg": "The colors on that second frame look so warm!",
       "chatUser": "Linh Nguyen",
-      "chatMsg1": "Morning! Did you get a chance to review the album sequencing?",
-      "chatMsg2": "Just listened to your voice memo — loved the acoustic intro. Let's lock it in!"
+      "chatMsg1": "Hey! Have you had a chance to listen to the new album recordings?",
+      "chatMsg2": "Just heard your guitar intro — really soulful. Let's keep it!",
+      "shieldTitle": "Multi-Layered Security & Encryption",
+      "shieldDesc": "Private messages are protected prior to transit, account safety with 2FA, and secure session management.",
+      "typing": "Linh is typing...",
+      "activeNow": "Active now",
+      "reactions": "reactions",
+      "comments": "conversations"
     },
     "footer": {
-      "ctaText": "Ready to connect with PocPoc?",
+      "ctaText": "Ready to experience PocPoc?",
       "ctaDesc": "Join our community today completely free of charge.",
-      "ctaButton": "Create Account"
+      "ctaButton": "Create Account Now",
+      "badges": {
+        "b1": "Secure Sign-Up",
+        "b2": "2FA Account Guard",
+        "b3": "Instant WebRTC Calling"
+      },
+      "directory": "Directory",
+      "legal": "Trust & Legal",
+      "tagline": "A modern digital commons engineered for genuine human connection, intimate voice moments, and uncompromising privacy.",
+      "rights": "All rights reserved.",
+      "crafted": "Designed with intentionality & craft for the open web."
+    }
+  },
+  "privacy": {
+    "title": "Privacy Policy & Data Transparency",
+    "subtitle": "PocPoc's commitment to protecting your privacy, data transparency, and user rights.",
+    "lastUpdated": "Updated November 11, 2026",
+    "backHome": "Back to Home",
+    "login": "Login",
+    "register": "Sign Up",
+    "tableOfContents": "Table of Contents",
+    "badge": "Privacy Policy",
+    "viewHistoryLink": "Open View History in Settings",
+    "copiedEmail": "Email copied to clipboard!",
+    "copyEmail": "Copy email address",
+    "sections": {
+      "intro": {
+        "title": "1. Core Privacy Principles",
+        "p1": "At PocPoc, we believe privacy is a fundamental human right in the digital space. We only collect the minimal data necessary to deliver core features, safeguard your account, and enhance your user experience.",
+        "p2": "We never silently harvest data for invasive advertising or cross-site tracking."
+      },
+      "accountData": {
+        "title": "2. Account Data & Personal Information",
+        "p1": "When you create an account on PocPoc, we collect information you voluntarily provide: Full name, Username, Email address, Birthdate (to comply with age requirements), and Password.",
+        "p2": "Passwords are securely hashed before database storage. You can update your profile picture, bio, and personal details anytime in Account Settings."
+      },
+      "viewTelemetry": {
+        "title": "3. View Recording & Feed Personalization",
+        "p1": "To provide a relevant feed and avoid repetitive content, our system only records a post as viewed when you pause to read it on screen while the app is active.",
+        "p2": "View history is securely stored and automatically deleted permanently after 90 days. This data strictly serves two purposes: (1) Providing your View History feature under Settings; (2) Reducing repetitive posts you have already read on your Newsfeed."
+      },
+      "messages": {
+        "title": "4. Secure Messaging & Calls",
+        "p1": "Private conversations between users are safeguarded with end-to-end encryption. PocPoc servers act as relay conduits and cannot decipher the plaintext contents of your messages.",
+        "p2": "Audio and video calls are transmitted directly between devices via secure peer-to-peer protocols. No call audio or video is recorded or saved on our servers."
+      },
+      "sharing": {
+        "title": "5. Zero Data Broker Guarantee",
+        "p1": "PocPoc strictly guarantees: We NEVER sell, lease, or transfer your personal data or usage patterns to any advertising brokers or third parties.",
+        "p2": "Information is only disclosed when strictly mandated by valid legal processes issued by authorized governmental authorities."
+      },
+      "userRights": {
+        "title": "6. Your Rights & Data Controls",
+        "p1": "Audit Right: You can review the complete history of posts you have viewed in the last 90 days under Settings -> Post View History.",
+        "p2": "Interaction Controls: You can block users, remove connections, and set visibility permissions for each post (Public, Friends, or Only Me).",
+        "p3": "Deletion Right: You can delete individual posts, comments, or permanently close your account anytime. Upon account closure, all associated identifiable data is purged securely."
+      },
+      "locationTelemetry": {
+        "title": "7. Location (GPS), IP Address & Device Information",
+        "p1": "IP & Device Telemetry: When you sign in or use PocPoc, we collect your IP address, device identifier, platform, OS version, and app version to protect against unauthorized logins, prevent abuse, and infer approximate city-level region.",
+        "p2": "GPS Location & People Nearby: Precise GPS coordinates are collected only when you grant browser/device permission. 'People Nearby' is OFF by default and strictly opt-in; active discovery entries in our cache automatically expire after 15–30 minutes or immediately when you turn it off. Other users only see rounded distances (e.g., '< 500m', '~1.2 km') and never your exact coordinates.",
+        "p3": "Persistent Analytics & Map Providers: Technical telemetry logs (IP, device metadata, and location events while using location features) are securely retained for up to 180 days for security auditing, fraud prevention, and service analytics. Map visualizations may use tiles from Carto, OpenStreetMap, or Google Maps subject to their respective terms."
+      },
+      "contact": {
+        "title": "8. Contact & Support",
+        "p1": "If you have questions, feedback, or concerns regarding our privacy practices, please contact our team at: privacy@pocpoc.online."
+      }
     }
   }
 }

@@ -1,8 +1,9 @@
 "use client";
 
-import { useState, useEffect, useCallback, useMemo } from "react";
+import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { useTranslations } from "next-intl";
 import api from "@/utils/axios";
+import { subscribe, sendMessage } from "@/utils/socket";
 import toast from "react-hot-toast";
 import { createDefaultSpaceNodes, arrangeExistingNodes } from "./spatialConstants";
 import SpatialViewport from "./SpatialViewport";
@@ -44,17 +45,203 @@ export default function SpatialProfileContainer({
   const [guestbookEntries, setGuestbookEntries] = useState([]);
 
   const [camera, setCamera] = useState({ panX: 0, panY: 0, zoom: 0.92 });
+  const [is3DMode, setIs3DMode] = useState(false);
   const [showMinimap, setShowMinimap] = useState(true);
   const [isBuilderMode, setIsBuilderMode] = useState(false);
   const [selectedNodeId, setSelectedNodeId] = useState(null);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isSavingSpace, setIsSavingSpace] = useState(false);
   const [currentUserId, setCurrentUserId] = useState("");
+  const [visitors, setVisitors] = useState({});
+  const [latestReaction, setLatestReaction] = useState(null);
+  const [spaceReactions, setSpaceReactions] = useState(null);
+  const visitorsList = useMemo(() => Object.values(visitors), [visitors]);
+  const lastMyCursorRef = useRef({ x: 0, y: 0 });
 
   useEffect(() => {
     const uid = localStorage.getItem("userId") || "";
     setCurrentUserId(uid);
   }, []);
+
+  // Real-time Spatial Room: Live Visitors Presence & Fireflies Cursors
+  useEffect(() => {
+    if (!routeUsername) return;
+
+    const storedUsername = localStorage.getItem("userName") || "";
+    const storedUserId = localStorage.getItem("userId") || "";
+    const currentAvatar = isOwnProfile
+      ? profileData?.profilePictureUrl || ""
+      : sessionStorage.getItem("myAvatar") || "";
+
+    if (!currentAvatar && storedUsername && !isOwnProfile) {
+      api
+        .get(`/v1/users/${storedUsername}`)
+        .then((res) => {
+          const fetchedAvatar = res.data?.body?.profilePictureUrl || "";
+          if (fetchedAvatar) {
+            sessionStorage.setItem("myAvatar", fetchedAvatar);
+          }
+        })
+        .catch(() => {});
+    }
+
+    const dest = `/spatial/${routeUsername}`;
+    const sub = subscribe(dest, (message) => {
+      try {
+        const data = JSON.parse(message.body);
+        if (!data || !data.command) return;
+
+        if (data.command === "SPATIAL_JOIN") {
+          if (data.userId && data.userId !== storedUserId) {
+            setVisitors((prev) => ({
+              ...prev,
+              [data.userId]: {
+                userId: data.userId,
+                userName: data.userName || "Khách",
+                avatar: data.avatar || "",
+                x: Number(data.x) || 0,
+                y: Number(data.y) || 0,
+                lastActive: Date.now(),
+              },
+            }));
+
+            // Greet newcomer with our current cursor position
+            const myAvatar = isOwnProfile
+              ? profileData?.profilePictureUrl || ""
+              : sessionStorage.getItem("myAvatar") || "";
+            sendMessage("/spatial", {
+              command: "SPATIAL_CURSOR",
+              spaceKey: routeUsername,
+              userName: storedUsername,
+              avatar: myAvatar,
+              x: lastMyCursorRef.current.x,
+              y: lastMyCursorRef.current.y,
+            });
+          }
+        } else if (data.command === "SPATIAL_CURSOR") {
+          if (data.userId && data.userId !== storedUserId) {
+            setVisitors((prev) => ({
+              ...prev,
+              [data.userId]: {
+                userId: data.userId,
+                userName: data.userName || prev[data.userId]?.userName || "Khách",
+                avatar: data.avatar || prev[data.userId]?.avatar || "",
+                x: Number(data.x) || 0,
+                y: Number(data.y) || 0,
+                lastActive: Date.now(),
+              },
+            }));
+          }
+        } else if (data.command === "SPATIAL_REACTION") {
+          if (data.emoji && data.userId !== storedUserId) {
+            setLatestReaction({
+              id: Date.now() + Math.random(),
+              emoji: data.emoji,
+              side: data.side || "right",
+            });
+          }
+        } else if (data.command === "SPATIAL_SYNC_REACTIONS") {
+          if (data.reactions) {
+            const parsed = {};
+            Object.keys(data.reactions).forEach((k) => {
+              parsed[k] = Number(data.reactions[k]) || 0;
+            });
+            setSpaceReactions(parsed);
+          }
+        } else if (data.command === "SPATIAL_LEAVE") {
+          if (data.userId) {
+            setVisitors((prev) => {
+              const next = { ...prev };
+              delete next[data.userId];
+              return next;
+            });
+          }
+        }
+      } catch (err) {
+        console.error("Failed to parse spatial message:", err);
+      }
+    });
+
+    // Announce our presence to the space
+    sendMessage("/spatial", {
+      command: "SPATIAL_JOIN",
+      spaceKey: routeUsername,
+      userName: storedUsername,
+      avatar: currentAvatar,
+    });
+
+    // Periodic GC for ghost cursors after 25s of inactivity
+    const gcInterval = setInterval(() => {
+      const now = Date.now();
+      setVisitors((prev) => {
+        let changed = false;
+        const next = { ...prev };
+        Object.keys(next).forEach((uid) => {
+          if (now - next[uid].lastActive > 25000) {
+            delete next[uid];
+            changed = true;
+          }
+        });
+        return changed ? next : prev;
+      });
+    }, 10000);
+
+    return () => {
+      clearInterval(gcInterval);
+      sendMessage("/spatial", {
+        command: "SPATIAL_LEAVE",
+        spaceKey: routeUsername,
+      });
+      if (sub && typeof sub.unsubscribe === "function") {
+        sub.unsubscribe();
+      }
+    };
+  }, [routeUsername, isOwnProfile, profileData?.profilePictureUrl]);
+
+  const handleCursorMove = useCallback(
+    (worldX, worldY) => {
+      lastMyCursorRef.current = { x: worldX, y: worldY };
+      const storedUsername = localStorage.getItem("userName") || "";
+      const myAvatar = isOwnProfile
+        ? profileData?.profilePictureUrl || ""
+        : sessionStorage.getItem("myAvatar") || "";
+
+      sendMessage("/spatial", {
+        command: "SPATIAL_CURSOR",
+        spaceKey: routeUsername,
+        userName: storedUsername,
+        avatar: myAvatar,
+        x: worldX,
+        y: worldY,
+      });
+    },
+    [routeUsername, isOwnProfile, profileData?.profilePictureUrl]
+  );
+
+  const handleEmitReaction = useCallback(
+    ({ emoji, side }) => {
+      // Broadcast reaction to active spatial viewers in real-time
+      sendMessage("/spatial", {
+        command: "SPATIAL_REACTION",
+        spaceKey: routeUsername,
+        emoji,
+        side,
+      });
+
+      // Persist reaction to server database
+      api
+        .post(`/v1/users/${routeUsername}/space/reaction`, { emoji })
+        .then((res) => {
+          if (res.data?.body) {
+            setSpaceReactions(res.data.body);
+          }
+        })
+        .catch((err) => {
+          console.error("Failed to persist space reaction:", err);
+        });
+    },
+    [routeUsername]
+  );
 
   // Load saved space configuration from user-service (NEVER auto-populates unselected posts/comments)
   useEffect(() => {
@@ -73,6 +260,9 @@ export default function SpatialProfileContainer({
           setAllowGuestbook(cfg.allowGuestbook !== false);
           setGuestbookEntries(cfg.guestbookEntries || []);
           setAutoplayNodeId(cfg.autoplayNodeId || "");
+          if (cfg.reactions) {
+            setSpaceReactions(cfg.reactions);
+          }
           if (cfg.defaultViewMode === "FEED") {
             setViewMode("FEED");
           } else {
@@ -223,6 +413,9 @@ export default function SpatialProfileContainer({
             isBuilderMode={isBuilderMode}
             onProfileUpdate={onProfileUpdate}
             onUsernameChange={onUsernameChange}
+            incomingReaction={latestReaction}
+            onEmitReaction={handleEmitReaction}
+            initialReactions={spaceReactions}
           />
         );
       case "POST_CARD": {
@@ -329,14 +522,17 @@ export default function SpatialProfileContainer({
             />
           )}
 
-          {/* 2D Infinite Spatial Canvas */}
+          {/* 2D / 2.5D Infinite Spatial Canvas */}
           <SpatialViewport
             theme={theme}
             customAccent={customAccent}
             camera={camera}
             onCameraChange={setCamera}
             onCanvasBackgroundClick={() => setSelectedNodeId(null)}
+            onCursorMove={handleCursorMove}
+            visitors={visitorsList}
             isBuilderMode={isBuilderMode}
+            is3DMode={is3DMode}
           >
             {nodes.map((node) => (
               <SpatialNodeWrapper
@@ -345,6 +541,7 @@ export default function SpatialProfileContainer({
                 zoom={camera.zoom}
                 theme={theme}
                 isBuilderMode={isBuilderMode}
+                is3DMode={is3DMode}
                 isSelected={selectedNodeId === node.id}
                 isAutoplayTarget={node.id === autoplayNodeId}
                 onSelect={setSelectedNodeId}
@@ -416,8 +613,11 @@ export default function SpatialProfileContainer({
         onResetCenter={() => setCamera({ panX: 0, panY: 0, zoom: 0.92 })}
         showMinimap={showMinimap}
         onToggleMinimap={() => setShowMinimap((prev) => !prev)}
+        is3DMode={is3DMode}
+        onToggle3DMode={() => setIs3DMode((prev) => !prev)}
         isOwnProfile={isOwnProfile}
         isBuilderMode={isBuilderMode}
+        visitors={visitorsList}
         onToggleBuilderMode={() => {
           setIsBuilderMode((prev) => !prev);
           setSelectedNodeId(null);

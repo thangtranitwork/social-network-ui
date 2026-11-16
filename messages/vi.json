@@ -49,7 +49,10 @@
       "resendPrompt": "Vui lòng nhập email trước khi gửi lại",
       "or": "Hoặc",
       "showPassword": "Hiển thị mật khẩu",
-      "hidePassword": "Ẩn mật khẩu"
+      "hidePassword": "Ẩn mật khẩu",
+      "agreePrompt": "Tôi đã đọc và đồng ý với",
+      "privacyPolicyLink": "Chính sách quyền riêng tư & Thu thập dữ liệu",
+      "policyRequired": "Vui lòng xác nhận đồng ý với Chính sách quyền riêng tư để tiếp tục."
     },
     "validation": {
       "fillAllFields": "Vui lòng điền đầy đủ thông tin",
@@ -438,6 +441,9 @@
       "nodeVinyl": "Đĩa nhạc",
       "nodePortal": "Cổng bạn bè",
       "nodeGuestbook": "Bảng lưu bút",
+      "view3D": "Góc nhìn 2.5D",
+      "sendReaction": "Thả cảm xúc",
+      "reactionSent": "Đã thả cảm xúc!",
       "changeFrame": "Đổi khung",
       "bringFront": "Đưa lên trên",
       "removeNode": "Gỡ vật thể",
@@ -726,6 +732,18 @@
     "interaction": "Tương tác",
     "connections": "Bạn bè & Kết nối",
     "blockedList": "Danh sách chặn",
+    "viewHistory": "Lịch sử xem bài viết",
+    "history": {
+      "title": "Lịch sử xem bài viết",
+      "description": "Xem lại các bài viết bạn đã xem trong vòng 90 ngày gần nhất.",
+      "viewedAt": "Đã xem",
+      "empty": "Chưa có bài viết nào trong lịch sử xem.",
+      "emptyDesc": "Khi bạn lướt bảng tin và xem các bài viết, lịch sử sẽ tự động được lưu trữ tại đây.",
+      "loadMore": "Tải thêm bài viết cũ hơn",
+      "loading": "Đang tải lịch sử xem...",
+      "loadError": "Không thể tải lịch sử xem bài viết.",
+      "noMore": "Bạn đã xem hết toàn bộ lịch sử 90 ngày."
+    },
     "sentReports": "Báo cáo đã gửi",
     "content": "Nội dung",
     "savedPosts": "Bài viết & Bình luận đã lưu",
@@ -803,6 +821,14 @@
       "DELETE_POST": "{name} đã xóa bài viết của bạn",
       "DELETE_COMMENT": "{name} đã xóa bình luận của bạn",
       "NEW_MESSAGE": "{name} đã gửi một tin nhắn cho bạn",
+      "group_LIKE_POST_two": "{name1} và {name2} đã thích bài viết của bạn",
+      "group_LIKE_POST_many": "{name1}, {name2} và {count} người khác đã thích bài viết của bạn",
+      "group_COMMENT_two": "{name1} và {name2} đã bình luận về bài viết của bạn",
+      "group_COMMENT_many": "{name1}, {name2} và {count} người khác đã bình luận về bài viết của bạn",
+      "group_SHARE_two": "{name1} và {name2} đã chia sẻ bài viết của bạn",
+      "group_SHARE_many": "{name1}, {name2} và {count} người khác đã chia sẻ bài viết của bạn",
+      "group_LIKE_COMMENT_two": "{name1} và {name2} đã thích bình luận của bạn",
+      "group_LIKE_COMMENT_many": "{name1}, {name2} và {count} người khác đã thích bình luận của bạn",
       "default": "Có thông báo mới từ {name}"
     }
   },
@@ -937,63 +963,173 @@
   },
   "about": {
     "title": "Giới thiệu về PocPoc",
+    "badge": "Mạng xã hội thế hệ mới",
+    "ticker": {
+      "status": "Hệ thống hoạt động ổn định",
+      "tech": "WebRTC Voice & Video · Nhắn tin thời gian thực",
+      "platform": "Nền tảng mạng xã hội PocPoc",
+      "nodes": "Hà Nội · TP. Hồ Chí Minh"
+    },
+    "nav": {
+      "tagline": "Không gian kết nối chân thực",
+      "features": "Tính năng",
+      "philosophy": "Triết lý",
+      "showcase": "Trải nghiệm",
+      "privacy": "Chính sách riêng tư",
+      "login": "Đăng nhập",
+      "register": "Đăng ký"
+    },
+    "stats": {
+      "latency": "Thời gian thực",
+      "latencyVal": "Độ trễ cực thấp (< 20ms)",
+      "security": "Bảo mật tài khoản",
+      "securityVal": "Xác thực 2 bước (2FA)",
+      "feed": "Bảng tin lành mạnh",
+      "feedVal": "Đo lường lượt xem minh bạch"
+    },
     "hero": {
-      "headline": "Kết nối không giới hạn",
-      "subhead": "Mạng xã hội thế hệ mới giúp bạn chia sẻ khoảnh khắc chân thực và trò chuyện tức thì với bạn bè.",
+      "headline": "Kết nối chân thực & Tôn trọng riêng tư",
+      "subhead": "PocPoc là nền tảng mạng xã hội hướng tới sự kết nối tự nhiên: bảng tin lành mạnh không giật gân, nhắn tin tức thời mã hóa bảo mật, cuộc gọi thoại và video WebRTC chất lượng cao cùng hồ sơ không gian cá tính.",
       "ctaStart": "Bắt đầu ngay",
-      "ctaLearn": "Khám phá tính năng"
+      "ctaLearn": "Khám phá tính năng",
+      "plateCaption": "Khoảnh khắc bạn bè · Kết nối tự nhiên không bẫy tương tác"
     },
     "features": {
       "title": "Trải nghiệm vượt trội",
-      "chatTitle": "Trò chuyện trực tuyến",
-      "chatDesc": "Nhắn tin thời gian thực với độ trễ cực thấp, hỗ trợ gửi tệp đính kèm và tin nhắn thoại mượt mà.",
-      "callTitle": "Cuộc gọi chất lượng cao",
-      "callDesc": "Kết nối thoại và video call sắc nét với công nghệ WebRTC hiện đại, không gián đoạn.",
-      "shareTitle": "Chia sẻ khoảnh khắc",
-      "shareDesc": "Tạo bài viết, bày tỏ cảm xúc và thảo luận cùng bạn bè trên bảng tin sinh động.",
-      "secureTitle": "Bảo mật tài khoản",
-      "secureDesc": "Bảo vệ thông tin cá nhân của bạn với xác thực 2 lớp (2FA) và kiểm soát quyền riêng tư tuyệt đối."
+      "subtitle": "Hệ sinh thái tính năng được thiết kế chỉn chu vì người dùng thực tế.",
+      "sectionTag": "Tính năng cốt lõi",
+      "chatTag": "Trò chuyện trực tuyến",
+      "chatTitle": "Trò chuyện tức thì & Tin nhắn thoại",
+      "chatDesc": "Nhắn tin thời gian thực với độ trễ cực thấp, hỗ trợ gửi tệp đính kèm, ảnh và tin nhắn thoại mượt mà cùng cơ chế bảo mật tin nhắn riêng tư.",
+      "callTag": "Cuộc gọi WebRTC",
+      "callTitle": "Cuộc gọi thoại & Video HD",
+      "callDesc": "Kết nối trực tiếp qua công nghệ WebRTC hiện đại, âm thanh rõ nét và hình ảnh mượt mà, không gián đoạn.",
+      "shareTag": "Bảng tin thông minh",
+      "shareTitle": "Bảng tin thông minh & Lịch sử minh bạch",
+      "shareDesc": "Tạo bài viết, tương tác cùng bạn bè và hoàn toàn minh bạch với lịch sử xem bài viết được lưu trữ an toàn trong 90 ngày.",
+      "secureTag": "Bảo mật đa lớp",
+      "secureTitle": "Bảo mật tài khoản & Xác thực 2FA",
+      "secureDesc": "Bảo vệ thông tin cá nhân với xác thực 2 bước (2FA), bảo mật phiên làm việc và cam kết không bán dữ liệu cho bên thứ ba."
     },
     "scroll": {
       "section1Title": "Đơn giản & Tinh tế",
-      "section1Desc": "Giao diện tối giản tập trung vào trải nghiệm cốt lõi của người dùng, mang lại sự mượt mà trên mọi thiết bị.",
+      "section1Desc": "Giao diện tối giản tập trung vào nội dung và cảm xúc, mang lại sự mượt mà trên mọi kích thước màn hình.",
       "section2Title": "Đồng bộ tức thì",
-      "section2Desc": "Mọi tin nhắn, cuộc gọi và bài viết được đồng bộ thời gian thực giúp bạn không bỏ lỡ bất kỳ khoảnh khắc nào.",
+      "section2Desc": "Mọi tin nhắn, cuộc gọi và cập nhật được đồng bộ thời gian thực giúp bạn không bỏ lỡ khoảnh khắc ý nghĩa.",
       "section3Title": "Quyền riêng tư hàng đầu",
-      "section3Desc": "Chúng tôi tôn trọng và bảo vệ dữ liệu cá nhân của bạn, cho phép tùy chỉnh chia sẻ với người bạn muốn."
+      "section3Desc": "Bạn có toàn quyền kiểm soát thông tin cá nhân, xem lại lịch sử xem bài viết và quản lý danh sách bạn bè rõ ràng."
     },
     "manifesto": {
-      "quote": "Chúng tôi tạo nên PocPoc vì sự hiện diện chân thực giữa con người, không phải để thao túng sự chú ý.",
-      "p1Title": "Giao thoa chân thực",
-      "p1Desc": "Không thuật toán thao túng, không bảng tin giật gân. Chỉ là những khoảnh khắc theo dòng thời gian từ người bạn thực sự quan tâm.",
-      "p2Title": "Bảo mật tuyệt đối",
-      "p2Desc": "Kênh liên lạc mã hóa đầu cuối, xác thực hai lớp (2FA) và cam kết không bán dữ liệu cá nhân.",
-      "p3Title": "Không gian tinh tế",
-      "p3Desc": "Được kiến tạo như một góc văn hóa độc lập: tĩnh lặng, tập trung và trân trọng từng phút giây của bạn."
+      "tag": "Triết lý phát triển",
+      "heading": "Kết nối vì sự hiện diện, không vì thao túng tương tác.",
+      "quote": "Chúng tôi tạo nên PocPoc vì tin rằng mạng xã hội phải phục vụ sự kết nối chân thực giữa người với người, thay vì tìm cách giữ chân bạn bằng nội dung độc hại.",
+      "p1Title": "Bảng tin lành mạnh",
+      "p1Desc": "Ưu tiên bài viết từ bạn bè và nội dung bạn thực sự quan tâm dựa trên thời gian hiển thị thực tế, không có thuật toán kích động cảm xúc tiêu cực.",
+      "p2Title": "Bảo mật & Minh bạch",
+      "p2Desc": "Kênh liên lạc bảo mật, xác thực 2 lớp (2FA) và cam kết minh bạch tuyệt đối về cách thu thập dữ liệu hành vi xem bài viết.",
+      "p3Title": "Hồ sơ không gian cá tính",
+      "p3Desc": "Chế độ Spatial Profile độc đáo giúp bạn tự do sắp đặt bài viết, âm nhạc, hình ảnh và tương tác qua sổ lưu bút."
     },
     "showcase": {
+      "tag": "Trải nghiệm thực tế",
       "tab1": "Đối thoại",
       "tab2": "Khoảnh khắc",
       "tab3": "Bảo mật",
+      "point1Title": "Bảng tin tự nhiên:",
+      "point1Desc": "Bạn luôn kiểm soát nội dung hiển thị từ những người bạn thực sự quan tâm.",
+      "point2Title": "Bảo mật thông tin:",
+      "point2Desc": "Lịch sử xem bài viết được minh bạch hoá trong Cài đặt và không chia sẻ cho bên thứ ba.",
       "listenVoice": "Tin nhắn thoại · 0:24",
-      "encryptedBadge": "Mã hóa đầu cuối",
-      "activeCall": "Kết nối trực tiếp 60fps HD",
-      "liveStatus": "Cuộc gọi thoại · độ trễ 18ms",
+      "encryptedBadge": "Bảo mật tin nhắn",
+      "activeCall": "Kết nối trực tiếp WebRTC",
+      "liveStatus": "Cuộc gọi thoại · Độ trễ thấp",
       "postAuthor": "Mai Lan",
-      "postRole": "Nghệ sĩ thị giác, Hà Nội",
+      "postRole": "Nhiếp ảnh gia tự do",
       "postContent": "Một sáng êm ả tại xưởng in những tấm ảnh 35mm mới chụp. Ánh nắng rọi qua ban công thật đẹp và bình yên.",
       "friend1": "Minh Khang",
-      "friend1Msg": "Mai nhớ mang vài bức in đến buổi tối nhé!",
+      "friend1Msg": "Mai nhớ mang vài bức in đến buổi gặp mặt nhé!",
       "friend2": "Hạ Linh",
       "friend2Msg": "Màu sắc trên tấm thứ hai trông ấm áp quá!",
       "chatUser": "Linh Nguyễn",
       "chatMsg1": "Chào bạn! Bạn đã xem qua danh sách bài hát cho album mới chưa?",
-      "chatMsg2": "Mình vừa nghe đoạn ghi âm của bạn rồi — đoạn guitar mở đầu rất cảm xúc!"
+      "chatMsg2": "Mình vừa nghe đoạn ghi âm của bạn rồi — đoạn guitar mở đầu rất cảm xúc!",
+      "shieldTitle": "Bảo mật đa tầng & Mã hóa đầu cuối",
+      "shieldDesc": "Tin nhắn riêng tư được bảo vệ trước khi truyền tải, bảo mật tài khoản với 2FA và bảo vệ phiên làm việc an toàn.",
+      "typing": "Linh đang soạn tin...",
+      "activeNow": "Đang hoạt động",
+      "reactions": "lượt thích",
+      "comments": "bình luận"
     },
     "footer": {
-      "ctaText": "Sẵn sàng kết nối cùng PocPoc?",
+      "ctaText": "Sẵn sàng trải nghiệm cùng PocPoc?",
       "ctaDesc": "Tham gia cộng đồng của chúng tôi ngay hôm nay hoàn toàn miễn phí.",
-      "ctaButton": "Tạo tài khoản"
+      "ctaButton": "Tạo tài khoản ngay",
+      "badges": {
+        "b1": "Đăng ký an toàn",
+        "b2": "Bảo mật tài khoản 2FA",
+        "b3": "Gọi thoại & Video WebRTC"
+      },
+      "directory": "Danh mục",
+      "legal": "Tin cậy & Pháp lý",
+      "tagline": "A modern digital commons engineered for genuine human connection, intimate voice moments, and uncompromising privacy.",
+      "rights": "Bảo lưu mọi quyền.",
+      "crafted": "Được thiết kế vì sự kết nối chân thực và văn minh."
+    }
+  },
+  "privacy": {
+    "title": "Chính sách quyền riêng tư & Thu thập dữ liệu",
+    "subtitle": "Cam kết bảo vệ quyền riêng tư, minh bạch dữ liệu và tôn trọng người dùng của PocPoc.",
+    "lastUpdated": "Cập nhật ngày 11 tháng 11, 2026",
+    "backHome": "Về trang chủ",
+    "login": "Đăng nhập",
+    "register": "Đăng ký",
+    "tableOfContents": "Mục lục chính sách",
+    "badge": "Chính sách bảo mật",
+    "viewHistoryLink": "Mở Lịch sử xem bài viết trong Cài đặt",
+    "copiedEmail": "Đã sao chép email!",
+    "copyEmail": "Sao chép địa chỉ email",
+    "sections": {
+      "intro": {
+        "title": "1. Nguyên tắc cốt lõi về quyền riêng tư",
+        "p1": "Tại PocPoc, chúng tôi quan niệm rằng sự riêng tư là quyền cơ bản của mỗi cá nhân trên không gian số. Nền tảng chỉ thu thập lượng thông tin tối thiểu cần thiết để vận hành dịch vụ, bảo vệ tài khoản và nâng cao chất lượng trải nghiệm của bạn.",
+        "p2": "Chúng tôi cam kết không bao giờ thu thập dữ liệu ngầm nhằm mục đích quảng cáo xâm phạm hay theo dõi hoạt động của bạn ngoài phạm vi ứng dụng."
+      },
+      "accountData": {
+        "title": "2. Thông tin tài khoản & Dữ liệu cá nhân",
+        "p1": "Khi bạn đăng ký tài khoản, chúng tôi thu thập các thông tin cơ bản do bạn chủ động cung cấp gồm: Họ và tên, Tên người dùng (username), Địa chỉ email, Ngày sinh (nhằm đảm bảo độ tuổi phù hợp) và Mật khẩu.",
+        "p2": "Mật khẩu luôn được mã hóa bảo mật trước khi lưu trữ. Bạn có thể bổ sung ảnh đại diện, tiểu sử và cập nhật thông tin cá nhân bất kỳ lúc nào tại mục Cài đặt tài khoản."
+      },
+      "viewTelemetry": {
+        "title": "3. Ghi nhận lượt xem & Cá nhân hóa Bảng tin",
+        "p1": "Để hiển thị nội dung phù hợp và tránh lặp lại bài viết, hệ thống chỉ ghi nhận một bài viết là đã xem khi bạn dừng lại đọc trên màn hình trong giây lát khi tab đang mở.",
+        "p2": "Lịch sử xem bài viết được lưu trữ an toàn và tự động xóa vĩnh viễn sau 90 ngày. Dữ liệu này chỉ phục vụ cho 2 mục đích duy nhất: (1) Cung cấp tính năng Lịch sử xem bài viết cho chính bạn trong mục Cài đặt; (2) Giảm tần suất hiển thị lại các bài viết bạn đã đọc kỹ trên Bảng tin."
+      },
+      "messages": {
+        "title": "4. Bảo mật tin nhắn & Cuộc gọi",
+        "p1": "Các cuộc trò chuyện riêng tư giữa người dùng được bảo vệ bằng cơ chế mã hóa đầu cuối. Máy chủ chỉ đóng vai trò chuyển tiếp và không thể đọc được nội dung tin nhắn văn bản của bạn.",
+        "p2": "Cuộc gọi thoại và video được truyền trực tiếp giữa các thiết bị thông qua giao thức an toàn, không ghi âm hay lưu trữ dữ liệu cuộc gọi trên máy chủ sau khi kết thúc."
+      },
+      "sharing": {
+        "title": "5. Cam kết không chia sẻ & Không bán dữ liệu",
+        "p1": "PocPoc cam kết tuyệt đối: KHÔNG bán, KHÔNG cho thuê, và KHÔNG chuyển giao dữ liệu cá nhân hay thói quen sử dụng của bạn cho bất kỳ công ty quảng cáo hoặc bên thứ ba nào.",
+        "p2": "Dữ liệu chỉ được cung cấp trong trường hợp đặc biệt khi có yêu cầu bằng văn bản hợp lệ từ cơ quan thực thi pháp luật có thẩm quyền theo quy định."
+      },
+      "userRights": {
+        "title": "6. Quyền kiểm soát & Xóa dữ liệu của bạn",
+        "p1": "Quyền xem lại: Bạn có thể kiểm tra toàn bộ danh sách các bài viết mình đã xem trong 90 ngày gần nhất tại mục Cài đặt -> Lịch sử xem bài viết.",
+        "p2": "Quyền kiểm soát bài đăng: Bạn có toàn quyền quyết định ai có thể xem bài viết của mình (Công khai, Bạn bè hoặc Chỉ mình tôi), cũng như quản lý danh sách bạn bè và chặn người dùng khác.",
+        "p3": "Quyền xóa dữ liệu: Bạn có quyền xóa bài viết, bình luận hoặc yêu cầu đóng tài khoản bất kỳ lúc nào. Khi đóng tài khoản, thông tin định danh của bạn sẽ được xóa khỏi hệ thống theo quy trình bảo mật."
+      },
+      "locationTelemetry": {
+        "title": "7. Dữ liệu Vị trí (GPS), Địa chỉ IP & Thông tin Thiết bị",
+        "p1": "Thu thập IP & Thiết bị: Khi bạn đăng nhập hoặc sử dụng dịch vụ, hệ thống ghi nhận địa chỉ IP, loại thiết bị, hệ điều hành và phiên bản ứng dụng để bảo vệ tài khoản khỏi đăng nhập lạ, chống spam và ước lượng khu vực địa lý thô.",
+        "p2": "Dữ liệu Vị trí GPS & Người quanh đây: Vị trí chính xác chỉ được thu thập khi bạn cấp quyền trên trình duyệt/thiết bị. Tính năng 'Người quanh đây' mặc định TẮT và chỉ hoạt động khi bạn chủ động bật; dữ liệu hiển thị trên bộ nhớ đệm sẽ tự động xóa sau 15–30 phút hoặc ngay khi bạn bấm tắt. Người lạ chỉ nhìn thấy khoảng cách làm tròn (ví dụ '< 500m', '~1.2 km'), tuyệt đối không lộ tọa độ chính xác.",
+        "p3": "Lưu trữ phân tích & Bản đồ bên thứ ba: Nhật ký kỹ thuật (IP, thiết bị và sự kiện vị trí khi sử dụng tính năng) có thể được lưu trữ an toàn tối đa 180 ngày để phân tích hiệu năng, phòng chống gian lận và cải thiện gợi ý nội dung. Dịch vụ bản đồ hiển thị có thể sử dụng dữ liệu từ Carto, OpenStreetMap hoặc Google Maps theo điều khoản tương ứng của nhà cung cấp."
+      },
+      "contact": {
+        "title": "8. Liên hệ & Hỗ trợ",
+        "p1": "Nếu bạn có bất kỳ câu hỏi hoặc khiếu nại nào liên quan đến chính sách thu thập dữ liệu và quyền riêng tư, vui lòng liên hệ với đội ngũ PocPoc qua email: privacy@pocpoc.online."
+      }
     }
   }
 }

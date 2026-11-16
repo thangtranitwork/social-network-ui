@@ -5,7 +5,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import MotionContainer from "@/components/ui-components/MotionContainer";
 import {
-  UserCircle, Lock, Ban, Sun, ArrowLeft, Shield, Bell, Info,
+  UserCircle, Lock, Ban, Sun, ArrowLeft, Shield, Bell, Info, History,
 } from "lucide-react";
 import {pageMetadata, usePageMetadata} from "@/utils/clientMetadata";
 import { useTranslations } from "next-intl";
@@ -32,6 +32,7 @@ export default function SettingsLayout({ children }) {
       title: t('interaction'),
       items: [
         { id: "blockedlist", icon: Ban, label: t('blockedList') },
+        { id: "history", icon: History, label: t('viewHistory') },
       ]
     },
     {

@@ -138,6 +138,36 @@ const FormFields = ({ mode, formData, setFormData, showPassword, setShowPassword
           </div>
       )}
 
+      {/* Privacy Policy & Data Collection Consent Checkbox */}
+      {mode === "register" && (
+        <div className="pt-3 pb-1">
+          <label className="flex items-start gap-2.5 cursor-pointer text-xs text-muted-foreground select-none leading-relaxed">
+            <input
+              type="checkbox"
+              id="agreePolicy"
+              checked={Boolean(formData.agreePolicy)}
+              onChange={(e) => setFormData(prev => ({ ...prev, agreePolicy: e.target.checked }))}
+              disabled={isDisabled}
+              className="mt-0.5 h-4 w-4 rounded border-[var(--border)] text-[var(--accent)] focus:ring-[var(--accent)] cursor-pointer accent-[var(--accent)]"
+              required
+            />
+            <span>
+              {t('register.agreePrompt')}{' '}
+              <Link
+                href="/privacy"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-[var(--accent)] hover:underline font-semibold"
+                onClick={(e) => e.stopPropagation()}
+              >
+                {t('register.privacyPolicyLink')}
+              </Link>
+              .
+            </span>
+          </label>
+        </div>
+      )}
+
       {/* 2FA Verification Code */}
       {mode === "login" && show2FAField && (
         <div className="space-y-2 mb-2">
@@ -340,6 +370,11 @@ function AuthPageContent() {
   }, [searchParams]);
 
   const handleRegister = async () => {
+    if (!formData.agreePolicy) {
+      setMessages(prev => ({ ...prev, general: `❌ ${tAuth('register.policyRequired')}` }));
+      return;
+    }
+
     if (process.env.NEXT_PUBLIC_CAPTCHA_SITE_KEY && !captchaToken) {
       setMessages(prev => ({ ...prev, general: "❌ Vui lòng hoàn thành xác thực CAPTCHA" }));
       return;
@@ -543,7 +578,7 @@ function AuthPageContent() {
                           📧 {tAuth('register.resendEmail') || "Gửi lại email xác thực"}
                         </Button>
                       ) : (
-                        <Button type="submit" disabled={status.loading || status.verifying} className="w-full py-2">
+                        <Button type="submit" disabled={status.loading || status.verifying || (mode === "register" && !formData.agreePolicy)} className="w-full py-2">
                           {status.loading ? tCommon('loading') : mode === "login" ? tAuth('login.submit') : tAuth('register.submit')}
                         </Button>
                       )}
@@ -555,9 +590,17 @@ function AuthPageContent() {
                             {tAuth('login.createNewPassword')}
                           </Link>
                         </div>
-                        <div className="pt-2 border-t border-[var(--border)]/20">
-                          <Link href="/about" className="text-xs text-muted-foreground hover:text-foreground hover:underline transition-colors">
+                        <div className="pt-2 border-t border-[var(--border)]/20 flex items-center justify-center gap-3 text-xs text-muted-foreground">
+                          <Link href="/about" className="hover:text-foreground hover:underline transition-colors">
                             {tAuth('login.aboutLink')}
+                          </Link>
+                          <span>•</span>
+                          <Link href="/privacy" className="hover:text-foreground hover:underline transition-colors">
+                            {tAuth('register.privacyPolicyLink')}
+                          </Link>
+                          <span>•</span>
+                          <Link href="/terms" className="hover:text-foreground hover:underline transition-colors">
+                            Terms
                           </Link>
                         </div>
                       </div>

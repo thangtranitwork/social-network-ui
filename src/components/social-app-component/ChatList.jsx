@@ -72,8 +72,8 @@ function ChatList({ onSelectChat, selectedChatId }) {
           })
           .catch((error) => {
             console.error("❌ Failed to fetch chat list:", error);
-            // Reset on error to allow retry
-            setFetchAttempted(false);
+            // Delay retry by 10s to prevent request storm
+            setTimeout(() => setFetchAttempted(false), 10000);
           });
     }
   }, [fetchAttempted, fetchChatList]);

@@ -8,12 +8,13 @@ import dayjs from "dayjs"
 import relativeTime from "dayjs/plugin/relativeTime"
 import { Globe, Heart, Lock, MessageCircle, MoreVertical, SendHorizonal, Share2, Users, Pencil, Trash2, Sparkles } from "lucide-react"
 import { useRouter } from "next/navigation"
-import { lazy, memo, Suspense, useCallback, useEffect, useState, useMemo } from "react"
+import { lazy, memo, Suspense, useCallback, useEffect, useState, useMemo, useRef } from "react"
 import toast from "react-hot-toast"
 import Avatar from "../ui-components/Avatar";
 import Card from "../ui-components/Card";
 import ImageView from "../ui-components/ImageView";
 import useIsMobile from "@/hooks/useIsMobile";
+import useQualifiedView from "@/hooks/useQualifiedView";
 import { useTranslations } from "next-intl";
 import ConfirmModal from "../ui-components/ConfirmModal"
 
@@ -47,6 +48,14 @@ const PostCard = memo(function PostCard({
     const [showShareToChatModal, setShowShareToChatModal] = useState(false)
     const [deleting, setDeleting] = useState(false)
     const [currentPost, setCurrentPost] = useState(post)
+
+    const cardRef = useRef(null)
+    useQualifiedView(
+        cardRef,
+        currentPost?.id || post?.id,
+        "newsfeed",
+        currentPost?.authorId || currentPost?.author?.id || post?.authorId || post?.author?.id
+    )
     // Content expansion states
     const [isContentExpanded, setIsContentExpanded] = useState(false)
     const [isOriginalContentExpanded, setIsOriginalContentExpanded] = useState(false)
@@ -393,6 +402,7 @@ const PostCard = memo(function PostCard({
     return (
         <>
             <Card
+                ref={cardRef}
                 className={`my-2 text-[var(--card-foreground)] rounded-2xl shadow-sm card-hover-effect
                     ${size === "compact" ? "p-2 sm:p-3" : size === "large" ? "p-5" : "p-4"} 
                     w-full ${className} cursor-pointer hover:bg-[var(--card)]/90 transition-colors`}

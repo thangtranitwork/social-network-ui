@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useMemo } from "react";
+import { useState, useRef, useMemo, useEffect } from "react";
 import {
   Edit,
   MessageCircle,
@@ -36,6 +36,9 @@ export default function IdentityCoreNode({
   isBuilderMode = false,
   onProfileUpdate,
   onUsernameChange,
+  incomingReaction,
+  onEmitReaction,
+  initialReactions,
 }) {
   const t = useTranslations("profile");
   const router = useRouter();
@@ -49,6 +52,121 @@ export default function IdentityCoreNode({
   const [isViewFullAvatarOpen, setIsViewFullAvatarOpen] = useState(false);
   const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
   const avatarFileInputRef = useRef(null);
+
+  // Floating Reactions in Gallery
+  const [particles, setParticles] = useState([]);
+  const [reactionCounts, setReactionCounts] = useState(() => {
+    if (typeof window !== "undefined") {
+      try {
+        const stored = localStorage.getItem(`space_reactions_${profileData?.username}`);
+        return stored ? JSON.parse(stored) : { "❤️": 12, "🔥": 8, "✨": 5, "👏": 7, "🎉": 4 };
+      } catch {
+        return { "❤️": 12, "🔥": 8, "✨": 5, "👏": 7, "🎉": 4 };
+      }
+    }
+    return { "❤️": 12, "🔥": 8, "✨": 5, "👏": 7, "🎉": 4 };
+  });
+
+  const reactionCountsRef = useRef(reactionCounts);
+  useEffect(() => {
+    reactionCountsRef.current = reactionCounts;
+  }, [reactionCounts]);
+
+  const spawnParticle = (emoji, forcedSide = null) => {
+    const id = Date.now() + Math.random();
+    const side = forcedSide || (Math.random() > 0.5 ? "left" : "right");
+    const duration = 2.2 + Math.random() * 0.3;
+    const y = 25 + Math.random() * 50;
+    const offsetX = -(14 + Math.random() * 12);
+
+    setParticles((prev) => [
+      ...prev.slice(-30),
+      { id, emoji, side, y, offsetX, duration },
+    ]);
+
+    setTimeout(() => {
+      setParticles((prev) => prev.filter((p) => p.id !== id));
+    }, duration * 1000);
+  };
+
+  // Sync initial reactions from server
+  useEffect(() => {
+    if (initialReactions && Object.keys(initialReactions).length > 0) {
+      setReactionCounts(initialReactions);
+    }
+  }, [initialReactions]);
+
+  const handleSpawnReaction = (e, emoji) => {
+    e?.stopPropagation?.();
+    const side = Math.random() > 0.5 ? "left" : "right";
+    spawnParticle(emoji, side);
+
+    setReactionCounts((prev) => {
+      const updated = { ...prev, [emoji]: (prev[emoji] || 0) + 1 };
+      try {
+        if (typeof window !== "undefined" && profileData?.username) {
+          localStorage.setItem(`space_reactions_${profileData.username}`, JSON.stringify(updated));
+        }
+      } catch {}
+      return updated;
+    });
+
+    onEmitReaction?.({ emoji, side });
+  };
+
+  // Synchronize remote reactions emitted by other visitors in the same space
+  useEffect(() => {
+    if (!incomingReaction || !incomingReaction.emoji) return;
+    spawnParticle(incomingReaction.emoji, incomingReaction.side || "right");
+
+    setReactionCounts((prev) => {
+      const updated = { ...prev, [incomingReaction.emoji]: (prev[incomingReaction.emoji] || 0) + 1 };
+      try {
+        if (typeof window !== "undefined" && profileData?.username) {
+          localStorage.setItem(`space_reactions_${profileData.username}`, JSON.stringify(updated));
+        }
+      } catch {}
+      return updated;
+    });
+  }, [incomingReaction]);
+
+  // Welcoming celebratory burst on initial entrance based on existing reactions
+  useEffect(() => {
+    if (!profileData?.username) return;
+
+    const currentCounts = reactionCountsRef.current;
+    const entries = Object.entries(currentCounts);
+    const totalCount = entries.reduce((acc, [, count]) => acc + (count || 0), 0);
+    if (totalCount === 0) return;
+
+    // Burst particles proportionally from both sides
+    const maxBurst = 20;
+    const burstQueue = [];
+
+    entries.forEach(([emoji, count]) => {
+      if (!count || count <= 0) return;
+      const numToSpawn = Math.max(1, Math.min(count, Math.round((count / totalCount) * maxBurst)));
+      for (let i = 0; i < numToSpawn; i++) {
+        burstQueue.push(emoji);
+      }
+    });
+
+    const shuffled = burstQueue.sort(() => Math.random() - 0.5);
+    const timers = [];
+
+    shuffled.forEach((emoji, index) => {
+      const delay = 120 + index * 75 + Math.random() * 30;
+      const t = setTimeout(() => {
+        const side = index % 2 === 0 ? "left" : "right";
+        spawnParticle(emoji, side);
+      }, delay);
+      timers.push(t);
+    });
+
+    return () => {
+      timers.forEach(clearTimeout);
+    };
+  }, [profileData?.username]);
 
   const chatMap = useAppStore((state) => state.chatMap);
   const { selectChat, showVirtualChat } = useAppStore(
@@ -238,6 +356,29 @@ export default function IdentityCoreNode({
 
   return (
     <div className={`relative w-[360px] sm:w-[410px] p-6 sm:p-7 transition-all duration-300 ${cardStyleClasses}`}>
+      {/* Floating Reactions Emitter from Left & Right Flanks of the Card */}
+      <div className="pointer-events-none absolute inset-0 overflow-visible z-50 select-none">
+        {particles.map((p) => (
+          <div
+            key={p.id}
+            className={`absolute text-2xl sm:text-3xl drop-shadow-md ${
+              p.side === "left"
+                ? "animate-float-reaction-left"
+                : "animate-float-reaction-right"
+            }`}
+            style={{
+              top: `${p.y}%`,
+              ...(p.side === "left"
+                ? { left: `${p.offsetX}px` }
+                : { right: `${p.offsetX}px` }),
+              animationDuration: `${p.duration}s`,
+            }}
+          >
+            {p.emoji}
+          </div>
+        ))}
+      </div>
+
       {/* Ambient Halo Ring */}
       <div
         className="pointer-events-none absolute -inset-1 rounded-[inherit] opacity-25 blur-xl -z-10"
@@ -459,6 +600,51 @@ export default function IdentityCoreNode({
               </button>
             </>
           )}
+        </div>
+
+        {/* Gallery Reaction Bar */}
+        <div
+          className={`mt-4 pt-3.5 border-t w-full flex flex-col gap-2 ${
+            isLightPlaque ? "border-stone-200/80" : "border-white/10"
+          }`}
+        >
+          <div className="flex items-center justify-between px-1">
+            <span
+              className={`text-[11px] font-semibold tracking-wide uppercase ${
+                isLightPlaque ? "text-stone-500" : "text-zinc-400"
+              }`}
+            >
+              Cảm xúc phòng trưng bày
+            </span>
+            <span className="text-[10px] text-zinc-500 font-mono">
+              {Object.values(reactionCounts).reduce((a, b) => a + b, 0)} lượt thả
+            </span>
+          </div>
+
+          <div className="flex items-center justify-around gap-1 px-1 py-1 rounded-2xl bg-white/5 border border-white/10">
+            {[
+              { emoji: "❤️", label: "Yêu thích" },
+              { emoji: "🔥", label: "Cuốn hút" },
+              { emoji: "✨", label: "Lấp lánh" },
+              { emoji: "👏", label: "Tuyệt vời" },
+              { emoji: "🎉", label: "Ăn mừng" },
+            ].map((r) => (
+              <button
+                key={r.emoji}
+                type="button"
+                onClick={(e) => handleSpawnReaction(e, r.emoji)}
+                className="group relative flex items-center gap-1 px-2.5 py-1.5 rounded-xl hover:bg-white/15 active:scale-125 transition-all text-sm select-none"
+                title={r.label}
+              >
+                <span className="group-hover:scale-125 transition-transform duration-200">
+                  {r.emoji}
+                </span>
+                <span className="text-[10px] font-bold text-zinc-400 group-hover:text-white transition-colors">
+                  {reactionCounts[r.emoji] || 0}
+                </span>
+              </button>
+            ))}
+          </div>
         </div>
       </div>
 

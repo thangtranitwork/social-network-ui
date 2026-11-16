@@ -133,6 +133,14 @@ api.interceptors.request.use(
       // Generate and attach X-Trace-ID
       config.headers["X-Trace-ID"] = generateUUID();
 
+      // Guard: Ensure request is not dispatched under a different user session
+      if (config._sessionUserId) {
+        const currentUserId = getUserId();
+        if (currentUserId !== config._sessionUserId) {
+          return Promise.reject(new Error(`Session mismatch: request bound to user ${config._sessionUserId}, but current user is ${currentUserId}`));
+        }
+      }
+
       if (config.skipAuth || isPublicEndpoint(config.url)) {
         return config;
       }
@@ -141,6 +149,18 @@ api.interceptors.request.use(
 
       if (token) {
         config.headers.Authorization = `Bearer ${token}`;
+      }
+      if (isClient) {
+        let deviceId = localStorage.getItem("pocpoc_device_id");
+        if (!deviceId) {
+          deviceId = (typeof crypto !== "undefined" && crypto.randomUUID)
+            ? crypto.randomUUID()
+            : `web-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
+          localStorage.setItem("pocpoc_device_id", deviceId);
+        }
+        config.headers["X-Device-Id"] = deviceId;
+        config.headers["X-Platform"] = "web";
+        config.headers["X-App-Version"] = "web-1.0.0";
       }
       return config;
     },
@@ -154,6 +174,10 @@ async function handleTokenRefresh(originalRequest) {
     return new Promise((resolve, reject) => {
       refreshSubscribers.push((token) => {
         if (token) {
+          if (originalRequest._sessionUserId && originalRequest._sessionUserId !== getUserId()) {
+            reject(new Error(`Session mismatch during token refresh: ${originalRequest._sessionUserId} !== ${getUserId()}`));
+            return;
+          }
           originalRequest.headers.Authorization = `Bearer ${token}`;
           resolve(api(originalRequest));
         } else {
@@ -190,6 +214,11 @@ async function handleTokenRefresh(originalRequest) {
     refreshSubscribers.forEach(cb => cb(newToken));
     refreshSubscribers = [];
     notifyTokenRefresh(newToken);
+
+    // Guard: Prevent retrying request if active session switched during refresh
+    if (originalRequest._sessionUserId && originalRequest._sessionUserId !== getUserId()) {
+      return Promise.reject(new Error(`Session mismatch during token refresh: ${originalRequest._sessionUserId} !== ${getUserId()}`));
+    }
 
     // Retry request gốc
     return api(originalRequest);

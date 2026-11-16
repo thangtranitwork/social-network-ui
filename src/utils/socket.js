@@ -58,7 +58,15 @@ class CustomSocketSingleton {
   }
 
   getWsUrl(destination) {
-    if (destination.startsWith("/chat") || destination.startsWith("/message") || destination.startsWith("/online") || destination.startsWith("/typing") || destination.startsWith("/app") || destination.startsWith("/errors")) return this.config.chatUrl;
+    if (
+      destination.startsWith("/chat") ||
+      destination.startsWith("/message") ||
+      destination.startsWith("/online") ||
+      destination.startsWith("/typing") ||
+      destination.startsWith("/app") ||
+      destination.startsWith("/errors") ||
+      destination.startsWith("/spatial")
+    ) return this.config.chatUrl;
     if (destination.startsWith("/notifications")) return this.config.notificationUrl;
     return null;
   }
@@ -142,8 +150,15 @@ class CustomSocketSingleton {
                   if (isError) {
                     sub.callback({ body: event.data });
                   }
+                } else if (dest.startsWith("/spatial")) {
+                  if (data.command && data.command.startsWith("SPATIAL_")) {
+                    const destSpace = dest.replace("/spatial/", "");
+                    if (!destSpace || !data.spaceKey || data.spaceKey === destSpace) {
+                      sub.callback({ body: event.data });
+                    }
+                  }
                 } else {
-                  if (!isError) {
+                  if (!isError && (!data.command || !data.command.startsWith("SPATIAL_"))) {
                     sub.callback({ body: event.data });
                   }
                 }
@@ -265,6 +280,10 @@ class CustomSocketSingleton {
       const chatId = destination.substring(6);
       console.log(`🔌 Notifying backend of unsubscribe from active chat: ${chatId}`);
       this.sendMessage(destination, { command: "UNSUBSCRIBE", chatId });
+    } else if (destination.startsWith("/spatial/")) {
+      const spaceKey = destination.substring(9);
+      console.log(`🔌 Notifying backend of spatial space leave: ${spaceKey}`);
+      this.sendMessage(destination, { command: "SPATIAL_LEAVE", spaceKey });
     }
     this.subscribers.delete(destination);
   }

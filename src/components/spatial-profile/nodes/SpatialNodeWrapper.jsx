@@ -9,6 +9,7 @@ export default function SpatialNodeWrapper({
   zoom = 1,
   theme = "COSMIC_VOID",
   isBuilderMode = false,
+  is3DMode = false,
   isSelected = false,
   isAutoplayTarget = false,
   onSelect,
@@ -101,10 +102,19 @@ export default function SpatialNodeWrapper({
       onPointerMove={handlePointerMove}
       onPointerUp={handlePointerUp}
       style={{
-        transform: `translate3d(${node.x}px, ${node.y}px, 0) translate(-50%, -50%) scale(${node.scale || 1}) rotate(${
-          node.rotation || 0
-        }deg)`,
+        transform: is3DMode
+          ? `translate3d(${node.x}px, ${node.y}px, ${((node.zIndex || 10) % 40) + 18}px) translate(-50%, -50%) scale(${node.scale || 1}) rotate(${
+              node.rotation || 0
+            }deg)`
+          : `translate3d(${node.x}px, ${node.y}px, 0) translate(-50%, -50%) scale(${node.scale || 1}) rotate(${
+              node.rotation || 0
+            }deg)`,
+        filter: is3DMode
+          ? "drop-shadow(0 25px 35px rgba(0,0,0,0.55)) drop-shadow(0 8px 12px rgba(0,0,0,0.35))"
+          : undefined,
+        transformStyle: "preserve-3d",
         zIndex: isSelected ? 900 : node.zIndex || 10,
+        transition: isDragging ? "none" : "transform 0.65s cubic-bezier(0.16, 1, 0.3, 1), filter 0.65s ease",
       }}
       className={`absolute left-0 top-0 transition-shadow duration-200 ${
         isBuilderMode

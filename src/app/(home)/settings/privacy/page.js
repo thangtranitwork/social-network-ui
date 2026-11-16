@@ -28,6 +28,13 @@ export default function PrivacySettings() {
   const [error2FA, setError2FA] = useState("");
   const [success2FA, setSuccess2FA] = useState("");
 
+  // Location & People Nearby States
+  const [locationSettings, setLocationSettings] = useState({
+    discoverableNearby: false,
+    locationPersonalization: true,
+  });
+  const [savingLocation, setSavingLocation] = useState(false);
+
   // Load values
   useEffect(() => {
     const storedPrivacy = localStorage.getItem("defaultPrivacy");
@@ -38,7 +45,56 @@ export default function PrivacySettings() {
       }));
     }
     fetch2FAStatus();
+    fetchLocationSettings();
   }, []);
+
+  const fetchLocationSettings = async () => {
+    try {
+      const res = await api.get("/v1/users/me/location-settings");
+      const body = res.data?.body;
+      if (body) {
+        setLocationSettings({
+          discoverableNearby: Boolean(body.discoverableNearby),
+          locationPersonalization: body.locationPersonalization !== false,
+        });
+      }
+    } catch {
+      // Keep default fallback when endpoint is unavailable
+    }
+  };
+
+  const handleToggleLocationSetting = async (field) => {
+    const nextValue = !locationSettings[field];
+    setSavingLocation(true);
+    try {
+      const res = await api.patch("/v1/users/me/location-settings", {
+        [field]: nextValue,
+      });
+      const body = res.data?.body;
+      setLocationSettings({
+        discoverableNearby: Boolean(body?.discoverableNearby ?? (field === "discoverableNearby" ? nextValue : locationSettings.discoverableNearby)),
+        locationPersonalization: Boolean(body?.locationPersonalization ?? (field === "locationPersonalization" ? nextValue : locationSettings.locationPersonalization)),
+      });
+      toast.success("Đã cập nhật cài đặt vị trí");
+    } catch {
+      toast.error("Không thể cập nhật cài đặt vị trí");
+    } finally {
+      setSavingLocation(false);
+    }
+  };
+
+  const handleClearLocationNow = async () => {
+    setSavingLocation(true);
+    try {
+      await api.delete("/v1/users/me/location");
+      setLocationSettings((prev) => ({ ...prev, discoverableNearby: false }));
+      toast.success("Đã ẩn vị trí và xóa khỏi Người quanh đây");
+    } catch {
+      toast.error("Không thể xóa vị trí lúc này");
+    } finally {
+      setSavingLocation(false);
+    }
+  };
 
   const fetch2FAStatus = async () => {
     try {
@@ -320,6 +376,76 @@ export default function PrivacySettings() {
               </div>
             </div>
           )}
+        </div>
+
+        {/* Location & People Nearby Privacy Section */}
+        <div className="bg-[var(--card)] border border-[var(--border)] rounded-2xl p-6 shadow-sm space-y-5">
+          <div>
+            <h2 className="text-lg font-semibold">Vị trí &amp; Người quanh đây</h2>
+            <p className="text-xs text-[var(--muted-foreground)] mt-1">
+              Kiểm soát việc hiển thị vị trí ước lượng của bạn trong mục Người quanh đây và cá nhân hóa theo khu vực.
+            </p>
+          </div>
+
+          <div className="flex items-center justify-between gap-4 py-2 border-t border-[var(--border)]">
+            <div>
+              <p className="text-sm font-medium">Hiển thị tôi trong Người quanh đây</p>
+              <p className="text-xs text-[var(--muted-foreground)]">
+                Chỉ hiển thị khoảng cách làm tròn; tự động ẩn sau 15 phút không hoạt động.
+              </p>
+            </div>
+            <button
+              type="button"
+              disabled={savingLocation}
+              onClick={() => handleToggleLocationSetting("discoverableNearby")}
+              className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+                locationSettings.discoverableNearby ? "bg-[var(--accent)]" : "bg-zinc-300 dark:bg-zinc-700"
+              }`}
+            >
+              <span
+                className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                  locationSettings.discoverableNearby ? "translate-x-6" : "translate-x-1"
+                }`}
+              />
+            </button>
+          </div>
+
+          <div className="flex items-center justify-between gap-4 py-2 border-t border-[var(--border)]">
+            <div>
+              <p className="text-sm font-medium">Cá nhân hóa nội dung theo vị trí</p>
+              <p className="text-xs text-[var(--muted-foreground)]">
+                Sử dụng vị trí tương đối (thành phố/khu vực) để gợi ý bài viết và tìm kiếm phù hợp.
+              </p>
+            </div>
+            <button
+              type="button"
+              disabled={savingLocation}
+              onClick={() => handleToggleLocationSetting("locationPersonalization")}
+              className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+                locationSettings.locationPersonalization ? "bg-[var(--accent)]" : "bg-zinc-300 dark:bg-zinc-700"
+              }`}
+            >
+              <span
+                className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                  locationSettings.locationPersonalization ? "translate-x-6" : "translate-x-1"
+                }`}
+              />
+            </button>
+          </div>
+
+          <div className="pt-2 border-t border-[var(--border)] flex items-center justify-between gap-3 flex-wrap">
+            <span className="text-xs text-[var(--muted-foreground)]">
+              Bạn có thể xóa ngay vị trí tạm thời khỏi bộ nhớ đệm bất kỳ lúc nào.
+            </span>
+            <button
+              type="button"
+              disabled={savingLocation}
+              onClick={handleClearLocationNow}
+              className="px-4 py-2 rounded-xl text-xs font-semibold border border-red-500/40 text-red-500 hover:bg-red-500/10 transition-colors disabled:opacity-50"
+            >
+              Ẩn &amp; xóa vị trí tạm thời ngay
+            </button>
+          </div>
         </div>
       </div>
     </div>

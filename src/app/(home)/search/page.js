@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState, useRef, useCallback, Suspense } from "react";
 import api from "@/utils/axios";
+import viewEventCollector from "@/utils/viewEventCollector";
 import PostCard from "@/components/social-app-component/PostCard";
 import UserHeader from "@/components/social-app-component/UserHeader";
 import Avatar from "@/components/ui-components/Avatar";
@@ -287,7 +288,15 @@ function SearchContent() {
   };
 
   const goToProfile = (username) => {
-    if (username) router.push(`/profile/${username}`);
+    if (username) {
+      viewEventCollector.recordSearchCTR({
+        query: query || qParam,
+        resultType: "user",
+        resultId: username,
+        clicked: true,
+      });
+      router.push(`/profile/${username}`);
+    }
   };
 
   const filterTabs = [
