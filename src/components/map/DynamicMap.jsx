@@ -1,7 +1,6 @@
 "use client";
 
-import React, { useEffect, useRef } from "react";
-import maplibregl from "maplibre-gl";
+import React, { useEffect, useRef, useState } from "react";
 import "maplibre-gl/dist/maplibre-gl.css";
 
 function buildGoogleTileUrls(template) {
@@ -83,6 +82,7 @@ export default function DynamicMap({
   const containerRef = useRef(null);
   const mapRef = useRef(null);
   const markerRefs = useRef([]);
+  const [mapReady, setMapReady] = useState(0);
 
   const provider = mapConfig?.provider || "carto";
 
@@ -145,21 +145,39 @@ export default function DynamicMap({
       };
     }
 
-    const map = new maplibregl.Map({
-      container: containerRef.current,
-      style: resolveMapLibreStyle(effectiveConfig),
-      center: [initialCenter.lng, initialCenter.lat],
-      zoom: initialZoom,
-      attributionControl: provider !== "google_tiles",
-    });
+    let cancelled = false;
+    let mapInstance = null;
 
-    map.addControl(new maplibregl.NavigationControl(), "top-right");
-    mapRef.current = { type: "maplibre", instance: map };
+    (async () => {
+      const mod = await import("maplibre-gl");
+      const maplibregl = mod.default || mod;
+      if (cancelled || !containerRef.current || !maplibregl?.Map) return;
+
+      if (typeof maplibregl.setWorkerUrl === "function") {
+        maplibregl.setWorkerUrl("/libs/maplibre-gl-worker.mjs");
+      }
+
+      const map = new maplibregl.Map({
+        container: containerRef.current,
+        style: resolveMapLibreStyle(effectiveConfig),
+        center: [initialCenter.lng, initialCenter.lat],
+        zoom: initialZoom,
+        attributionControl: provider !== "google_tiles",
+      });
+
+      map.addControl(new maplibregl.NavigationControl(), "top-right");
+      mapInstance = map;
+      mapRef.current = { type: "maplibre", instance: map, lib: maplibregl };
+      setMapReady((v) => v + 1);
+    })();
 
     return () => {
+      cancelled = true;
       markerRefs.current.forEach((mk) => mk.remove());
       markerRefs.current = [];
-      map.remove();
+      if (mapInstance) {
+        mapInstance.remove();
+      }
       mapRef.current = null;
     };
   }, [provider, mapConfig?.style, mapConfig?.googleTilesUrl, mapConfig?.googleApiKey]);
@@ -167,8 +185,9 @@ export default function DynamicMap({
   // Sync center & markers on MapLibre instance without recreating the map
   useEffect(() => {
     const current = mapRef.current;
-    if (!current || current.type !== "maplibre") return;
+    if (!current || current.type !== "maplibre" || !current.lib) return;
     const map = current.instance;
+    const maplibregl = current.lib;
 
     if (center?.lat && center?.lng) {
       map.flyTo({ center: [center.lng, center.lat], essential: true, duration: 600 });
@@ -215,7 +234,7 @@ export default function DynamicMap({
         .addTo(map);
       markerRefs.current.push(mk);
     });
-  }, [center?.lat, center?.lng, selfLocation?.lat, selfLocation?.lng, markers, onSelectMarker]);
+  }, [mapReady, center?.lat, center?.lng, selfLocation?.lat, selfLocation?.lng, markers, onSelectMarker]);
 
   if (provider === "disabled") {
     return (
