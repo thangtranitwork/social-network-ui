@@ -6,7 +6,8 @@ import adminApi from "@/utils/adminInterception"
 import api, { getUserId } from "@/utils/axios"
 import dayjs from "dayjs"
 import relativeTime from "dayjs/plugin/relativeTime"
-import { Globe, Heart, Lock, MessageCircle, MoreVertical, SendHorizonal, Share2, Users, Pencil, Trash2, Sparkles } from "lucide-react"
+import { Globe, Heart, Lock, MessageCircle, MoreVertical, SendHorizonal, Share2, Users, Pencil, Trash2, Sparkles, EyeOff, UserX } from "lucide-react"
+import viewEventCollector from "@/utils/viewEventCollector"
 import { useRouter } from "next/navigation"
 import { lazy, memo, Suspense, useCallback, useEffect, useState, useMemo, useRef } from "react"
 import toast from "react-hot-toast"
@@ -47,6 +48,7 @@ const PostCard = memo(function PostCard({
     const [showShareModal, setShowShareModal] = useState(false)
     const [showShareToChatModal, setShowShareToChatModal] = useState(false)
     const [deleting, setDeleting] = useState(false)
+    const [hiddenBySignal, setHiddenBySignal] = useState(false)
     const [currentPost, setCurrentPost] = useState(post)
 
     const cardRef = useRef(null)
@@ -399,6 +401,8 @@ const PostCard = memo(function PostCard({
         )
     }, [currentPost, isOriginalContentExpanded, handleOriginalProfileClick, renderPrivacyIcon, shouldTruncateContent, getTruncatedContent, isModalOpen, isPriority, handleImageClick])
 
+    if (hiddenBySignal) return null
+
     return (
         <>
             <Card
@@ -447,8 +451,8 @@ const PostCard = memo(function PostCard({
                         </div>
                     </div>
 
-                    {/* Show options menu if it's the user's own post OR if user is admin */}
-                    {showMoreOptions && (
+                    {/* Show options menu for all non-Ad posts */}
+                    {!currentPost.isAd && (
                         <div className="relative">
                             <button
                                 aria-label={t("aria.moreOptions")}
@@ -457,37 +461,77 @@ const PostCard = memo(function PostCard({
                                     e.stopPropagation()
                                     setShowOptions(!showOptions)
                                 }}
-                                className="text-xl text-[var(--muted-foreground)] hover:bg-[var(--input)] rounded-full p-1"
+                                className="cursor-pointer text-xl text-[var(--muted-foreground)] hover:bg-[var(--input)] rounded-full p-1"
                             >
                                 <MoreVertical className="w-5 h-5" />
                             </button>
 
                             {showOptions && (
-                                <div className="absolute right-0 mt-2 w-36 bg-white dark:bg-[var(--background)] border rounded shadow z-10">
-                                    {/* Only show edit button for own posts */}
-                                    {isOwnPost && (
-                                        <button
-                                            onClick={(e) => {
-                                                e.stopPropagation()
-                                                handleEdit()
-                                            }}
-                                            className="flex items-center gap-2 w-full px-4 py-2 text-left text-sm hover:bg-[var(--input)] transition-colors"
-                                        >
-                                            <Pencil size={14} className="text-blue-500" />
-                                            <span>{t('edit')}</span>
-                                        </button>
+                                <div className="absolute right-0 mt-2 w-52 bg-white dark:bg-[var(--card)] border border-[var(--border)] rounded-xl shadow-lg z-20 overflow-hidden">
+                                    {showMoreOptions ? (
+                                        <>
+                                            {isOwnPost && (
+                                                <button
+                                                    onClick={(e) => {
+                                                        e.stopPropagation()
+                                                        handleEdit()
+                                                    }}
+                                                    className="cursor-pointer flex items-center gap-2 w-full px-4 py-2.5 text-left text-sm hover:bg-[var(--input)] transition-colors"
+                                                >
+                                                    <Pencil size={14} className="text-blue-500" />
+                                                    <span>{t('edit')}</span>
+                                                </button>
+                                            )}
+                                            <button
+                                                onClick={(e) => {
+                                                    e.stopPropagation()
+                                                    handleDeletePost()
+                                                }}
+                                                className="cursor-pointer flex items-center gap-2 w-full px-4 py-2.5 text-left text-sm hover:bg-[var(--input)] disabled:opacity-50 text-red-500 transition-colors"
+                                                disabled={deleting}
+                                            >
+                                                <Trash2 size={14} />
+                                                <span>{deleting ? t('deleting') : t('delete')}</span>
+                                            </button>
+                                        </>
+                                    ) : (
+                                        <>
+                                            <button
+                                                onClick={async (e) => {
+                                                    e.stopPropagation()
+                                                    setShowOptions(false)
+                                                    setHiddenBySignal(true)
+                                                    await viewEventCollector.recordNegativeSignal({
+                                                        postId: currentPost?.id || post?.id,
+                                                        authorId: currentPost?.authorId || currentPost?.author?.id,
+                                                        signalType: "hide_post",
+                                                    })
+                                                    toast.success("Đã ẩn bài viết. Chúng tôi sẽ giảm nội dung tương tự.")
+                                                }}
+                                                className="cursor-pointer flex items-center gap-2.5 w-full px-4 py-2.5 text-left text-sm hover:bg-[var(--input)] transition-colors"
+                                            >
+                                                <EyeOff size={14} className="text-[var(--muted-foreground)] shrink-0" />
+                                                <span>Không quan tâm / Ẩn bài</span>
+                                            </button>
+                                            <button
+                                                onClick={async (e) => {
+                                                    e.stopPropagation()
+                                                    setShowOptions(false)
+                                                    setHiddenBySignal(true)
+                                                    await viewEventCollector.recordNegativeSignal({
+                                                        postId: currentPost?.id || post?.id,
+                                                        authorId: currentPost?.authorId || currentPost?.author?.id,
+                                                        signalType: "mute_author",
+                                                    })
+                                                    toast.success("Đã ẩn bài viết từ người này")
+                                                }}
+                                                className="cursor-pointer flex items-center gap-2.5 w-full px-4 py-2.5 text-left text-sm text-red-500 hover:bg-[var(--input)] transition-colors"
+                                            >
+                                                <UserX size={14} className="shrink-0" />
+                                                <span>Ẩn bài từ người này</span>
+                                            </button>
+                                        </>
                                     )}
-                                    <button
-                                        onClick={(e) => {
-                                            e.stopPropagation()
-                                            handleDeletePost()
-                                        }}
-                                        className="flex items-center gap-2 w-full px-4 py-2 text-left text-sm hover:bg-[var(--input)] disabled:opacity-50 text-red-500 transition-colors"
-                                        disabled={deleting}
-                                    >
-                                        <Trash2 size={14} />
-                                        <span>{deleting ? t('deleting') : t('delete')}</span>
-                                    </button>
                                 </div>
                             )}
                         </div>
@@ -543,6 +587,8 @@ const PostCard = memo(function PostCard({
                     <div onClick={(e) => e.stopPropagation()}>
                         <ImageView
                             images={currentPost.files}
+                            postId={currentPost?.id || post?.id}
+                            authorId={currentPost?.authorId || currentPost?.author?.id}
                             isActive={!isModalOpen}
                             priority={isPriority}
                             onImageClick={handleImageClick}

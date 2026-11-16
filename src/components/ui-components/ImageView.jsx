@@ -3,6 +3,7 @@
 import Image from "next/image";
 import { useState, useRef, useEffect, memo } from "react";
 import { Volume2, VolumeX, Sparkles } from "lucide-react";
+import viewEventCollector from "@/utils/viewEventCollector";
 
 /* =========================
    Utils
@@ -61,11 +62,14 @@ const ImageView = memo(function ImageView({
                                             isPriority = false,
                                             highlightedFileId = null,
                                             onSimilarSearch = null,
+                                            postId = null,
+                                            authorId = null,
                                           }) {
   const [mutedVideos, setMutedVideos] = useState({});
   const [mediaErrors, setMediaErrors] = useState({});
   const [loadingStates, setLoadingStates] = useState({});
   const videoRefs = useRef({});
+  const watchStateRef = useRef({});
 
   const fallbackImage = "/images/media-not-found.png";
 
@@ -219,6 +223,51 @@ const ImageView = memo(function ImageView({
                         playsInline
                         autoPlay
                         onClick={() => onImageClick()}
+                        onTimeUpdate={(e) => {
+                          if (!postId) return;
+                          const el = e.currentTarget;
+                          if (!el.duration || el.duration <= 0) return;
+                          const ratio = el.currentTime / el.duration;
+                          const st = watchStateRef.current[index] || {
+                            reported50: false,
+                            reported90: false,
+                            lastTime: 0,
+                            replays: 0,
+                          };
+                          // Detect loop replay
+                          if (st.lastTime > el.duration * 0.8 && el.currentTime < 0.5) {
+                            st.replays += 1;
+                          }
+                          st.lastTime = el.currentTime;
+                          if (ratio >= 0.5 && !st.reported50) {
+                            st.reported50 = true;
+                            viewEventCollector.recordMediaWatch({
+                              postId,
+                              authorId,
+                              mediaId: String(index),
+                              mediaType: "video",
+                              watchDurationMs: el.currentTime * 1000,
+                              totalDurationMs: el.duration * 1000,
+                              progressRatio: ratio,
+                              muted: el.muted,
+                              replayCount: st.replays,
+                            });
+                          } else if (ratio >= 0.9 && !st.reported90) {
+                            st.reported90 = true;
+                            viewEventCollector.recordMediaWatch({
+                              postId,
+                              authorId,
+                              mediaId: String(index),
+                              mediaType: "video",
+                              watchDurationMs: el.currentTime * 1000,
+                              totalDurationMs: el.duration * 1000,
+                              progressRatio: ratio,
+                              muted: el.muted,
+                              replayCount: st.replays,
+                            });
+                          }
+                          watchStateRef.current[index] = st;
+                        }}
                         onLoadedData={() =>
                             setLoadingStates((prev) => ({
                               ...prev,

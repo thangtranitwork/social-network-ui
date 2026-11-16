@@ -14,7 +14,8 @@ import {
   LayoutDashboard,
   Megaphone,
   ShieldAlert,
-  Settings
+  Settings,
+  Activity
 } from "lucide-react"
 import adminApi, { clearAdminSession } from "@/utils/adminInterception"
 import ThemeToggle from "@/components/ui-components/Themetoggle"
@@ -92,6 +93,13 @@ export default function AdminLayout({ children }) {
       icon: BarChart3,
       active: pathname === "/admin/dashboard/ads",
       description: "Duyệt & thống kê chiến dịch quảng cáo"
+    },
+    {
+      href: "/admin/dashboard/telemetry",
+      label: "Telemetry & Search CTR",
+      icon: Activity,
+      active: pathname === "/admin/dashboard/telemetry",
+      description: "Thiết bị, khu vực & tỉ lệ click tìm kiếm"
     }
   ]
 
@@ -112,6 +120,8 @@ export default function AdminLayout({ children }) {
       return { title: "Cấu hình hệ thống", subtitle: "Điều chỉnh các giới hạn và cách hệ thống vận hành" }
     } else if (pathname.includes("/ads")) {
       return { title: "📢 Quản lý quảng cáo", subtitle: "Phê duyệt các chiến dịch quảng cáo toàn hệ thống và theo dõi doanh thu" }
+    } else if (pathname.includes("/telemetry")) {
+      return { title: "📡 Telemetry & Search CTR", subtitle: "Thống kê thiết bị, khu vực địa lý và hiệu quả tìm kiếm" }
     }
     return { title: "📈 Admin Control Center", subtitle: "Hệ thống quản trị và phân tích PocPoc" }
   }

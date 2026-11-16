@@ -34,6 +34,7 @@ export default function PrivacySettings() {
     locationPersonalization: true,
   });
   const [savingLocation, setSavingLocation] = useState(false);
+  const [devices, setDevices] = useState([]);
 
   // Load values
   useEffect(() => {
@@ -46,7 +47,19 @@ export default function PrivacySettings() {
     }
     fetch2FAStatus();
     fetchLocationSettings();
+    fetchDeviceSessions();
   }, []);
+
+  const fetchDeviceSessions = async () => {
+    try {
+      const res = await api.get("/v1/users/me/devices");
+      if (Array.isArray(res.data?.body)) {
+        setDevices(res.data.body);
+      }
+    } catch {
+      // Non-blocking if user has no sessions yet
+    }
+  };
 
   const fetchLocationSettings = async () => {
     try {
@@ -446,6 +459,40 @@ export default function PrivacySettings() {
               Ẩn &amp; xóa vị trí tạm thời ngay
             </button>
           </div>
+        </div>
+
+        {/* Active Devices & IP Sessions */}
+        <div className="bg-[var(--card)] border border-[var(--border)] rounded-2xl p-6 shadow-sm space-y-4">
+          <div>
+            <h2 className="text-lg font-semibold">Thiết bị đã đăng nhập</h2>
+            <p className="text-xs text-[var(--muted-foreground)] mt-1">
+              Lịch sử thiết bị, nền tảng và địa chỉ IP gần đây truy cập vào tài khoản của bạn.
+            </p>
+          </div>
+          {devices.length === 0 ? (
+            <p className="text-xs text-[var(--muted-foreground)] py-3 border-t border-[var(--border)]">
+              Chưa có dữ liệu phiên thiết bị nào được ghi nhận.
+            </p>
+          ) : (
+            <div className="divide-y divide-[var(--border)] border-t border-[var(--border)]">
+              {devices.map((d) => (
+                <div key={d.id} className="py-3 flex items-center justify-between gap-4 text-sm">
+                  <div className="min-w-0">
+                    <p className="font-medium truncate">
+                      {d.deviceModel || d.platform || "Web Browser"}
+                      {d.appVersion ? ` (${d.appVersion})` : ""}
+                    </p>
+                    <p className="text-xs text-[var(--muted-foreground)] truncate">
+                      IP: {d.ipAddress || "—"} • {d.osVersion || d.platform || "unknown"}
+                    </p>
+                  </div>
+                  <span className="text-xs text-[var(--muted-foreground)] shrink-0">
+                    {d.lastActiveAt ? new Date(d.lastActiveAt).toLocaleString("vi-VN") : ""}
+                  </span>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       </div>
     </div>

@@ -14,9 +14,11 @@ import {
   SlidersHorizontal,
   Sparkles,
   X,
+  MapPin,
 } from "lucide-react"
 import toast from "react-hot-toast"
 import adminApi from "@/utils/adminInterception"
+import DynamicMap from "@/components/map/DynamicMap"
 
 const allOption = { value: "", label: "Tất cả" }
 const typeLabels = {
@@ -31,6 +33,7 @@ const scopeLabels = {
   "post-service": "Bài viết",
   "user-service": "Người dùng",
   "api-gateway": "Gateway",
+  client: "Client UI",
   global: "Toàn hệ thống",
 }
 
@@ -40,6 +43,9 @@ const categoryLabels = {
   rate_limits: "Tần suất sử dụng",
   timeouts: "Thời gian chờ",
   security: "Bảo mật",
+  map: "Bản đồ",
+  location: "Vị trí",
+  telemetry: "Telemetry",
 }
 
 const configLabels = {
@@ -393,6 +399,8 @@ export default function RuntimeConfigsPage() {
         </div>
       </section>
 
+      <MapProviderQuickPreview configs={configs} onRefresh={loadConfigs} />
+
       {filteredConfigs.length === 0 ? (
         <EmptyState onReset={() => {
           setScope("")
@@ -432,6 +440,89 @@ export default function RuntimeConfigsPage() {
         />
       )}
     </div>
+  )
+}
+
+function MapProviderQuickPreview({ configs, onRefresh }) {
+  const providerCfg = configs.find((c) => c.key === "map.provider")
+  const styleCfg = configs.find((c) => c.key === "map.style")
+  const tilesCfg = configs.find((c) => c.key === "map.google_tiles_url")
+  const apiKeyCfg = configs.find((c) => c.key === "map.google_api_key")
+
+  const [selectedProvider, setSelectedProvider] = useState(providerCfg?.value || "carto")
+  const [applying, setApplying] = useState(false)
+
+  useEffect(() => {
+    if (providerCfg?.value) {
+      setSelectedProvider(providerCfg.value)
+    }
+  }, [providerCfg?.value])
+
+  if (!providerCfg) return null
+
+  const applyProvider = async (nextProvider) => {
+    setSelectedProvider(nextProvider)
+    setApplying(true)
+    try {
+      await adminApi.patch(`/v1/admin/runtime-configs/${encodeURIComponent("map.provider")}`, {
+        value: nextProvider,
+        expectedVersion: providerCfg.version,
+        reason: "Quick switch map provider from Admin UI",
+      })
+      await adminApi.post("/v1/admin/runtime-configs/sync", {
+        reason: "Sync map provider change",
+      })
+      toast.success(`Đã chuyển chế độ bản đồ sang ${nextProvider}`)
+      onRefresh?.()
+    } catch {
+      toast.error("Không thể cập nhật chế độ bản đồ")
+    } finally {
+      setApplying(false)
+    }
+  }
+
+  return (
+    <section className="rounded-xl border border-[var(--border)] bg-[var(--card)] p-4 grid grid-cols-1 lg:grid-cols-12 gap-4 items-center">
+      <div className="lg:col-span-5 space-y-3">
+        <div className="flex items-center gap-2">
+          <div className="w-8 h-8 rounded-lg bg-[var(--accent-subtle)] text-[var(--accent)] flex items-center justify-center">
+            <MapPin className="w-4 h-4" />
+          </div>
+          <div>
+            <h2 className="text-sm font-bold">Chế độ Bản đồ (Live Preview)</h2>
+            <p className="text-xs text-[var(--muted-foreground)]">
+              Chuyển nhanh nhà cung cấp bản đồ cho trang Người quanh đây.
+            </p>
+          </div>
+        </div>
+        <div className="flex items-center gap-2">
+          <select
+            value={selectedProvider}
+            disabled={applying}
+            onChange={(e) => applyProvider(e.target.value)}
+            className="flex-1 h-10 rounded-lg border border-[var(--border)] bg-[var(--background)] px-3 text-sm font-medium outline-none focus:border-[var(--accent)]"
+          >
+            <option value="carto">carto (Carto Voyager / Dark Matter)</option>
+            <option value="google_tiles">google_tiles (Google Tiles kiểu socket-service-go)</option>
+            <option value="osm">osm (OpenStreetMap)</option>
+            <option value="google_sdk">google_sdk (Google Maps JS API Key)</option>
+            <option value="disabled">disabled (Tắt bản đồ, chỉ hiện danh sách)</option>
+          </select>
+        </div>
+      </div>
+      <div className="lg:col-span-7">
+        <DynamicMap
+          mapConfig={{
+            provider: selectedProvider,
+            style: styleCfg?.value || "auto",
+            googleTilesUrl: tilesCfg?.value,
+            googleApiKey: apiKeyCfg?.value,
+            defaultCenter: { lat: 10.7769, lng: 106.7009, zoom: 12 },
+          }}
+          className="w-full h-44 rounded-xl overflow-hidden border border-[var(--border)]"
+        />
+      </div>
+    </section>
   )
 }
 
