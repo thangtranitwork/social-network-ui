@@ -3,6 +3,7 @@ import { useState, useCallback, useEffect } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
 import { useTranslations } from "next-intl";
+import HlsVideo from "./HlsVideo";
 
 const variants = {
     enter: (direction) => ({ x: direction > 0 ? 300 : -300, opacity: 0 }),
@@ -102,7 +103,7 @@ export default function MediaCarousel({ media, page, setPage }) {
                     {!isValidMedia || hasError ? (
                         <p className="text-white">{t('mediaUnavailable')}</p>
                     ) : isVideo(currentMedia) ? (
-                        <video
+                        <HlsVideo
                             autoPlay
                             controls
                             className="max-w-full max-h-full object-contain"

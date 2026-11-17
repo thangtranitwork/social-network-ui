@@ -6,6 +6,7 @@ import api from "@/utils/axios"
 import { uploadFile } from "@/utils/fileUpload"
 import toast from "react-hot-toast"
 import { motion, AnimatePresence } from "framer-motion"
+import HlsVideo from "@/components/ui-components/HlsVideo"
 
 export default function StoryFeed() {
   const [currentUser, setCurrentUser] = useState(null)
@@ -402,7 +403,7 @@ export default function StoryFeed() {
               {/* Story Media */}
               <div className="w-full h-full flex items-center justify-center bg-black">
                 {feed[activeUserIndex]?.stories[activeStoryIndex]?.mediaType === "VIDEO" ? (
-                  <video
+                  <HlsVideo
                     src={feed[activeUserIndex]?.stories[activeStoryIndex]?.mediaUrl}
                     className="max-h-full max-w-full object-contain"
                     autoPlay

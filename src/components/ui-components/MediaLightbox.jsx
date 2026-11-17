@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import { X } from "lucide-react";
+import HlsVideo from "./HlsVideo";
 
 const isVideoUrl = (url = "") => {
   if (typeof url !== "string") return false;
@@ -73,7 +74,7 @@ export default function MediaLightbox({
         onClick={(e) => e.stopPropagation()}
       >
         {isVideo ? (
-          <video
+          <HlsVideo
             src={src}
             controls
             autoPlay

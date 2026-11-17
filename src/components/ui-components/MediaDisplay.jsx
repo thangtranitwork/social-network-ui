@@ -1,6 +1,7 @@
 // components/MediaDisplay.jsx
 import Image from "next/image";
 import { memo, useState } from "react";
+import HlsVideo from "./HlsVideo";
 
 const isVideo = (url = "") => {
     if (typeof url !== "string" || !url.trim()) {
@@ -41,7 +42,7 @@ export const MediaDisplay = memo(({ url, alt, className = "" }) => {
     }
 
     return isVideo(url) ? (
-        <video
+        <HlsVideo
             controls
             className={`rounded-lg max-h-60 w-full object-contain ${className}`}
             src={url}
